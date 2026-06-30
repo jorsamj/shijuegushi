@@ -147,15 +147,16 @@
       "splash",
       `
       <section class="splash-screen">
-        <div class="phone-glow" aria-hidden="true">
-          <span class="call-dot"></span>
-          <span class="call-line"></span>
-          <span class="call-line short"></span>
+        <div class="life-orbit" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
         </div>
-        <div class="brand-mark">MIST CASE LIBRARY</div>
-        <h1>迷雾剧本馆</h1>
-        <p>每一个选择，都可能改变真相</p>
-        <button class="primary-cta" type="button" data-action="enter-hall">进入剧本馆</button>
+        <div class="brand-mark">SECOND LIFE</div>
+        <h1>${escapeHTML(DATA.product.name)}</h1>
+        <p>${escapeHTML(DATA.product.subtitle)}</p>
+        <small>每一次选择，都会走向另一种人生。</small>
+        <button class="primary-cta" type="button" data-action="enter-hall">开始体验</button>
       </section>
       `
     );
@@ -170,9 +171,10 @@
           <article class="case-folder ${isOpen ? "is-open" : "is-locked"}" data-series-id="${series.seriesId}">
             <div class="folder-tab">${isOpen ? "已开放" : "未开放"}</div>
             <div class="folder-lines" aria-hidden="true"></div>
+            <span class="story-kind">${isOpen ? "悬疑人生" : "待解锁人生"}</span>
             <h2>${escapeHTML(series.title)}</h2>
             <p>${escapeHTML(series.summary)}</p>
-            <button class="ghost-button" type="button">${isOpen ? "查看系列" : "敬请期待"}</button>
+            <button class="ghost-button" type="button">${isOpen ? "查看档案" : "未开放"}</button>
           </article>
         `;
       })
@@ -183,9 +185,9 @@
       `
       <section class="hall-screen">
         <header class="page-header">
-          <p class="eyebrow">CASE ARCHIVE</p>
-          <h1>迷雾剧本馆</h1>
-          <p>选择一组案件剧本，进入雨夜、旧照片与未接来电之间。</p>
+          <p class="eyebrow">LIFE ARCHIVE</p>
+          <h1>人生档案</h1>
+          <p>选择一个人生故事，进入别人的秘密、选择与结局。</p>
         </header>
         <div class="series-shelf">${cards}</div>
       </section>
@@ -211,10 +213,10 @@
     const rows = scripts
       .map((script) => {
         const isOpen = script.status === "open";
-        const actionText = isOpen ? (hasLocalProgress ? "继续游戏" : "开始游戏") : "未完待续";
+        const actionText = isOpen ? (hasLocalProgress ? "继续体验" : "开始体验") : "未完待续";
         return `
           <article class="script-dossier ${isOpen ? "is-playable" : "is-coming"}" data-script-id="${script.scriptId}">
-            <span class="script-order">第 ${script.order} 本</span>
+            <span class="script-order">故事 ${String(script.order).padStart(2, "0")}</span>
             <div>
               <h3>《${escapeHTML(script.title)}》</h3>
               <p>${escapeHTML(script.summary)}</p>
@@ -229,11 +231,11 @@
       "series",
       `
       <section class="series-screen">
-        <button class="back-link" type="button" data-action="back-hall">← 返回剧本馆</button>
+        <button class="back-link" type="button" data-action="back-hall">← 返回人生档案</button>
         <header class="series-brief">
-          <p class="eyebrow">RAIN CALL FILE</p>
+          <p class="eyebrow">LIFE FILE</p>
           <h1>${escapeHTML(series.title)}</h1>
-          <p>${escapeHTML(series.summary)}第一版开放《雨夜来电》，其余剧本以未完待续状态展示。</p>
+          <p>当前开放人生故事：《雨夜来电》。其余故事未完待续。</p>
         </header>
         <div class="script-stack">${rows}</div>
       </section>
@@ -249,7 +251,7 @@
           return;
         }
         if (hasLocalProgress) {
-          openConfirm("继续游戏", "检测到本地进度。要从上次保存的位置继续吗？", () => {
+          openConfirm("继续体验", "检测到本地进度。要从上次保存的人生节点继续吗？", () => {
             loadProgress();
             showGame();
           }, () => startNewGame());
@@ -269,7 +271,7 @@
   function showGame() {
     const node = getNode();
     if (!node) {
-      showToast("剧情节点缺失，已返回剧本馆。", "warn");
+      showToast("剧情节点缺失，已返回人生档案。", "warn");
       showHall();
       return;
     }
@@ -291,7 +293,7 @@
             <button type="button" data-tool="save">存档</button>
             <button type="button" data-tool="load">读档</button>
             <button type="button" data-tool="history">历史</button>
-            <button type="button" data-tool="hall">返回剧本馆</button>
+            <button type="button" data-tool="hall">返回人生档案</button>
           </nav>
         </header>
         <div class="scene-stage">
@@ -302,7 +304,7 @@
           <div class="dialogue-text">${formatText(node.text)}</div>
           <div id="choiceArea" class="choice-area"></div>
           <div class="dialogue-actions">
-            <span class="node-id">${escapeHTML(node.nodeId)}</span>
+            <span class="node-id" aria-hidden="true">${escapeHTML(node.nodeId)}</span>
             <button id="continueButton" class="continue-button" type="button">继续</button>
           </div>
         </section>
@@ -487,7 +489,7 @@
           <div class="ending-actions">
             <button class="case-button" type="button" data-action="restart">重新开始</button>
             <button class="case-button secondary" type="button" data-action="load">读取存档</button>
-            <button class="ghost-button" type="button" data-action="hall">返回剧本馆</button>
+            <button class="ghost-button" type="button" data-action="hall">返回人生档案</button>
           </div>
         </div>
       </section>
@@ -507,7 +509,7 @@
     app.querySelector("[data-tool='load']").addEventListener("click", openLoadModal);
     app.querySelector("[data-tool='history']").addEventListener("click", openHistoryModal);
     app.querySelector("[data-tool='hall']").addEventListener("click", () => {
-      openConfirm("返回剧本馆", "返回前会自动保存当前进度。要离开当前剧情页吗？", () => {
+      openConfirm("返回人生档案", "返回前会自动保存当前进度。要离开当前故事吗？", () => {
         autoSave();
         showHall();
       });
@@ -541,7 +543,7 @@
         `;
       })
       .join("");
-    openModal("案件线索板", "CLUE BOARD", html || "<p>还没有线索。</p>");
+    openModal("人生线索板", "LIFE CLUES", html || "<p>还没有线索。</p>");
   }
 
   function openSaveModal() {
@@ -551,7 +553,7 @@
         ${slots.map((slot, index) => renderSaveSlot(slot, index, "save")).join("")}
       </div>
     `;
-    openModal("保存进度", "SAVE FILE", html);
+    openModal("保存人生节点", "SAVE NODE", html);
     modalBody.querySelectorAll("[data-save-slot]").forEach((button) => {
       button.addEventListener("click", () => {
         const index = Number(button.dataset.saveSlot);
@@ -562,11 +564,11 @@
             savedAt: new Date().toISOString(),
           };
           saveJSON(STORAGE_KEYS.saves, nextSlots);
-          showToast(`已保存到存档槽 ${index + 1}`, "clue");
+          showToast(`已保存到人生节点 ${index + 1}`, "clue");
           openSaveModal();
         };
         if (slots[index]) {
-          openConfirm("覆盖存档", `存档槽 ${index + 1} 已有记录，确认覆盖吗？`, writeSlot, openSaveModal);
+          openConfirm("覆盖存档", `人生节点 ${index + 1} 已有记录，确认覆盖吗？`, writeSlot, openSaveModal);
         } else {
           writeSlot();
         }
@@ -581,7 +583,7 @@
         ${slots.map((slot, index) => renderSaveSlot(slot, index, "load")).join("")}
       </div>
     `;
-    openModal("读取存档", "LOAD FILE", html);
+    openModal("读取人生节点", "LOAD NODE", html);
     modalBody.querySelectorAll("[data-load-slot]").forEach((button) => {
       button.addEventListener("click", () => {
         const index = Number(button.dataset.loadSlot);
@@ -604,7 +606,7 @@
     if (!slot) {
       return `
         <article class="save-slot is-empty">
-          <h3>存档槽 ${index + 1}</h3>
+          <h3>人生节点 ${index + 1}</h3>
           <p>空存档</p>
           <button class="case-button" type="button" ${mode === "load" ? "disabled" : `data-save-slot="${index}"`}>
             ${mode === "load" ? "不可读取" : "保存到这里"}
@@ -618,7 +620,7 @@
     const clueCount = Array.isArray(slot.clues) ? slot.clues.length : 0;
     return `
       <article class="save-slot">
-        <h3>存档槽 ${index + 1}</h3>
+          <h3>人生节点 ${index + 1}</h3>
         <p class="save-title">《${escapeHTML(getScript(slot.scriptId).title)}》</p>
         <p>${escapeHTML(chapter)}</p>
         <p>${escapeHTML(summary || "剧情节点记录")}</p>
@@ -639,7 +641,7 @@
         </article>
       `)
       .join("");
-    openModal("历史记录", "BACKLOG", rows || "<p>还没有对白记录。</p>");
+    openModal("回忆记录", "MEMORY LOG", rows || "<p>还没有对白记录。</p>");
   }
 
   function openNotice(title, text) {

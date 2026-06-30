@@ -1,15 +1,15 @@
 window.MIST_DATA = {
   "schemaVersion": "0.3",
   "product": {
-    "name": "迷雾剧本馆",
-    "subtitle": "每一个选择，都可能改变真相"
+    "name": "第二人生",
+    "subtitle": "欢迎来体验别人的人生。"
   },
   "series": [
     {
       "seriesId": "series_rain_call",
-      "title": "雨夜来电系列",
+      "title": "雨夜来电",
       "status": "open",
-      "summary": "围绕暴雨夜、旧手机、死者来电与身份疑云展开的都市悬疑系列。",
+      "summary": "一个暴雨夜，一通来自死者的电话，把你带回三年前的旧案。",
       "scriptIds": [
         "script_rain_call",
         "script_no_answer",
@@ -18,16 +18,16 @@ window.MIST_DATA = {
     },
     {
       "seriesId": "series_old_building",
-      "title": "旧楼档案系列",
+      "title": "旧楼档案",
       "status": "locked",
-      "summary": "旧楼里无人愿意提起的失踪记录。",
+      "summary": "每一栋旧楼，都住着不愿被提起的人生。",
       "scriptIds": []
     },
     {
       "seriesId": "series_missing_people",
-      "title": "消失的人系列",
+      "title": "消失的人",
       "status": "locked",
-      "summary": "那些从生活缝隙里悄悄消失的人。",
+      "summary": "有人从生活里消失，也有人从记忆里回来。",
       "scriptIds": []
     }
   ],
