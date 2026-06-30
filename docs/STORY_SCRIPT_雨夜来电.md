@@ -105,6 +105,34 @@
 | refused_zhou_pressure | 拒绝周屿施压 |
 | gave_original_photo | 交出原始照片 |
 
+### 6.3 人物关系值
+
+| relationshipId | 展示名称 | 初始值 | 范围 | 说明 |
+| --- | --- | --- | --- | --- |
+| trust_zhuwan | 许知晚：信任 | 0 | 0-100 | 林舟对许知晚的信任与许知晚对林舟的配合程度 |
+| support_chenyan | 陈妍：协助 | 0 | 0-100 | 陈妍对林舟调查行动的支持和介入程度 |
+| suspicion_zhou | 周屿：警觉 | 0 | 0-100 | 周屿对林舟行动的警觉与施压程度 |
+| courage_linzou | 林舟：直面 | 0 | 0-100 | 林舟面对旧案、愧疚和真相的程度 |
+
+### 6.4 节点扩展字段
+
+后续将节点转为 `story-data.js / story.json` 时，choice 节点可增加以下字段：
+
+```js
+relationshipEffects: [
+  { id: "trust_zhuwan", delta: 10, reason: "选择隔门核验许知晚身份" }
+],
+endingPathTags: ["verified_identity", "kept_evidence"]
+```
+
+字段说明：
+
+| 字段 | 说明 |
+| --- | --- |
+| relationshipEffects | 本选项对人物关系值的影响，可包含多个关系值 |
+| endingPathTags | 用于结局报告生成“你如何走到这个结局”的路径链 |
+| reason | 关系变化原因，应能被人物关系面板和结局报告复用 |
+
 ## 7. 章节结构
 
 | 章节 | 标题 | 核心目标 | 小高潮 |
@@ -2639,3 +2667,42 @@
 8. 文风保持都市悬疑、生活化、克制，恐惧落点必须回到现实证据和人物关系。
 9. 不要加入与当前个人副业方向无关的行业化设定。
 10. 后续扩写到 120-160 节点时，可在每章现有 8 节点之间插入调查、回忆和分支回流节点，不改变核心线索和结局条件。
+
+## 12. v0.2 人物关系影响与结局路径补充
+
+本节用于补充关键 choice 节点的 `relationshipEffects` 与 `endingPathTags`。不重写原有剧情文本；开发时可将下表内容合并进对应节点选项数据。
+
+| 节点范围 | 关键选择 | relationshipEffects | endingPathTags |
+| --- | --- | --- | --- |
+| ch01_008 | 先不开门，隔门要求证明 | trust_zhuwan +5：给许知晚解释机会；courage_linzou +5：没有被恐惧完全控制 | kept_door_closed, verified_identity_start |
+| ch01_008 | 直接开门 | trust_zhuwan +15：快速信任许知晚；suspicion_zhou +5：行动更容易被周屿利用 | early_trust, handoff_risk |
+| ch02 身份判断节点 | 要求许知晚说出姐妹私密细节 | trust_zhuwan +10：身份可信度提升；courage_linzou +5：主动核验证据 | verified_identity, zhuwan_trust |
+| ch02 身份判断节点 | 拒绝继续听许知晚解释 | trust_zhuwan -10：信任下降；courage_linzou -5：回避当前疑点 | distrust_zhuwan, escape_pressure |
+| ch03 周屿消息节点 | 收到“别让她进去”后继续核验 | suspicion_zhou +10：意识到周屿异常介入；courage_linzou +5：继续追问 | zhou_message, suspected_zhou |
+| ch04 许知晚进屋节点 | 让许知晚进屋但不交出证据 | trust_zhuwan +10：建立临时合作；courage_linzou +5：控制风险 | controlled_trust, evidence_kept |
+| ch04 许知晚进屋节点 | 让许知晚进屋并准备交出关键物 | trust_zhuwan +15：过早托付；suspicion_zhou +5：证据流转风险上升 | early_trust, evidence_handoff_risk |
+| ch06 陈妍查资料节点 | 给陈妍发消息求助 | support_chenyan +10：外部协助建立；courage_linzou +5：开始面对旧案 | chenyan_help, evidence_chain |
+| ch06 陈妍查资料节点 | 拒绝告诉陈妍 | support_chenyan -5：协助链变弱；courage_linzou -5：独自承压 | isolated, evidence_gap |
+| ch07 照片节点 | 备份最后合照 | support_chenyan +5：形成外部备份；courage_linzou +10：保留证据 | photo_backed_up, evidence_safe |
+| ch07 照片节点 | 只保留原图不备份 | courage_linzou +5：暂时保留证据 | evidence_fragile |
+| ch08 照片检查节点 | 查看角落阴影并标记异常 | suspicion_zhou +10：周屿不在场说法动摇；courage_linzou +5：继续追查 | photo_background_found, zhou_at_scene |
+| ch09 来电机制节点 | 接受旧手机触发解释 | courage_linzou +10：摆脱灵异恐惧；trust_zhuwan +5：理解许知晚行动 | understood_dead_call, reality_explained |
+| ch09 来电机制节点 | 坚持认为是灵异或恶作剧 | courage_linzou -10：真相理解受阻 | misunderstood_call, deduction_gap |
+| ch10 周屿电话节点 | 接周屿电话 | suspicion_zhou +10：周屿开始正面施压 | answered_zhou, pressure_rises |
+| ch10 周屿电话节点 | 质问周屿为何知道合照 | courage_linzou +10；suspicion_zhou +10：周屿异常暴露 | confronted_zhou, zhou_exposed |
+| ch11 三方压力节点 | 备份证据并发给陈妍 | support_chenyan +10；courage_linzou +10 | evidence_safe, chenyan_backup |
+| ch11 三方压力节点 | 把原始照片交给许知晚 | trust_zhuwan +10；courage_linzou -5 | original_photo_handoff, evidence_out_of_control |
+| ch11 三方压力节点 | 删除照片 | courage_linzou -20 | deleted_evidence, truth_closed |
+| ch12_002-ch12_006 | 最终推理答对 | 无直接关系值变化 | deduction_correct |
+| ch12_002-ch12_006 | 最终推理答错 | 无直接关系值变化 | deduction_gap |
+| ch12_007 | 备份所有证据，选择重启旧案 | courage_linzou +20；support_chenyan +5 | chose_reopen_case, ending_a_path |
+| ch12_007 | 把原始照片交给许知晚 | trust_zhuwan +10；courage_linzou -5 | gave_original_photo, ending_b_risk |
+| ch12_007 | 删除照片，结束这一切 | courage_linzou -20 | deleted_evidence, ending_c_path |
+| ch12_007 | 什么都不做，挂断所有电话 | courage_linzou -10 | avoid_truth, ending_d_path |
+
+### 12.1 结局路径记录规则
+
+1. `endingPathTags` 不直接决定结局，结局仍由线索、flags、最终选择和 `deductionScore` 自动判断。
+2. `endingPathTags` 用于结局页解释“你如何走到这个结局”。
+3. 同一选项可同时影响人物关系和路径记录。
+4. 关系值和路径记录必须进入存档，读档后恢复。

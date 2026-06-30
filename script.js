@@ -100,6 +100,12 @@
     },
   };
 
+  const RELATIONSHIP_DEFS = [
+    { id: "trust_zhuwan", character: "许知晚", label: "信任", levels: ["疏离", "试探", "信任", "托付"] },
+    { id: "support_chenyan", character: "陈妍", label: "协助", levels: ["微弱", "有限协助", "积极协助", "全力协助"] },
+    { id: "suspicion_zhou", character: "周屿", label: "警觉", levels: ["未察觉", "警觉", "高度警觉", "失控施压"] },
+    { id: "courage_linzou", character: "林舟", label: "直面", levels: ["逃避", "动摇", "面对", "直面真相"] },
+  ];
   const app = document.getElementById("app");
   const toastHost = document.getElementById("toastHost");
   const modalRoot = document.getElementById("modalRoot");
@@ -129,6 +135,9 @@
       sessionAchievements: [],
       importantChoices: [],
       truthNotices: [],
+      relationships: createDefaultRelationships(),
+      relationshipEvents: [],
+      endingPathTags: [],
       startedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -213,6 +222,41 @@
     return CORE_CLUE_IDS.filter((clueId) => state.clues.includes(clueId)).length;
   }
 
+  function createDefaultRelationships() {
+    return RELATIONSHIP_DEFS.reduce((result, item) => {
+      result[item.id] = 0;
+      return result;
+    }, {});
+  }
+
+  function normalizeRelationships(input) {
+    const base = createDefaultRelationships();
+    if (!input || typeof input !== "object") return base;
+    RELATIONSHIP_DEFS.forEach((item) => {
+      const value = Number(input[item.id]);
+      base[item.id] = Number.isFinite(value) ? clampRelationship(value) : 0;
+    });
+    return base;
+  }
+
+  function clampRelationship(value) {
+    return Math.max(0, Math.min(100, Number(value) || 0));
+  }
+
+  function getRelationshipDef(id) {
+    return RELATIONSHIP_DEFS.find((item) => item.id === id);
+  }
+
+  function getRelationshipLevel(def, value) {
+    if (value <= 20) return def.levels[0];
+    if (value <= 50) return def.levels[1];
+    if (value <= 80) return def.levels[2];
+    return def.levels[3];
+  }
+
+  function getLastRelationshipEvent(id) {
+    return [...(state.relationshipEvents || [])].reverse().find((event) => event.id === id);
+  }
   function renderTruthMeter() {
     const count = getCoreClueCount();
     const pieces = CORE_CLUE_IDS
@@ -269,6 +313,9 @@
       sessionAchievements: Array.isArray(input.sessionAchievements) ? input.sessionAchievements : [],
       importantChoices: Array.isArray(input.importantChoices) ? input.importantChoices : [],
       truthNotices: Array.isArray(input.truthNotices) ? input.truthNotices : [],
+      relationships: normalizeRelationships(input.relationships),
+      relationshipEvents: Array.isArray(input.relationshipEvents) ? input.relationshipEvents : [],
+      endingPathTags: Array.isArray(input.endingPathTags) ? input.endingPathTags : [],
     };
   }
 
@@ -278,6 +325,9 @@
       flags: { ...state.flags },
       clues: [...state.clues],
       history: [...state.history],
+      relationships: { ...state.relationships },
+      relationshipEvents: [...(state.relationshipEvents || [])],
+      endingPathTags: [...(state.endingPathTags || [])],
       updatedAt: new Date().toISOString(),
     };
   }
@@ -445,6 +495,8 @@
             <button type="button" data-tool="clues" class="clue-tool ${state.unreadClues.length ? "has-unread" : ""}">
               线索 <span>${state.clues.length}/${getTotalClueCount()}</span>
             </button>
+            <button type="button" data-tool="relationships">??</button>
+
             <button type="button" data-tool="save">存档</button>
             <button type="button" data-tool="load">读档</button>
             <button type="button" data-tool="history">历史</button>
@@ -544,6 +596,8 @@
     });
     gainClues(choice.gainClues || []);
     setFlags(choice.setFlags || []);
+    applyRelationshipEffects(choice.relationshipEffects || []);
+    recordEndingPathTags(choice.endingPathTags || []);
     if (node.type === "deduction" && choice.isCorrect === true) {
       state.deductionScore += 1;
     }
@@ -558,6 +612,37 @@
     }
   }
 
+  function applyRelationshipEffects(effects) {
+    if (!Array.isArray(effects) || effects.length === 0) return;
+    effects.forEach((effect) => {
+      const def = getRelationshipDef(effect.id);
+      if (!def) return;
+      const before = state.relationships[effect.id] || 0;
+      const after = clampRelationship(before + Number(effect.delta || 0));
+      state.relationships[effect.id] = after;
+      const event = {
+        id: effect.id,
+        delta: after - before,
+        before,
+        after,
+        reason: effect.reason || "??????",
+        nodeId: state.nodeId,
+        time: new Date().toISOString(),
+      };
+      state.relationshipEvents.push(event);
+      if (event.delta !== 0) {
+        showToast(`???????${def.character}${def.label} ${event.delta > 0 ? "+" : ""}${event.delta}`, "relationship");
+      }
+    });
+  }
+
+  function recordEndingPathTags(tags) {
+    if (!Array.isArray(tags) || tags.length === 0) return;
+    state.endingPathTags ||= [];
+    tags.forEach((tag) => {
+      if (tag && !state.endingPathTags.includes(tag)) state.endingPathTags.push(tag);
+    });
+  }
   function goToNode(nodeId) {
     if (DATA.endings[nodeId]) {
       showEnding(nodeId);
@@ -823,11 +908,72 @@
             <ul>${unlocked.length ? unlocked.map((title) => `<li>${escapeHTML(title)}</li>`).join("") : "<li>本次暂无新成就</li>"}</ul>
           </article>
         </div>
+        ${renderRelationshipReport()}
+        <article class="ending-path-report">
+          <h3>?????????</h3>
+          <ul>${buildEndingPathReport(ending.endingId).map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
+        </article>
         <blockquote>${escapeHTML(report.comment)}</blockquote>
       </section>
     `;
   }
 
+  function renderRelationshipReport() {
+    const cards = RELATIONSHIP_DEFS.map((def) => {
+      const value = state.relationships?.[def.id] || 0;
+      const last = getLastRelationshipEvent(def.id);
+      return [
+        '<article class="relationship-report-card">',
+        '<div>',
+        `<span>${escapeHTML(def.character)}</span>`,
+        `<strong>${escapeHTML(def.label)} ? ${escapeHTML(getRelationshipLevel(def, value))}</strong>`,
+        '</div>',
+        `<div class="relationship-bar"><i style="width: ${value}%"></i></div>`,
+        `<p>${value}/100</p>`,
+        `<small>${escapeHTML(last?.reason || "本次暂无明显变化")}</small>`,
+        '</article>',
+      ].join("");
+    }).join("");
+    return `<section class="relationship-report"><h3>人物关系</h3><div class="relationship-report-grid">${cards}</div></section>`;
+  }
+  function buildEndingPathReport(endingId) {
+    const has = (clueId) => state.clues.includes(clueId);
+    const rows = [];
+    if (endingId === "ending_c") {
+      rows.push("你选择删除证据。");
+      rows.push(state.flags.backed_up_photo ? "虽然曾经建立过备份，但关键路径仍被删除选择打断。" : "你没有建立有效备份。");
+      rows.push("关键证据从当前证据链中消失。");
+      rows.push("因此进入 C 结局：删除证据。");
+      return rows;
+    }
+    if (endingId === "ending_a") {
+      if (has("clue_last_photo")) rows.push("你找到了最后一张大学合照。");
+      if (has("clue_photo_background")) rows.push("你发现了照片背景里的周屿。");
+      if (has("clue_gray_loan")) rows.push("你查到了许知夏信息被冒用借贷。");
+      if (has("clue_timed_voice")) rows.push("你理解了死者来电的现实机制。");
+      if (state.flags.backed_up_photo) rows.push("你保留并备份了关键证据。");
+      if (state.flags.chose_reopen_case) rows.push("你选择重启旧案。");
+      rows.push(`最终推理达到 ${state.deductionScore}/5。`);
+      rows.push("因此进入 A 结局：真相重启。");
+      return rows;
+    }
+    if (endingId === "ending_b") {
+      rows.push("你选择把原始照片交给许知晚。");
+      if (!state.flags.verified_zhuwan_identity) rows.push("你没有完成足够的身份核验。");
+      if (!state.flags.backed_up_photo) rows.push("你没有在交出前建立稳定备份。");
+      if (!state.flags.understood_dead_call) rows.push("你没有完全理解死者来电机制。");
+      rows.push("证据链在善意和仓促之间流转失控。");
+      rows.push("因此进入 B 结局：证据失控。");
+      return rows;
+    }
+    rows.push("你没有满足重启旧案的全部关键条件。");
+    rows.push(`核心线索进度为 ${getCoreClueCount()}/${CORE_CLUE_IDS.length}，最终推理为 ${state.deductionScore}/5。`);
+    if (!state.flags.chose_reopen_case) rows.push("你没有明确选择重启旧案。");
+    if (!state.flags.backed_up_photo) rows.push("关键证据没有形成稳定备份。");
+    rows.push("真相仍停在无人接听的电话里。");
+    rows.push("因此进入 D 结局：无人接听。");
+    return rows;
+  }
   function renderKeyChoiceReport() {
     const rows = [
       `许知晚：${state.flags.trusted_zhuwan_early || state.flags.verified_zhuwan_identity ? "选择接近并核验她" : "保持距离或尚未完全确认"}`,
@@ -841,6 +987,7 @@
 
   function bindGameToolbar() {
     app.querySelector("[data-tool='clues']").addEventListener("click", openClueModal);
+    app.querySelector("[data-tool='relationships']").addEventListener("click", openRelationshipModal);
     app.querySelector("[data-tool='save']").addEventListener("click", openSaveModal);
     app.querySelector("[data-tool='load']").addEventListener("click", openLoadModal);
     app.querySelector("[data-tool='history']").addEventListener("click", openHistoryModal);
@@ -852,6 +999,28 @@
     });
   }
 
+  function openRelationshipModal() {
+    const cards = RELATIONSHIP_DEFS.map((def) => {
+      const value = state.relationships?.[def.id] || 0;
+      const last = getLastRelationshipEvent(def.id);
+      return [
+        '<article class="relationship-card">',
+        '<header>',
+        `<span>${escapeHTML(def.character)}</span>`,
+        `<strong>${escapeHTML(def.label)}</strong>`,
+        '</header>',
+        `<div class="relationship-value"><b>${value}</b><small>/100 ? ${escapeHTML(getRelationshipLevel(def, value))}</small></div>`,
+        `<div class="relationship-bar"><i style="width: ${value}%"></i></div>`,
+        `<p>${escapeHTML(last?.reason || "尚未因关键选择产生明显变化")}</p>`,
+        '</article>',
+      ].join("");
+    }).join("");
+    openModal({
+      kicker: "LIFE RELATION",
+      title: "人物关系",
+      body: `<div class="relationship-panel"><p class="panel-note">这些数值不是单纯好感，而是林舟在这个雨夜里与他人、与旧案之间的关系变化。</p><div class="relationship-grid">${cards}</div></div>`,
+    });
+  }
   function refreshGameMeta() {
     const clueButton = app.querySelector("[data-tool='clues']");
     if (clueButton) {

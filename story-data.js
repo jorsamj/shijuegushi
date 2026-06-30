@@ -376,7 +376,23 @@ window.MIST_DATA = {
           "setFlags": [
             "kept_door_closed"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 5,
+              "reason": "选择隔门核验许知晚身份"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "没有被恐惧完全控制"
+            }
+          ],
+          "endingPathTags": [
+            "kept_door_closed",
+            "verified_identity_start"
+          ]
         },
         {
           "choiceId": "b",
@@ -386,7 +402,23 @@ window.MIST_DATA = {
           "setFlags": [
             "trusted_zhuwan_early"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 15,
+              "reason": "选择提前给许知晚进入空间"
+            },
+            {
+              "id": "suspicion_zhou",
+              "delta": 5,
+              "reason": "证据流转风险开始上升"
+            }
+          ],
+          "endingPathTags": [
+            "early_trust",
+            "handoff_risk"
+          ]
         },
         {
           "choiceId": "c",
@@ -396,7 +428,23 @@ window.MIST_DATA = {
           "setFlags": [
             "called_chenyan"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "support_chenyan",
+              "delta": 10,
+              "reason": "第一时间向陈妍求助"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "选择用现实关系确认危险"
+            }
+          ],
+          "endingPathTags": [
+            "chenyan_help",
+            "evidence_chain"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -480,7 +528,23 @@ window.MIST_DATA = {
           "text": "继续隔门询问她怎么找到这里",
           "nextNodeId": "ch02_006",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 5,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "identity_check",
+            "kept_boundary"
+          ]
         },
         {
           "choiceId": "b",
@@ -490,7 +554,23 @@ window.MIST_DATA = {
           "setFlags": [
             "verified_zhuwan_identity"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 10,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "verified_zhuwan_identity",
+            "evidence_chain"
+          ]
         },
         {
           "choiceId": "c",
@@ -500,7 +580,23 @@ window.MIST_DATA = {
           "setFlags": [
             "trusted_zhuwan_early"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 15,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "suspicion_zhou",
+              "delta": 5,
+              "reason": "周屿的异常被进一步放大"
+            }
+          ],
+          "endingPathTags": [
+            "early_trust",
+            "entry_risk"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -645,7 +741,23 @@ window.MIST_DATA = {
           "setFlags": [
             "answered_zhou_call"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "suspicion_zhou",
+              "delta": 10,
+              "reason": "周屿的异常被进一步放大"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "answered_zhou",
+            "zhou_pressure"
+          ]
         },
         {
           "choiceId": "b",
@@ -655,7 +767,23 @@ window.MIST_DATA = {
           "setFlags": [
             "called_chenyan"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "support_chenyan",
+              "delta": 10,
+              "reason": "你让陈妍更多参与证据链"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "chenyan_help",
+            "evidence_backup_mind"
+          ]
         },
         {
           "choiceId": "c",
@@ -665,7 +793,23 @@ window.MIST_DATA = {
           "setFlags": [
             "verified_zhuwan_identity"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 10,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "suspicion_zhou",
+              "delta": 5,
+              "reason": "周屿的异常被进一步放大"
+            }
+          ],
+          "endingPathTags": [
+            "shared_zhou_message",
+            "trust_zhuwan"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -787,7 +931,23 @@ window.MIST_DATA = {
           "setFlags": [
             "verified_zhuwan_identity"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 10,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "old_phone_verified",
+            "balanced_trust"
+          ]
         },
         {
           "choiceId": "b",
@@ -797,7 +957,23 @@ window.MIST_DATA = {
           "setFlags": [
             "kept_door_closed"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 3,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "kept_door_closed",
+            "slow_trust"
+          ]
         },
         {
           "choiceId": "c",
@@ -807,7 +983,23 @@ window.MIST_DATA = {
           "setFlags": [
             "trusted_zhuwan_early"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 15,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 10,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "help_zhuwan",
+            "case_reopened_seed"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -963,7 +1155,17 @@ window.MIST_DATA = {
           "text": "继续翻许知夏和自己的私聊",
           "nextNodeId": "ch05_006",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "old_chat_review"
+          ]
         },
         {
           "choiceId": "b",
@@ -973,7 +1175,23 @@ window.MIST_DATA = {
           "setFlags": [
             "suspected_zhou"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 8,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "suspicion_zhou",
+              "delta": 8,
+              "reason": "周屿的异常被进一步放大"
+            }
+          ],
+          "endingPathTags": [
+            "suspected_zhou",
+            "zhuwan_context"
+          ]
         },
         {
           "choiceId": "c",
@@ -983,7 +1201,17 @@ window.MIST_DATA = {
           "setFlags": [
             "called_chenyan"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "support_chenyan",
+              "delta": 10,
+              "reason": "你让陈妍更多参与证据链"
+            }
+          ],
+          "endingPathTags": [
+            "chenyan_old_news"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -1092,7 +1320,23 @@ window.MIST_DATA = {
           "setFlags": [
             "called_chenyan"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "support_chenyan",
+              "delta": 15,
+              "reason": "你让陈妍更多参与证据链"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "gray_loan_search",
+            "chenyan_support"
+          ]
         },
         {
           "choiceId": "b",
@@ -1102,7 +1346,23 @@ window.MIST_DATA = {
           "setFlags": [
             "answered_zhou_call"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "suspicion_zhou",
+              "delta": 10,
+              "reason": "周屿的异常被进一步放大"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 8,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "questioned_zhou_loan",
+            "zhou_pressure"
+          ]
         },
         {
           "choiceId": "c",
@@ -1112,7 +1372,23 @@ window.MIST_DATA = {
           "setFlags": [
             "verified_zhuwan_identity"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 8,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "zhuwan_investigation",
+            "identity_context"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -1257,7 +1533,23 @@ window.MIST_DATA = {
           "setFlags": [
             "backed_up_photo"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "support_chenyan",
+              "delta": 5,
+              "reason": "你让陈妍更多参与证据链"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 10,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "backed_up_photo",
+            "evidence_chain"
+          ]
         },
         {
           "choiceId": "b",
@@ -1265,7 +1557,22 @@ window.MIST_DATA = {
           "text": "先找出许知晚说的最后合照",
           "nextNodeId": "ch07_004",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 5,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "last_photo_search"
+          ]
         },
         {
           "choiceId": "c",
@@ -1275,7 +1582,17 @@ window.MIST_DATA = {
           "setFlags": [
             "verified_zhuwan_identity"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 8,
+              "reason": "你与许知晚之间的信任发生变化"
+            }
+          ],
+          "endingPathTags": [
+            "zhuwan_photo_hint"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -1369,7 +1686,18 @@ window.MIST_DATA = {
           "setFlags": [
             "answered_zhou_call"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "suspicion_zhou",
+              "delta": 10,
+              "reason": "周屿的异常被进一步放大"
+            }
+          ],
+          "endingPathTags": [
+            "answered_zhou_call",
+            "zhou_interference"
+          ]
         },
         {
           "choiceId": "b",
@@ -1379,7 +1707,23 @@ window.MIST_DATA = {
           "setFlags": [
             "refused_zhou_pressure"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "courage_linzou",
+              "delta": 10,
+              "reason": "林舟更接近直面旧案"
+            },
+            {
+              "id": "suspicion_zhou",
+              "delta": 5,
+              "reason": "周屿的异常被进一步放大"
+            }
+          ],
+          "endingPathTags": [
+            "refused_zhou_pressure",
+            "photo_focus"
+          ]
         },
         {
           "choiceId": "c",
@@ -1389,7 +1733,23 @@ window.MIST_DATA = {
           "setFlags": [
             "backed_up_photo"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "support_chenyan",
+              "delta": 10,
+              "reason": "你让陈妍更多参与证据链"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 10,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "photo_backed_to_chenyan",
+            "evidence_chain"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -1445,7 +1805,17 @@ window.MIST_DATA = {
           "text": "先看玻璃反光",
           "nextNodeId": "ch08_004",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "checked_reflection"
+          ]
         },
         {
           "choiceId": "b",
@@ -1453,7 +1823,17 @@ window.MIST_DATA = {
           "text": "先看右侧门牌",
           "nextNodeId": "ch08_004",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "checked_doorplate"
+          ]
         },
         {
           "choiceId": "c",
@@ -1461,7 +1841,23 @@ window.MIST_DATA = {
           "text": "先看角落阴影",
           "nextNodeId": "ch08_004",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "suspicion_zhou",
+              "delta": 10,
+              "reason": "周屿的异常被进一步放大"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "checked_shadow",
+            "photo_background_found"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -1600,7 +1996,17 @@ window.MIST_DATA = {
           "text": "让许知晚继续发旧手机记录",
           "nextNodeId": "ch09_004",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 8,
+              "reason": "你与许知晚之间的信任发生变化"
+            }
+          ],
+          "endingPathTags": [
+            "old_phone_records"
+          ]
         },
         {
           "choiceId": "b",
@@ -1610,7 +2016,23 @@ window.MIST_DATA = {
           "setFlags": [
             "called_chenyan"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "support_chenyan",
+              "delta": 10,
+              "reason": "你让陈妍更多参与证据链"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "timed_voice_verified",
+            "chenyan_support"
+          ]
         },
         {
           "choiceId": "c",
@@ -1620,7 +2042,18 @@ window.MIST_DATA = {
           "setFlags": [
             "answered_zhou_call"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "suspicion_zhou",
+              "delta": 10,
+              "reason": "周屿的异常被进一步放大"
+            }
+          ],
+          "endingPathTags": [
+            "asked_zhou_old_phone",
+            "zhou_pressure"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -1782,7 +2215,23 @@ window.MIST_DATA = {
           "text": "假装没找到照片，试探他的反应",
           "nextNodeId": "ch10_005",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "suspicion_zhou",
+              "delta": 8,
+              "reason": "周屿的异常被进一步放大"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 5,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "tested_zhou",
+            "photo_secret"
+          ]
         },
         {
           "choiceId": "b",
@@ -1792,7 +2241,23 @@ window.MIST_DATA = {
           "setFlags": [
             "suspected_zhou"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "suspicion_zhou",
+              "delta": 12,
+              "reason": "周屿的异常被进一步放大"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 10,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "questioned_zhou_left",
+            "suspected_zhou"
+          ]
         },
         {
           "choiceId": "c",
@@ -1802,7 +2267,23 @@ window.MIST_DATA = {
           "setFlags": [
             "backed_up_photo"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "support_chenyan",
+              "delta": 12,
+              "reason": "你让陈妍更多参与证据链"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 10,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "photo_backed_to_chenyan",
+            "refused_zhou_pressure"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -1924,7 +2405,23 @@ window.MIST_DATA = {
           "setFlags": [
             "backed_up_photo"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "support_chenyan",
+              "delta": 10,
+              "reason": "你让陈妍更多参与证据链"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 10,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "backed_up_photo",
+            "evidence_chain"
+          ]
         },
         {
           "choiceId": "b",
@@ -1935,7 +2432,23 @@ window.MIST_DATA = {
             "gave_original_photo",
             "trusted_zhuwan_early"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 10,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": -5,
+              "reason": "林舟退回到逃避和恐惧里"
+            }
+          ],
+          "endingPathTags": [
+            "gave_original_photo",
+            "evidence_lost_control"
+          ]
         },
         {
           "choiceId": "c",
@@ -1945,7 +2458,23 @@ window.MIST_DATA = {
           "setFlags": [
             "deleted_evidence"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "courage_linzou",
+              "delta": -20,
+              "reason": "林舟退回到逃避和恐惧里"
+            },
+            {
+              "id": "suspicion_zhou",
+              "delta": 5,
+              "reason": "周屿的异常被进一步放大"
+            }
+          ],
+          "endingPathTags": [
+            "deleted_evidence",
+            "fear_choice"
+          ]
         }
       ],
       "nextNodeId": null,
@@ -2289,7 +2818,23 @@ window.MIST_DATA = {
             "backed_up_photo",
             "chose_reopen_case"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "support_chenyan",
+              "delta": 5,
+              "reason": "你让陈妍更多参与证据链"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": 20,
+              "reason": "林舟更接近直面旧案"
+            }
+          ],
+          "endingPathTags": [
+            "chose_reopen_case",
+            "final_evidence_chain"
+          ]
         },
         {
           "choiceId": "b",
@@ -2299,7 +2844,23 @@ window.MIST_DATA = {
           "setFlags": [
             "gave_original_photo"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "trust_zhuwan",
+              "delta": 8,
+              "reason": "你与许知晚之间的信任发生变化"
+            },
+            {
+              "id": "courage_linzou",
+              "delta": -5,
+              "reason": "林舟退回到逃避和恐惧里"
+            }
+          ],
+          "endingPathTags": [
+            "gave_original_photo",
+            "ending_b_risk"
+          ]
         },
         {
           "choiceId": "c",
@@ -2309,7 +2870,18 @@ window.MIST_DATA = {
           "setFlags": [
             "deleted_evidence"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "courage_linzou",
+              "delta": -20,
+              "reason": "林舟退回到逃避和恐惧里"
+            }
+          ],
+          "endingPathTags": [
+            "deleted_evidence",
+            "ending_c_path"
+          ]
         },
         {
           "choiceId": "d",
@@ -2317,7 +2889,18 @@ window.MIST_DATA = {
           "text": "什么都不做，挂断所有电话",
           "nextNodeId": "ch12_008",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "relationshipEffects": [
+            {
+              "id": "courage_linzou",
+              "delta": -10,
+              "reason": "林舟退回到逃避和恐惧里"
+            }
+          ],
+          "endingPathTags": [
+            "avoid_truth",
+            "ending_d_path"
+          ]
         }
       ],
       "nextNodeId": null,
