@@ -6,12 +6,12 @@
 
 ## 当前阶段
 
-PRD 文档阶段。
+PRD 文档阶段。当前文档已按产品 PRD 工作流和需求文档维护规范整理为 v0.2。
 
 ## 当前文档
 
-- [docs/PRD_SOFTWARE.md](docs/PRD_SOFTWARE.md)
-- [docs/PRD_STORY_凌晨三点的监控.md](docs/PRD_STORY_凌晨三点的监控.md)
+- [docs/PRD_SOFTWARE.md](docs/PRD_SOFTWARE.md)：软件产品 PRD，描述产品形态、页面结构、功能模块、交互规则、数据结构、存档机制和验收标准。
+- [docs/PRD_STORY_凌晨三点的监控.md](docs/PRD_STORY_凌晨三点的监控.md)：故事剧情 PRD，描述故事设定、人物、章节、线索、推理链、选择分支和结局。
 
 ## 下一阶段
 
