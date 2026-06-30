@@ -333,7 +333,7 @@
     const choiceArea = document.getElementById("choiceArea");
 
     if (node.nodeId === "ch12_008") {
-      continueButton.textContent = "进入结局";
+      continueButton.textContent = "查看结局";
       continueButton.addEventListener("click", () => {
         state.endingId = resolveEnding();
         autoSave();
@@ -384,7 +384,7 @@
     });
     gainClues(choice.gainClues || []);
     setFlags(choice.setFlags || []);
-    if (node.type === "deduction" && choice.choiceId === "a") {
+    if (node.type === "deduction" && choice.isCorrect === true) {
       state.deductionScore += 1;
     }
     autoSave();
@@ -445,7 +445,12 @@
       "clue_zhou_left",
       "clue_timed_voice",
     ].every((id) => clues.has(id));
-    if (hasAClues && flags.backed_up_photo === true && flags.chose_reopen_case === true) {
+    if (
+      hasAClues &&
+      flags.backed_up_photo === true &&
+      flags.chose_reopen_case === true &&
+      state.deductionScore >= 4
+    ) {
       return "ending_a";
     }
     if (

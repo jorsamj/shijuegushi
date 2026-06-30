@@ -2058,28 +2058,31 @@ window.MIST_DATA = {
         {
           "choiceId": "a",
           "label": "选项 A",
+          "text": "周屿提前伪造了整通原始来电",
+          "nextNodeId": "ch12_003",
+          "setFlags": [],
+          "gainClues": [],
+          "isCorrect": false
+        },
+        {
+          "choiceId": "b",
+          "label": "选项 B",
           "text": "许知晚重新开机旧手机后，旧语音备忘或云端记录被触发",
           "nextNodeId": "ch12_003",
           "setFlags": [
             "understood_dead_call"
           ],
-          "gainClues": []
-        },
-        {
-          "choiceId": "b",
-          "label": "选项 B",
-          "text": "许知夏真的以灵异方式打来电话",
-          "nextNodeId": "ch12_003",
-          "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": true
         },
         {
           "choiceId": "c",
           "label": "选项 C",
-          "text": "周屿提前伪造了整通原始来电",
+          "text": "许知夏真的以灵异方式打来电话",
           "nextNodeId": "ch12_003",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": false
         }
       ],
       "nextNodeId": null,
@@ -2105,7 +2108,8 @@ window.MIST_DATA = {
           "setFlags": [
             "verified_zhuwan_identity"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": true
         },
         {
           "choiceId": "b",
@@ -2113,7 +2117,8 @@ window.MIST_DATA = {
           "text": "冒充许知夏的陌生人",
           "nextNodeId": "ch12_004",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": false
         },
         {
           "choiceId": "c",
@@ -2121,7 +2126,8 @@ window.MIST_DATA = {
           "text": "周屿安排来取照片的人",
           "nextNodeId": "ch12_004",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": false
         }
       ],
       "nextNodeId": null,
@@ -2142,28 +2148,31 @@ window.MIST_DATA = {
         {
           "choiceId": "a",
           "label": "选项 A",
+          "text": "她长期情绪低落，主动走向意外",
+          "nextNodeId": "ch12_005",
+          "setFlags": [],
+          "gainClues": [],
+          "isCorrect": false
+        },
+        {
+          "choiceId": "b",
+          "label": "选项 B",
+          "text": "许知晚为了查案夸大了旧事",
+          "nextNodeId": "ch12_005",
+          "setFlags": [],
+          "gainClues": [],
+          "isCorrect": false
+        },
+        {
+          "choiceId": "c",
+          "label": "选项 C",
           "text": "她发现周屿冒用信息借贷并准备报警",
           "nextNodeId": "ch12_005",
           "setFlags": [
             "found_gray_loan"
           ],
-          "gainClues": []
-        },
-        {
-          "choiceId": "b",
-          "label": "选项 B",
-          "text": "她长期情绪低落，主动走向意外",
-          "nextNodeId": "ch12_005",
-          "setFlags": [],
-          "gainClues": []
-        },
-        {
-          "choiceId": "c",
-          "label": "选项 C",
-          "text": "许知晚为了查案夸大了旧事",
-          "nextNodeId": "ch12_005",
-          "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": true
         }
       ],
       "nextNodeId": null,
@@ -2184,20 +2193,22 @@ window.MIST_DATA = {
         {
           "choiceId": "a",
           "label": "选项 A",
+          "text": "证明林舟和许知夏曾经关系很好",
+          "nextNodeId": "ch12_006",
+          "setFlags": [],
+          "gainClues": [],
+          "isCorrect": false
+        },
+        {
+          "choiceId": "b",
+          "label": "选项 B",
           "text": "背景拍到周屿出现在案发楼道附近",
           "nextNodeId": "ch12_006",
           "setFlags": [
             "found_photo_background"
           ],
-          "gainClues": []
-        },
-        {
-          "choiceId": "b",
-          "label": "选项 B",
-          "text": "证明林舟和许知夏曾经关系很好",
-          "nextNodeId": "ch12_006",
-          "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": true
         },
         {
           "choiceId": "c",
@@ -2205,7 +2216,8 @@ window.MIST_DATA = {
           "text": "证明许知晚长得像许知夏",
           "nextNodeId": "ch12_006",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": false
         }
       ],
       "nextNodeId": null,
@@ -2231,7 +2243,8 @@ window.MIST_DATA = {
           "setFlags": [
             "suspected_zhou"
           ],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": true
         },
         {
           "choiceId": "b",
@@ -2239,7 +2252,8 @@ window.MIST_DATA = {
           "text": "阻止许知晚继续打扰林舟生活",
           "nextNodeId": "ch12_007",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": false
         },
         {
           "choiceId": "c",
@@ -2247,7 +2261,8 @@ window.MIST_DATA = {
           "text": "阻止陈妍误会大学旧友",
           "nextNodeId": "ch12_007",
           "setFlags": [],
-          "gainClues": []
+          "gainClues": [],
+          "isCorrect": false
         }
       ],
       "nextNodeId": null,
@@ -2316,43 +2331,10 @@ window.MIST_DATA = {
       "scene": "ending_screen",
       "cast": "系统",
       "speaker": "系统",
-      "text": "根据已获得线索、关键变量和最终选择进入结局。\n\nA 结局需要：clue_last_photo、clue_photo_background、clue_gray_loan、clue_zhou_left、clue_timed_voice，且 backed_up_photo = true，chose_reopen_case = true。\n\nB 结局在证据未备份、身份核验不足或来电机制未理解时，选择交出原始照片触发。\n\nC 结局在 deleted_evidence = true 且没有备份时触发。\n\n其余证据不足或逃避调查进入 D 结局。",
+      "text": "林舟按下确认。\n\n手机屏幕暗了一瞬。\n\n雨声、门外的呼吸、周屿的沉默，像三条线同时收紧。\n\n这一次，系统不会替她逃避。",
       "gainClues": [],
       "setFlags": [],
-      "choices": [
-        {
-          "choiceId": "a",
-          "label": "选项 A",
-          "text": "进入 A 结局：真相重启",
-          "nextNodeId": "ending_a",
-          "setFlags": [],
-          "gainClues": []
-        },
-        {
-          "choiceId": "b",
-          "label": "选项 B",
-          "text": "进入 B 结局：证据失控",
-          "nextNodeId": "ending_b",
-          "setFlags": [],
-          "gainClues": []
-        },
-        {
-          "choiceId": "c",
-          "label": "选项 C",
-          "text": "进入 C 结局：删除证据",
-          "nextNodeId": "ending_c",
-          "setFlags": [],
-          "gainClues": []
-        },
-        {
-          "choiceId": "d",
-          "label": "选项 D",
-          "text": "进入 D 结局：无人接听",
-          "nextNodeId": "ending_d",
-          "setFlags": [],
-          "gainClues": []
-        }
-      ],
+      "choices": [],
       "nextNodeId": null,
       "note": "开发时由条件判断自动跳转，不展示全部选项"
     }
