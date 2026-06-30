@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>迷雾剧本馆</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="ambient-layer" aria-hidden="true">
+      <div class="rain rain-a"></div>
+      <div class="rain rain-b"></div>
+      <div class="fog"></div>
+      <div class="noise"></div>
+      <div class="vignette"></div>
+    </div>
+
+    <main id="app" class="app-shell" aria-live="polite"></main>
+
+    <div id="toastHost" class="toast-host" aria-live="assertive"></div>
+
+    <div id="modalRoot" class="modal-root hidden" aria-hidden="true">
+      <div class="modal-scrim" data-close-modal></div>
+      <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <header class="modal-header">
+          <div>
+            <p class="modal-kicker" id="modalKicker">案件记录</p>
+            <h2 id="modalTitle">标题</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-modal aria-label="关闭弹窗">×</button>
+        </header>
+        <div id="modalBody" class="modal-body"></div>
+      </section>
+    </div>
+
+    <script src="story-data.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
