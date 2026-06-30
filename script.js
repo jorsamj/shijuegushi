@@ -8,6 +8,96 @@
     history: "mist.history",
     settings: "mist.settings",
     schema: "mist.schemaVersion",
+    achievements: "secondLife.achievements",
+  };
+
+  const CORE_CLUE_IDS = [
+    "clue_dead_call",
+    "clue_warning_sentence",
+    "clue_door_woman",
+    "clue_sister_mark",
+    "clue_old_phone",
+    "clue_last_photo",
+    "clue_photo_background",
+    "clue_gray_loan",
+    "clue_zhou_left",
+    "clue_timed_voice",
+  ];
+
+  const CLUE_FILTERS = ["全部", "关键线索", "通话", "人物", "物件", "照片", "旧案", "地点"];
+
+  const MILESTONES = [
+    {
+      milestoneId: "dead_call",
+      title: "命运节点开启",
+      text: "你接起了来自三年前的电话。这个夜晚已经无法回到原来的轨道。",
+      test: () => state.clues.includes("clue_dead_call"),
+    },
+    {
+      milestoneId: "sister_identity",
+      title: "身份疑云推进",
+      text: "门外的人不再只是陌生人。她知道许知夏留下的秘密。",
+      test: () => state.clues.includes("clue_sister_mark") || state.flags.verified_zhuwan_identity === true,
+    },
+    {
+      milestoneId: "gray_loan",
+      title: "旧案裂缝出现",
+      text: "许知夏不是意外坠入黑暗，她曾经试图自救。",
+      test: () => state.clues.includes("clue_gray_loan"),
+    },
+    {
+      milestoneId: "last_photo",
+      title: "关键物证出现",
+      text: "三年前的一张合照，把所有人的谎言重新摆上桌面。",
+      test: () => state.clues.includes("clue_last_photo"),
+    },
+    {
+      milestoneId: "photo_background",
+      title: "谎言被拍下",
+      text: "照片不会说话，但它记住了周屿不该出现的位置。",
+      test: () => state.clues.includes("clue_photo_background"),
+    },
+    {
+      milestoneId: "timed_voice",
+      title: "灵异被现实撕开",
+      text: "这不是鬼魂来电，而是一段迟到三年的提醒。",
+      test: () => state.clues.includes("clue_timed_voice") || state.flags.understood_dead_call === true,
+    },
+  ];
+
+  const ACHIEVEMENTS = [
+    { achievementId: "rain_line", title: "雨夜接线人", test: () => state.clues.includes("clue_dead_call") },
+    { achievementId: "careful_one", title: "谨慎的人", test: () => state.flags.kept_door_closed === true },
+    { achievementId: "first_trust", title: "第一次相信", test: () => state.flags.trusted_zhuwan_early === true },
+    { achievementId: "evidence_mind", title: "证据意识", test: () => state.flags.backed_up_photo === true },
+    { achievementId: "old_case_crack", title: "旧案裂缝", test: () => state.clues.includes("clue_gray_loan") },
+    { achievementId: "photo_speaks", title: "照片会说话", test: () => state.clues.includes("clue_photo_background") },
+    { achievementId: "reality_reader", title: "现实解释者", test: () => state.flags.understood_dead_call === true },
+    { achievementId: "truth_restart", title: "真相重启", test: () => state.endingId === "ending_a" },
+    { achievementId: "no_answer", title: "无人接听", test: () => state.endingId === "ending_d" },
+  ];
+
+  const ENDING_REPORT = {
+    ending_a: {
+      label: "结局 A：真相重启",
+      type: "最佳进展",
+      comment: "你保住了证据，也完成了推理。旧案不会立刻结束，但它终于重新开始。",
+    },
+    ending_b: {
+      label: "结局 B：证据失控",
+      type: "证据失控",
+      comment: "你选择相信，但没有建立完整证据链。善意并不足以保护真相。",
+    },
+    ending_c: {
+      label: "结局 C：删除证据",
+      type: "证据删除",
+      comment: "你结束了这个雨夜，也亲手关上了许知夏最后一次求救。",
+    },
+    ending_d: {
+      label: "结局 D：无人接听",
+      type: "逃避真相",
+      comment: "你没有犯错，但你也没有继续向前。真相仍停在无人接听的电话里。",
+    },
   };
 
   const app = document.getElementById("app");
@@ -20,6 +110,7 @@
   let storageAvailable = true;
   let modalCloseHandler = null;
   let currentView = "splash";
+  let feedbackQueue = [];
   let state = createInitialState();
 
   function createInitialState() {
@@ -31,6 +122,13 @@
       history: [],
       endingId: null,
       deductionScore: 0,
+      unreadClues: [],
+      chapterStats: {},
+      triggeredMilestones: [],
+      achievements: loadStoredAchievements(),
+      sessionAchievements: [],
+      importantChoices: [],
+      truthNotices: [],
       startedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -81,6 +179,16 @@
     }
   }
 
+  function loadStoredAchievements() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.achievements);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
   function getScript(scriptId = "script_rain_call") {
     return DATA.scripts.find((item) => item.scriptId === scriptId);
   }
@@ -95,6 +203,43 @@
 
   function getChapter(chapterId) {
     return DATA.chapters.find((chapter) => chapter.chapterId === chapterId);
+  }
+
+  function getTotalClueCount() {
+    return Object.keys(DATA.clues).length;
+  }
+
+  function getCoreClueCount() {
+    return CORE_CLUE_IDS.filter((clueId) => state.clues.includes(clueId)).length;
+  }
+
+  function renderTruthMeter() {
+    const count = getCoreClueCount();
+    const pieces = CORE_CLUE_IDS
+      .map((clueId) => `<i class="${state.clues.includes(clueId) ? "is-lit" : ""}"></i>`)
+      .join("");
+    return `
+      <div class="truth-meter ${count ? "has-progress" : ""}">
+        <span>真相进度</span>
+        <strong>${count}/${CORE_CLUE_IDS.length}</strong>
+        <div class="truth-pieces" aria-hidden="true">${pieces}</div>
+      </div>
+    `;
+  }
+
+  function ensureChapterStats(chapterId) {
+    if (!chapterId) return null;
+    if (!state.chapterStats[chapterId]) {
+      state.chapterStats[chapterId] = {
+        clues: [],
+        choices: [],
+        summaryShown: false,
+      };
+    }
+    state.chapterStats[chapterId].clues ||= [];
+    state.chapterStats[chapterId].choices ||= [];
+    state.chapterStats[chapterId].summaryShown ||= false;
+    return state.chapterStats[chapterId];
   }
 
   function hasProgress() {
@@ -117,6 +262,13 @@
       clues: Array.isArray(input.clues) ? input.clues : [],
       history: Array.isArray(input.history) ? input.history : [],
       deductionScore: Number(input.deductionScore || 0),
+      unreadClues: Array.isArray(input.unreadClues) ? input.unreadClues : [],
+      chapterStats: input.chapterStats && typeof input.chapterStats === "object" ? input.chapterStats : {},
+      triggeredMilestones: Array.isArray(input.triggeredMilestones) ? input.triggeredMilestones : [],
+      achievements: Array.from(new Set([...(loadStoredAchievements() || []), ...((Array.isArray(input.achievements) && input.achievements) || [])])),
+      sessionAchievements: Array.isArray(input.sessionAchievements) ? input.sessionAchievements : [],
+      importantChoices: Array.isArray(input.importantChoices) ? input.importantChoices : [],
+      truthNotices: Array.isArray(input.truthNotices) ? input.truthNotices : [],
     };
   }
 
@@ -288,8 +440,11 @@
             <span>${escapeHTML(getScript().title)}</span>
             <strong>${escapeHTML(chapter?.title || node.chapterTitle || "")}</strong>
           </div>
+          ${renderTruthMeter()}
           <nav class="toolbox" aria-label="游戏工具栏">
-            <button type="button" data-tool="clues">线索</button>
+            <button type="button" data-tool="clues" class="clue-tool ${state.unreadClues.length ? "has-unread" : ""}">
+              线索 <span>${state.clues.length}/${getTotalClueCount()}</span>
+            </button>
             <button type="button" data-tool="save">存档</button>
             <button type="button" data-tool="load">读档</button>
             <button type="button" data-tool="history">历史</button>
@@ -313,8 +468,10 @@
     );
 
     bindGameToolbar();
+    bindSceneInteractions();
     renderNodeControls(node);
     autoSave();
+    processFeedbackQueue();
   }
 
   function applyNodeEffects(node) {
@@ -378,6 +535,7 @@
   function handleChoice(node, choiceId) {
     const choice = (node.choices || []).find((item) => item.choiceId === choiceId);
     if (!choice) return;
+    recordChoice(node, choice);
     addHistory({
       type: "choice",
       speaker: "你的选择",
@@ -389,6 +547,8 @@
     if (node.type === "deduction" && choice.isCorrect === true) {
       state.deductionScore += 1;
     }
+    evaluateProgressTriggers();
+    evaluateAchievements();
     autoSave();
     if (choice.nextNodeId) {
       goToNode(choice.nextNodeId);
@@ -403,16 +563,31 @@
       showEnding(nodeId);
       return;
     }
+    const previousNode = getNode();
+    const nextNode = DATA.nodes[nodeId];
+    const chapterFeedback =
+      previousNode && nextNode && previousNode.chapterId !== nextNode.chapterId
+        ? buildChapterSummaryFeedback(previousNode.chapterId, nextNode.chapterId)
+        : null;
     state.nodeId = nodeId;
     showGame();
+    if (chapterFeedback) {
+      enqueueFeedback(chapterFeedback, true);
+    }
   }
 
   function gainClues(clueIds) {
     clueIds.forEach((clueId) => {
       if (!clueId || !DATA.clues[clueId] || state.clues.includes(clueId)) return;
       state.clues.push(clueId);
+      if (!state.unreadClues.includes(clueId)) state.unreadClues.push(clueId);
+      recordChapterClue(clueId);
       showToast(`获得线索：${DATA.clues[clueId].title}`, "clue");
+      enqueueFeedback({ type: "clue", clueId });
+      maybeShowTruthNotice();
     });
+    evaluateProgressTriggers();
+    evaluateAchievements();
   }
 
   function setFlags(flagIds) {
@@ -420,6 +595,114 @@
       if (!flagId) return;
       state.flags[flagId] = true;
     });
+    evaluateProgressTriggers();
+    evaluateAchievements();
+  }
+
+  function recordChapterClue(clueId) {
+    const node = getNode();
+    const stats = ensureChapterStats(node?.chapterId);
+    if (stats && !stats.clues.includes(clueId)) stats.clues.push(clueId);
+  }
+
+  function recordChoice(node, choice) {
+    const stats = ensureChapterStats(node.chapterId);
+    const entry = {
+      chapterId: node.chapterId,
+      nodeId: node.nodeId,
+      text: choice.text,
+      flags: [...(choice.setFlags || [])],
+      time: new Date().toISOString(),
+    };
+    if (stats) stats.choices.push(entry);
+    if ((choice.setFlags || []).length || node.type === "choice") {
+      state.importantChoices.push(entry);
+      if (state.importantChoices.length > 80) state.importantChoices.shift();
+    }
+  }
+
+  function buildChapterSummaryFeedback(chapterId, nextChapterId) {
+    const stats = ensureChapterStats(chapterId);
+    if (!stats || stats.summaryShown) return null;
+    stats.summaryShown = true;
+    const chapter = getChapter(chapterId);
+    const nextChapter = getChapter(nextChapterId);
+    return {
+      type: "chapter",
+      chapterId,
+      nextChapterId,
+      title: `${chapter?.title || "本章"}完成`,
+      nextTitle: nextChapter?.title || "下一章",
+      clues: [...stats.clues],
+      choices: [...stats.choices],
+    };
+  }
+
+  function evaluateProgressTriggers() {
+    MILESTONES.forEach((milestone) => {
+      if (state.triggeredMilestones.includes(milestone.milestoneId)) return;
+      if (!milestone.test()) return;
+      state.triggeredMilestones.push(milestone.milestoneId);
+      enqueueFeedback({
+        type: "milestone",
+        title: milestone.title,
+        text: milestone.text,
+      });
+    });
+  }
+
+  function evaluateAchievements() {
+    ACHIEVEMENTS.forEach((achievement) => {
+      if (state.achievements.includes(achievement.achievementId)) return;
+      if (!achievement.test()) return;
+      state.achievements.push(achievement.achievementId);
+      state.sessionAchievements.push(achievement.achievementId);
+      saveJSON(STORAGE_KEYS.achievements, state.achievements);
+      showToast(`成就解锁：${achievement.title}`, "achievement");
+    });
+  }
+
+  function maybeShowTruthNotice() {
+    const count = getCoreClueCount();
+    const noticeMap = {
+      5: "真相正在靠近",
+      8: "证据链逐渐成形",
+      10: "旧案轮廓已经完整",
+    };
+    if (!noticeMap[count] || state.truthNotices.includes(count)) return;
+    state.truthNotices.push(count);
+    showToast(noticeMap[count], "clue");
+  }
+
+  function enqueueFeedback(item, first = false) {
+    if (!item) return;
+    if (first) {
+      feedbackQueue.unshift(item);
+    } else {
+      feedbackQueue.push(item);
+    }
+    window.setTimeout(processFeedbackQueue, 0);
+  }
+
+  function processFeedbackQueue() {
+    if (!feedbackQueue.length || !modalRoot.classList.contains("hidden")) return;
+    const item = feedbackQueue.shift();
+    if (!item) return;
+    if (item.type === "clue") {
+      openClueRevealFeedback(item.clueId);
+      return;
+    }
+    if (item.type === "chapter") {
+      openChapterSummaryFeedback(item);
+      return;
+    }
+    if (item.type === "milestone") {
+      openMilestoneFeedback(item);
+    }
+  }
+
+  function continueFeedbackQueue() {
+    window.setTimeout(processFeedbackQueue, 80);
   }
 
   function addHistory(entry) {
@@ -470,6 +753,7 @@
     const ending = DATA.endings[endingId] || DATA.endings.ending_d;
     state.endingId = ending.endingId;
     state.nodeId = ending.endingId;
+    evaluateAchievements();
     addHistory({
       type: "system",
       speaker: `结局：${ending.title}`,
@@ -486,9 +770,11 @@
           <p class="eyebrow">CASE ENDING</p>
           <h1>${escapeHTML(ending.title)}</h1>
           <div class="ending-text">${formatText(ending.text)}</div>
+          ${renderEndingReport(ending)}
           <div class="ending-actions">
             <button class="case-button" type="button" data-action="restart">重新开始</button>
             <button class="case-button secondary" type="button" data-action="load">读取存档</button>
+            <button class="case-button secondary" type="button" data-action="clues">查看本次线索</button>
             <button class="ghost-button" type="button" data-action="hall">返回人生档案</button>
           </div>
         </div>
@@ -500,7 +786,57 @@
       openConfirm("重新开始", "会从《雨夜来电》开头重新进入。当前自动进度会被覆盖。", startNewGame);
     });
     app.querySelector("[data-action='load']").addEventListener("click", () => openLoadModal());
+    app.querySelector("[data-action='clues']").addEventListener("click", () => openClueModal());
     app.querySelector("[data-action='hall']").addEventListener("click", showHall);
+  }
+
+  function renderEndingReport(ending) {
+    const report = ENDING_REPORT[ending.endingId] || ENDING_REPORT.ending_d;
+    const coreCount = getCoreClueCount();
+    const keyClues = Object.values(DATA.clues).filter((clue) => clue.isKey && state.clues.includes(clue.clueId)).length;
+    const auxClues = Object.values(DATA.clues).filter((clue) => !clue.isKey && state.clues.includes(clue.clueId)).length;
+    const missing = getTotalClueCount() - state.clues.length;
+    const unlocked = state.sessionAchievements
+      .map((id) => ACHIEVEMENTS.find((item) => item.achievementId === id)?.title)
+      .filter(Boolean);
+    return `
+      <section class="ending-report">
+        <div class="report-head">
+          <p class="eyebrow">LIFE REPORT</p>
+          <h2>本次人生报告</h2>
+          <span>${escapeHTML(report.label)} · ${escapeHTML(report.type)}</span>
+        </div>
+        <div class="report-metrics">
+          <article><span>核心线索</span><strong>${coreCount}/${CORE_CLUE_IDS.length}</strong></article>
+          <article><span>最终推理</span><strong>${state.deductionScore}/5</strong></article>
+          <article><span>关键线索</span><strong>${keyClues}</strong></article>
+          <article><span>辅助线索</span><strong>${auxClues}</strong></article>
+          <article><span>缺失线索</span><strong>${Math.max(missing, 0)}</strong></article>
+        </div>
+        <div class="report-grid">
+          <article>
+            <h3>关键选择</h3>
+            <ul>${renderKeyChoiceReport()}</ul>
+          </article>
+          <article>
+            <h3>本次解锁成就</h3>
+            <ul>${unlocked.length ? unlocked.map((title) => `<li>${escapeHTML(title)}</li>`).join("") : "<li>本次暂无新成就</li>"}</ul>
+          </article>
+        </div>
+        <blockquote>${escapeHTML(report.comment)}</blockquote>
+      </section>
+    `;
+  }
+
+  function renderKeyChoiceReport() {
+    const rows = [
+      `许知晚：${state.flags.trusted_zhuwan_early || state.flags.verified_zhuwan_identity ? "选择接近并核验她" : "保持距离或尚未完全确认"}`,
+      `照片备份：${state.flags.backed_up_photo ? "已备份关键照片" : "未形成稳定备份"}`,
+      `原始照片：${state.flags.gave_original_photo ? "交出原始照片" : "未交出原始照片"}`,
+      `证据处理：${state.flags.deleted_evidence ? "删除证据" : "保留证据"}`,
+      `旧案方向：${state.flags.chose_reopen_case ? "选择重启旧案" : "没有推动重启旧案"}`,
+    ];
+    return rows.map((row) => `<li>${escapeHTML(row)}</li>`).join("");
   }
 
   function bindGameToolbar() {
@@ -516,34 +852,78 @@
     });
   }
 
+  function refreshGameMeta() {
+    const clueButton = app.querySelector("[data-tool='clues']");
+    if (clueButton) {
+      clueButton.classList.toggle("has-unread", state.unreadClues.length > 0);
+      clueButton.innerHTML = `线索 <span>${state.clues.length}/${getTotalClueCount()}</span>`;
+    }
+    const meter = app.querySelector(".truth-meter");
+    if (meter) meter.outerHTML = renderTruthMeter();
+  }
+
+  function bindClueFilters() {
+    modalBody.querySelectorAll("[data-clue-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const filter = button.dataset.clueFilter;
+        modalBody.querySelectorAll("[data-clue-filter]").forEach((item) => item.classList.remove("is-active"));
+        button.classList.add("is-active");
+        modalBody.querySelectorAll("[data-clue-tags]").forEach((card) => {
+          const tags = card.dataset.clueTags || "";
+          card.classList.toggle("hidden", !tags.split("|").includes(filter));
+        });
+      });
+    });
+  }
+
+  function bindSceneInteractions() {
+    app.querySelectorAll("[data-scene-feedback]").forEach((button) => {
+      button.addEventListener("click", () => {
+        button.classList.add("is-checked");
+        showToast(button.dataset.sceneFeedback || "已检查", "clue");
+      });
+    });
+  }
+
   function openClueModal() {
-    const categories = ["通话", "人物", "物件", "旧案", "照片", "地点"];
+    state.unreadClues = [];
+    autoSave();
+    refreshGameMeta();
     const clueItems = Object.values(DATA.clues);
-    const html = categories
-      .map((category) => {
-        const items = clueItems.filter((clue) => clue.category === category);
-        if (!items.length) return "";
-        const rows = items
-          .map((clue) => {
-            const owned = state.clues.includes(clue.clueId);
-            return `
-              <article class="clue-card ${owned ? "is-owned" : "is-hidden"}">
-                <span class="clue-pin">${owned ? "已记录" : "？？？"}</span>
-                <h3>${owned ? escapeHTML(clue.title) : "？？？"}</h3>
-                <p>${owned ? escapeHTML(clue.description) : "这条线索还藏在雨声里。"}</p>
-              </article>
-            `;
-          })
-          .join("");
+    const tabs = CLUE_FILTERS.map((filter, index) => `
+      <button class="${index === 0 ? "is-active" : ""}" type="button" data-clue-filter="${filter}">
+        ${filter}
+      </button>
+    `).join("");
+    const rows = clueItems
+      .map((clue) => {
+        const owned = state.clues.includes(clue.clueId);
+        const filterTags = ["全部", clue.category, clue.isKey ? "关键线索" : ""].filter(Boolean).join("|");
         return `
-          <section class="clue-category">
-            <h3>${category}</h3>
-            <div class="clue-grid">${rows}</div>
-          </section>
+          <article class="clue-card ${owned ? "is-owned" : "is-hidden"} ${clue.isKey ? "is-key" : ""}" data-clue-tags="${escapeHTML(filterTags)}">
+            <span class="clue-pin">${owned ? (clue.isKey ? "关键线索" : "已记录") : "？？？"}</span>
+            <h3>${owned ? escapeHTML(clue.title) : "？？？"}</h3>
+            <p>${owned ? escapeHTML(clue.description) : "这条线索还藏在雨声里。"}</p>
+          </article>
         `;
       })
       .join("");
-    openModal("人生线索板", "LIFE CLUES", html || "<p>还没有线索。</p>");
+    openModal(
+      "人生线索板",
+      "LIFE CLUES",
+      `
+      <section class="truth-board">
+        <div>
+          <h3>真相拼图</h3>
+          <p>已拼出 ${getCoreClueCount()} / ${CORE_CLUE_IDS.length}</p>
+        </div>
+        <div class="truth-pieces large">${CORE_CLUE_IDS.map((id) => `<i class="${state.clues.includes(id) ? "is-lit" : ""}"></i>`).join("")}</div>
+      </section>
+      <div class="clue-tabs">${tabs}</div>
+      <div class="clue-grid clue-library">${rows}</div>
+      `
+    );
+    bindClueFilters();
   }
 
   function openSaveModal() {
@@ -648,6 +1028,88 @@
     openModal(title, "NOTICE", `<p class="notice-text">${escapeHTML(text)}</p>`);
   }
 
+  function openClueRevealFeedback(clueId) {
+    const clue = DATA.clues[clueId];
+    if (!clue) {
+      continueFeedbackQueue();
+      return;
+    }
+    const total = getTotalClueCount();
+    openModal(
+      "发现线索",
+      "CLUE FOUND",
+      `
+      <article class="feedback-card clue-reveal-card">
+        <span class="feedback-badge">${clue.isKey ? "关键线索" : "辅助线索"}</span>
+        <h3>${escapeHTML(clue.title)}</h3>
+        <p class="feedback-meta">分类：${escapeHTML(clue.category)}</p>
+        <p>${escapeHTML(clue.description)}</p>
+        <div class="feedback-progress">
+          <span>线索进度</span>
+          <strong>${state.clues.length} / ${total}</strong>
+        </div>
+        <button class="case-button" type="button" data-feedback-close>收入线索库</button>
+      </article>
+      `,
+      continueFeedbackQueue
+    );
+    modalBody.querySelector("[data-feedback-close]").addEventListener("click", closeModal);
+  }
+
+  function openMilestoneFeedback(item) {
+    openModal(
+      item.title,
+      "MILESTONE",
+      `
+      <article class="feedback-card milestone-card">
+        <div class="milestone-ring" aria-hidden="true"></div>
+        <p>${escapeHTML(item.text)}</p>
+        <div class="feedback-progress">
+          <span>真相进度</span>
+          <strong>${getCoreClueCount()} / ${CORE_CLUE_IDS.length}</strong>
+        </div>
+        <button class="case-button" type="button" data-feedback-close>继续</button>
+      </article>
+      `,
+      continueFeedbackQueue
+    );
+    modalBody.querySelector("[data-feedback-close]").addEventListener("click", closeModal);
+  }
+
+  function openChapterSummaryFeedback(item) {
+    const clueList = item.clues.length
+      ? item.clues
+          .map((clueId) => `<li>${escapeHTML(DATA.clues[clueId]?.title || clueId)}</li>`)
+          .join("")
+      : "<li>本章暂无新线索</li>";
+    const choices = item.choices.length
+      ? item.choices.slice(-4).map((choice) => `<li>你选择了：${escapeHTML(choice.text)}</li>`).join("")
+      : "<li>本章暂无关键选择记录</li>";
+    openModal(
+      item.title,
+      "CHAPTER CLEAR",
+      `
+      <article class="feedback-card chapter-summary-card">
+        <section>
+          <h3>本章获得</h3>
+          <ul>${clueList}</ul>
+        </section>
+        <section>
+          <h3>本章关键选择</h3>
+          <ul>${choices}</ul>
+        </section>
+        <div class="feedback-progress">
+          <span>真相进度</span>
+          <strong>${getCoreClueCount()} / ${CORE_CLUE_IDS.length}</strong>
+        </div>
+        <button class="case-button" type="button" data-feedback-close>进入${escapeHTML(item.nextTitle)}</button>
+      </article>
+      `,
+      continueFeedbackQueue
+    );
+    modalBody.querySelector("[data-feedback-close]").addEventListener("click", closeModal);
+  }
+
   function openConfirm(title, text, onConfirm, onCancel) {
     openModal(
       title,
@@ -685,6 +1147,7 @@
     const handler = modalCloseHandler;
     modalCloseHandler = null;
     if (typeof handler === "function") handler();
+    window.setTimeout(processFeedbackQueue, 80);
   }
 
   function bindGlobalModalEvents() {
@@ -729,6 +1192,10 @@
             <strong>许知夏</strong>
             <small>三年前的旧号码</small>
             <div class="phone-pulse"></div>
+            <div class="phone-actions">
+              <button type="button" data-scene-feedback="你把手指悬在接听键上，雨声忽然变得很近。">接听</button>
+              <button type="button" data-scene-feedback="你想挂断，可屏幕还亮着。这个夜晚没有那么容易结束。">挂断</button>
+            </div>
           </div>
         </div>`,
       old_chat_memory: `
@@ -742,12 +1209,22 @@
           <div class="paper-stack"></div>
           <div class="coffee-ring"></div>
           <div class="old-photo"></div>
+          <div class="table-hotspots">
+            <button type="button" data-scene-feedback="纸箱里有潮味，旧物被翻动时发出干涩的响声。">纸箱</button>
+            <button type="button" data-scene-feedback="照片边缘起了毛，像有人反复捏过。">旧照片</button>
+            <button type="button" data-scene-feedback="杯底的咖啡渍已经干透，像一个没说完的句号。">咖啡杯</button>
+          </div>
           <p>泡面碗旁边，旧纸箱的胶带已经发黄。</p>
         </div>`,
       photo_zoom_view: `
         <div class="scene-visual photo-visual">
           <div class="photo-frame"><span></span><b></b></div>
           <div class="magnifier"></div>
+          <div class="photo-inspect">
+            <button type="button" data-scene-feedback="已检查：玻璃反光里只有一截模糊的楼梯扶手。">查看玻璃反光</button>
+            <button type="button" data-scene-feedback="已检查：门牌号码和旧新闻里的地点能对上。">查看门牌</button>
+            <button type="button" data-scene-feedback="已检查：角落阴影里有一个熟悉的侧影。">查看角落阴影</button>
+          </div>
           <p>照片边缘的颗粒里，藏着一个不该出现的人影。</p>
         </div>`,
       old_phone_view: `
@@ -755,6 +1232,7 @@
           <div class="cracked-phone">
             <strong>语音备忘</strong>
             <div class="waveform"><i></i><i></i><i></i><i></i><i></i></div>
+            <button class="voice-archive" type="button" data-scene-feedback="录音已归档。那句没说完的话，还在波形里发亮。">归档录音</button>
           </div>
         </div>`,
       ending_screen: `
