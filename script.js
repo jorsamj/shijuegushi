@@ -13,18 +13,14 @@
 
   const CORE_CLUE_IDS = [
     "clue_dead_call",
-    "clue_warning_sentence",
-    "clue_door_woman",
     "clue_sister_mark",
-    "clue_old_phone",
-    "clue_last_photo",
-    "clue_photo_background",
     "clue_gray_loan",
     "clue_zhou_left",
+    "clue_photo_background",
     "clue_timed_voice",
   ];
 
-  const CLUE_FILTERS = ["全部", "关键线索", "通话", "人物", "物件", "照片", "旧案", "地点"];
+  const CLUE_FILTERS = ["全部", "关键线索", "通话", "人物", "照片", "旧案"];
 
   const MILESTONES = [
     {
@@ -34,22 +30,10 @@
       test: () => state.clues.includes("clue_dead_call"),
     },
     {
-      milestoneId: "sister_identity",
-      title: "身份疑云推进",
-      text: "门外的人不再只是陌生人。她知道许知夏留下的秘密。",
-      test: () => state.clues.includes("clue_sister_mark") || state.flags.verified_zhuwan_identity === true,
-    },
-    {
       milestoneId: "gray_loan",
       title: "旧案裂缝出现",
       text: "许知夏不是意外坠入黑暗，她曾经试图自救。",
       test: () => state.clues.includes("clue_gray_loan"),
-    },
-    {
-      milestoneId: "last_photo",
-      title: "关键物证出现",
-      text: "三年前的一张合照，把所有人的谎言重新摆上桌面。",
-      test: () => state.clues.includes("clue_last_photo"),
     },
     {
       milestoneId: "photo_background",
@@ -495,7 +479,7 @@
             <button type="button" data-tool="clues" class="clue-tool ${state.unreadClues.length ? "has-unread" : ""}">
               线索 <span>${state.clues.length}/${getTotalClueCount()}</span>
             </button>
-            <button type="button" data-tool="relationships">??</button>
+            <button type="button" data-tool="relationships">人物</button>
 
             <button type="button" data-tool="save">存档</button>
             <button type="button" data-tool="load">读档</button>
@@ -543,7 +527,7 @@
     const continueButton = document.getElementById("continueButton");
     const choiceArea = document.getElementById("choiceArea");
 
-    if (node.nodeId === "ch12_008") {
+    if (node.resolveEnding === true) {
       continueButton.textContent = "查看结局";
       continueButton.addEventListener("click", () => {
         state.endingId = resolveEnding();
@@ -625,13 +609,13 @@
         delta: after - before,
         before,
         after,
-        reason: effect.reason || "??????",
+        reason: effect.reason || "关键选择影响",
         nodeId: state.nodeId,
         time: new Date().toISOString(),
       };
       state.relationshipEvents.push(event);
       if (event.delta !== 0) {
-        showToast(`???????${def.character}${def.label} ${event.delta > 0 ? "+" : ""}${event.delta}`, "relationship");
+        showToast(`人物关系变化：${def.character}${def.label} ${event.delta > 0 ? "+" : ""}${event.delta}`, "relationship");
       }
     });
   }
@@ -750,9 +734,9 @@
   function maybeShowTruthNotice() {
     const count = getCoreClueCount();
     const noticeMap = {
-      5: "真相正在靠近",
-      8: "证据链逐渐成形",
-      10: "旧案轮廓已经完整",
+      3: "真相正在靠近",
+      5: "证据链逐渐成形",
+      6: "旧案轮廓已经完整",
     };
     if (!noticeMap[count] || state.truthNotices.includes(count)) return;
     state.truthNotices.push(count);
@@ -809,10 +793,9 @@
       return "ending_c";
     }
     const hasAClues = [
-      "clue_last_photo",
-      "clue_photo_background",
       "clue_gray_loan",
       "clue_zhou_left",
+      "clue_photo_background",
       "clue_timed_voice",
     ].every((id) => clues.has(id));
     if (
@@ -910,7 +893,7 @@
         </div>
         ${renderRelationshipReport()}
         <article class="ending-path-report">
-          <h3>?????????</h3>
+          <h3>你如何走到这个结局</h3>
           <ul>${buildEndingPathReport(ending.endingId).map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
         </article>
         <blockquote>${escapeHTML(report.comment)}</blockquote>
@@ -926,7 +909,7 @@
         '<article class="relationship-report-card">',
         '<div>',
         `<span>${escapeHTML(def.character)}</span>`,
-        `<strong>${escapeHTML(def.label)} ? ${escapeHTML(getRelationshipLevel(def, value))}</strong>`,
+        `<strong>${escapeHTML(def.label)} · ${escapeHTML(getRelationshipLevel(def, value))}</strong>`,
         '</div>',
         `<div class="relationship-bar"><i style="width: ${value}%"></i></div>`,
         `<p>${value}/100</p>`,
@@ -947,9 +930,9 @@
       return rows;
     }
     if (endingId === "ending_a") {
-      if (has("clue_last_photo")) rows.push("你找到了最后一张大学合照。");
-      if (has("clue_photo_background")) rows.push("你发现了照片背景里的周屿。");
       if (has("clue_gray_loan")) rows.push("你查到了许知夏信息被冒用借贷。");
+      if (has("clue_zhou_left")) rows.push("你发现周屿案发后离城。");
+      if (has("clue_photo_background")) rows.push("你在照片背景里发现了周屿。");
       if (has("clue_timed_voice")) rows.push("你理解了死者来电的现实机制。");
       if (state.flags.backed_up_photo) rows.push("你保留并备份了关键证据。");
       if (state.flags.chose_reopen_case) rows.push("你选择重启旧案。");
@@ -1009,17 +992,17 @@
         `<span>${escapeHTML(def.character)}</span>`,
         `<strong>${escapeHTML(def.label)}</strong>`,
         '</header>',
-        `<div class="relationship-value"><b>${value}</b><small>/100 ? ${escapeHTML(getRelationshipLevel(def, value))}</small></div>`,
+        `<div class="relationship-value"><b>${value}</b><small>/100 · ${escapeHTML(getRelationshipLevel(def, value))}</small></div>`,
         `<div class="relationship-bar"><i style="width: ${value}%"></i></div>`,
         `<p>${escapeHTML(last?.reason || "尚未因关键选择产生明显变化")}</p>`,
         '</article>',
       ].join("");
     }).join("");
-    openModal({
-      kicker: "LIFE RELATION",
-      title: "人物关系",
-      body: `<div class="relationship-panel"><p class="panel-note">这些数值不是单纯好感，而是林舟在这个雨夜里与他人、与旧案之间的关系变化。</p><div class="relationship-grid">${cards}</div></div>`,
-    });
+    openModal(
+      "人物关系",
+      "LIFE RELATION",
+      `<div class="relationship-panel"><p class="panel-note">这些数值不是单纯好感，而是林舟在这个雨夜里与他人、与旧案之间的关系变化。</p><div class="relationship-grid">${cards}</div></div>`
+    );
   }
   function refreshGameMeta() {
     const clueButton = app.querySelector("[data-tool='clues']");
@@ -1059,24 +1042,40 @@
     autoSave();
     refreshGameMeta();
     const clueItems = Object.values(DATA.clues);
+    const ownedClues = clueItems.filter((clue) => state.clues.includes(clue.clueId));
+    const lockedCount = Math.max(clueItems.length - ownedClues.length, 0);
     const tabs = CLUE_FILTERS.map((filter, index) => `
       <button class="${index === 0 ? "is-active" : ""}" type="button" data-clue-filter="${filter}">
         ${filter}
       </button>
     `).join("");
-    const rows = clueItems
+    const rows = ownedClues
       .map((clue) => {
-        const owned = state.clues.includes(clue.clueId);
         const filterTags = ["全部", clue.category, clue.isKey ? "关键线索" : ""].filter(Boolean).join("|");
         return `
-          <article class="clue-card ${owned ? "is-owned" : "is-hidden"} ${clue.isKey ? "is-key" : ""}" data-clue-tags="${escapeHTML(filterTags)}">
-            <span class="clue-pin">${owned ? (clue.isKey ? "关键线索" : "已记录") : "？？？"}</span>
-            <h3>${owned ? escapeHTML(clue.title) : "？？？"}</h3>
-            <p>${owned ? escapeHTML(clue.description) : "这条线索还藏在雨声里。"}</p>
+          <article class="clue-card is-owned ${clue.isKey ? "is-key" : ""}" data-clue-tags="${escapeHTML(filterTags)}">
+            <span class="clue-pin">${clue.isKey ? "关键线索" : "已归档"}</span>
+            <h3>${escapeHTML(clue.title)}</h3>
+            <p>${escapeHTML(clue.description)}</p>
           </article>
         `;
       })
       .join("");
+    const lockedPanel = lockedCount
+      ? `
+        <details class="sealed-clues">
+          <summary>未归档线索 ${lockedCount} 条</summary>
+          <div class="sealed-clue-list">
+            ${Array.from({ length: lockedCount }, (_, index) => `
+              <article class="sealed-clue">
+                <strong>未归档线索 ${String(index + 1).padStart(2, "0")}</strong>
+                <p>这条记录还藏在雨声里。</p>
+              </article>
+            `).join("")}
+          </div>
+        </details>
+      `
+      : `<p class="archive-complete">所有关键线索已经归档。</p>`;
     openModal(
       "人生线索板",
       "LIFE CLUES",
@@ -1089,7 +1088,8 @@
         <div class="truth-pieces large">${CORE_CLUE_IDS.map((id) => `<i class="${state.clues.includes(id) ? "is-lit" : ""}"></i>`).join("")}</div>
       </section>
       <div class="clue-tabs">${tabs}</div>
-      <div class="clue-grid clue-library">${rows}</div>
+      <div class="clue-grid clue-library">${rows || `<p class="empty-archive">还没有正式归档的关键线索。先回到雨夜里，听完那通电话。</p>`}</div>
+      ${lockedPanel}
       `
     );
     bindClueFilters();
