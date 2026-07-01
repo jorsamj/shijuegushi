@@ -15,6 +15,12 @@ function loadData() {
   return context.window.MIST_DATA;
 }
 
+function loadVisuals() {
+  const context = { window: {} };
+  vm.runInNewContext(read("assets/visual-assets.js"), context, { filename: "assets/visual-assets.js" });
+  return context.window.SECOND_LIFE_VISUALS;
+}
+
 function parseCoreClues(scriptText) {
   const match = scriptText.match(/const CORE_CLUE_IDS = \[([\s\S]*?)\];/);
   if (!match) return [];
@@ -62,6 +68,7 @@ function resolveEnding(snapshot) {
 }
 
 const DATA = loadData();
+const VISUALS = loadVisuals();
 const scriptText = read("script.js");
 const docPaths = [
   "README.md",
@@ -74,6 +81,7 @@ const docPaths = [
   "script.js",
   "style.css",
   "index.html",
+  "assets/visual-assets.js",
 ];
 const allText = docPaths.map((path) => `${path}\n${read(path)}`).join("\n\n");
 
@@ -88,6 +96,8 @@ const relationshipIds = new Set([
   "suspicion_zhou",
   "courage_linzou",
 ]);
+const requiredSceneIds = new Set(Object.values(DATA.nodes || {}).map((node) => node.scene).filter(Boolean));
+const requiredCharacterNames = new Set(["林舟", "许知晚", "周屿", "陈妍", "许知夏"]);
 
 assert(DATA.chapters?.length === 6, `chapters must be 6, got ${DATA.chapters?.length}`);
 assert(clueIds.size === 6, `clues must be 6, got ${clueIds.size}`);
@@ -100,6 +110,38 @@ assert(
 );
 ["ending_a", "ending_b", "ending_c", "ending_d"].forEach((id) => assert(endingIds.has(id), `missing ending: ${id}`));
 assert(countMilestones(scriptText) <= 4, "MILESTONES must be at most 4");
+assert(VISUALS && typeof VISUALS === "object", "visual assets config is missing");
+
+for (const sceneId of requiredSceneIds) {
+  const scene = VISUALS.scenes?.[sceneId];
+  assert(scene, `missing visual scene config: ${sceneId}`);
+  assert(Boolean(scene?.art), `visual scene has no art: ${sceneId}`);
+}
+
+for (const clueId of clueIds) {
+  const clueVisual = VISUALS.clues?.[clueId];
+  assert(clueVisual, `missing clue icon config: ${clueId}`);
+  assert(Boolean(clueVisual?.icon), `clue icon config has no icon class: ${clueId}`);
+}
+
+for (const chapter of DATA.chapters || []) {
+  const chapterVisual = VISUALS.chapters?.[chapter.chapterId];
+  assert(chapterVisual, `missing chapter cover config: ${chapter.chapterId}`);
+  assert(Boolean(chapterVisual?.cover), `chapter cover config has no cover class: ${chapter.chapterId}`);
+}
+
+for (const characterName of requiredCharacterNames) {
+  const characterVisual = VISUALS.characters?.[characterName];
+  assert(characterVisual, `missing character visual config: ${characterName}`);
+  assert(Boolean(characterVisual?.avatar), `character visual config has no avatar class: ${characterName}`);
+}
+
+for (const aliasTarget of Object.values(VISUALS.characterAliases || {})) {
+  assert(VISUALS.characters?.[aliasTarget], `character alias references missing character: ${aliasTarget}`);
+}
+
+const visualText = JSON.stringify(VISUALS);
+assert(!/https?:\/\//i.test(visualText), "visual assets must not use external image URLs");
 
 for (const chapter of DATA.chapters || []) {
   const nodes = Object.values(DATA.nodes || {}).filter((node) => node.chapterId === chapter.chapterId);

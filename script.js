@@ -2,6 +2,14 @@
   "use strict";
 
   const DATA = window.MIST_DATA;
+  const VISUALS = window.SECOND_LIFE_VISUALS || {
+    scenes: {},
+    characters: {},
+    characterAliases: {},
+    clues: {},
+    chapters: {},
+    props: {},
+  };
   const STORAGE_KEYS = {
     progress: "mist.currentProgress",
     saves: "mist.saveSlots",
@@ -198,6 +206,59 @@
     return DATA.chapters.find((chapter) => chapter.chapterId === chapterId);
   }
 
+  function getVisualCharacter(speaker = "旁白") {
+    const rawName = String(speaker).split(/[：:]/)[0].trim() || "旁白";
+    const aliasName = VISUALS.characterAliases?.[rawName] || rawName;
+    return VISUALS.characters?.[aliasName] || VISUALS.characters?.旁白 || {
+      name: rawName,
+      role: "人生记录",
+      avatar: "avatar-narrator",
+    };
+  }
+
+  function renderCharacterBadge(speaker) {
+    const character = getVisualCharacter(speaker);
+    return `
+      <aside class="character-presence ${escapeHTML(character.avatar)}" aria-label="${escapeHTML(character.name)}">
+        <div class="character-silhouette"><i></i><b></b></div>
+        <div>
+          <strong>${escapeHTML(character.name)}</strong>
+          <span>${escapeHTML(character.role)}</span>
+        </div>
+      </aside>
+    `;
+  }
+
+  function renderClueIcon(clueId, extraClass = "") {
+    const visual = VISUALS.clues?.[clueId];
+    if (!visual) return `<span class="visual-icon icon-sealed ${extraClass}" aria-hidden="true"></span>`;
+    return `<span class="visual-icon ${escapeHTML(visual.icon)} ${extraClass}" title="${escapeHTML(visual.label)}" aria-hidden="true"><i></i><b></b></span>`;
+  }
+
+  function renderChapterCover(chapterId, compact = false) {
+    const chapter = getChapter(chapterId);
+    const visual = VISUALS.chapters?.[chapterId];
+    if (!visual) return "";
+    return `
+      <figure class="chapter-cover ${escapeHTML(visual.cover)} ${compact ? "is-compact" : ""}">
+        <i></i><b></b><span></span>
+        <figcaption>
+          <strong>${escapeHTML(chapter?.title || visual.title)}</strong>
+          <small>${escapeHTML(visual.motif)}</small>
+        </figcaption>
+      </figure>
+    `;
+  }
+
+  function renderPropStrip(ids = []) {
+    const rows = ids
+      .map((id) => VISUALS.props?.[id])
+      .filter(Boolean)
+      .map((prop) => `<span class="prop-token ${escapeHTML(prop.icon)}"><i></i>${escapeHTML(prop.label)}</span>`)
+      .join("");
+    return rows ? `<div class="prop-strip">${rows}</div>` : "";
+  }
+
   function getTotalClueCount() {
     return Object.keys(DATA.clues).length;
   }
@@ -366,6 +427,9 @@
         const isOpen = series.status === "open";
         return `
           <article class="case-folder ${isOpen ? "is-open" : "is-locked"}" data-series-id="${series.seriesId}">
+            <div class="folder-cover ${isOpen ? "cover-rain-call" : "cover-sealed"}">
+              <i></i><b></b><span></span>
+            </div>
             <div class="folder-tab">${isOpen ? "已开放" : "未开放"}</div>
             <div class="folder-lines" aria-hidden="true"></div>
             <span class="story-kind">${isOpen ? "悬疑人生" : "待解锁人生"}</span>
@@ -430,10 +494,17 @@
       <section class="series-screen">
         <button class="back-link" type="button" data-action="back-hall">← 返回人生档案</button>
         <header class="series-brief">
+          <div class="series-hero-cover">
+            ${renderChapterCover("chapter_01")}
+            ${renderPropStrip(["old_phone", "last_photo", "voice_file"])}
+          </div>
           <p class="eyebrow">LIFE FILE</p>
           <h1>${escapeHTML(series.title)}</h1>
           <p>当前开放人生故事：《雨夜来电》。其余故事未完待续。</p>
         </header>
+        <section class="chapter-preview-row" aria-label="章节封面">
+          ${DATA.chapters.map((chapter) => renderChapterCover(chapter.chapterId, true)).join("")}
+        </section>
         <div class="script-stack">${rows}</div>
       </section>
       `
@@ -500,6 +571,7 @@
         </header>
         <div class="scene-stage">
           ${renderSceneVisual(node)}
+          ${renderCharacterBadge(node.speaker)}
         </div>
         <section class="dialogue-panel">
           <div class="speaker-tag">${escapeHTML(node.speaker || "旁白")}</div>
@@ -905,7 +977,7 @@
         ${renderRelationshipReport()}
         <article class="ending-path-report">
           <h3>你如何走到这个结局</h3>
-          <ul>${buildEndingPathReport(ending.endingId).map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
+          <ol class="evidence-chain">${buildEndingPathReport(ending.endingId).map((item, index) => `<li><span>${String(index + 1).padStart(2, "0")}</span>${escapeHTML(item)}</li>`).join("")}</ol>
         </article>
         <blockquote>${escapeHTML(report.comment)}</blockquote>
       </section>
@@ -918,6 +990,7 @@
       const last = getLastRelationshipEvent(def.id);
       return [
         '<article class="relationship-report-card">',
+        renderCharacterBadge(def.character),
         '<div>',
         `<span>${escapeHTML(def.character)}</span>`,
         `<strong>${escapeHTML(def.label)} · ${escapeHTML(getRelationshipLevel(def, value))}</strong>`,
@@ -999,6 +1072,7 @@
       const last = getLastRelationshipEvent(def.id);
       return [
         '<article class="relationship-card">',
+        renderCharacterBadge(def.character),
         '<header>',
         `<span>${escapeHTML(def.character)}</span>`,
         `<strong>${escapeHTML(def.label)}</strong>`,
@@ -1040,10 +1114,10 @@
   }
 
   function bindSceneInteractions() {
-    app.querySelectorAll("[data-scene-feedback]").forEach((button) => {
-      button.addEventListener("click", () => {
-        button.classList.add("is-checked");
-        showToast(button.dataset.sceneFeedback || "已检查", "clue");
+    app.querySelectorAll("[data-scene-feedback]").forEach((element) => {
+      element.addEventListener("click", () => {
+        element.classList.add("is-checked");
+        showToast(element.dataset.sceneFeedback || "已检查", "clue");
       });
     });
   }
@@ -1065,6 +1139,7 @@
         const filterTags = ["全部", clue.category, clue.isKey ? "关键线索" : ""].filter(Boolean).join("|");
         return `
           <article class="clue-card is-owned ${clue.isKey ? "is-key" : ""}" data-clue-tags="${escapeHTML(filterTags)}">
+            ${renderClueIcon(clue.clueId)}
             <span class="clue-pin">${clue.isKey ? "关键线索" : "已归档"}</span>
             <h3>${escapeHTML(clue.title)}</h3>
             <p>${escapeHTML(clue.description)}</p>
@@ -1220,6 +1295,7 @@
       "CLUE FOUND",
       `
       <article class="feedback-card clue-reveal-card">
+        ${renderClueIcon(clue.clueId, "is-large")}
         <span class="feedback-badge">${clue.isKey ? "关键线索" : "辅助线索"}</span>
         <h3>${escapeHTML(clue.title)}</h3>
         <p class="feedback-meta">分类：${escapeHTML(clue.category)}</p>
@@ -1270,6 +1346,7 @@
       "CHAPTER CLEAR",
       `
       <article class="feedback-card chapter-summary-card">
+        ${renderChapterCover(item.chapterId, true)}
         <section>
           <h3>本章获得</h3>
           <ul>${clueList}</ul>
@@ -1350,79 +1427,21 @@
 
   function renderSceneVisual(node) {
     const scene = node.scene || "rental_room_rain_night";
-    const label = escapeHTML(node.chapterTitle || getChapter(node.chapterId)?.title || "雨夜来电");
-    const sceneMap = {
-      rental_room_rain_night: `
-        <div class="scene-visual room-visual">
-          <div class="window-frame"><span></span><span></span></div>
-          <div class="desk-light"></div>
-          <div class="room-table"><i></i><b></b></div>
-          <p>${label}</p>
-        </div>`,
-      corridor_door: `
-        <div class="scene-visual peephole-visual">
-          <div class="peephole"><span></span></div>
-          <div class="door-line"></div>
-          <p>门外的雨水，把楼道灯拖成一条冷白的线。</p>
-        </div>`,
-      phone_call_ui: `
-        <div class="scene-visual phone-visual">
-          <div class="phone-shell">
-            <span class="phone-time">22:47</span>
-            <strong>许知夏</strong>
-            <small>三年前的旧号码</small>
-            <div class="phone-pulse"></div>
-            <div class="phone-actions">
-              <button type="button" data-scene-feedback="你把手指悬在接听键上，雨声忽然变得很近。">接听</button>
-              <button type="button" data-scene-feedback="你想挂断，可屏幕还亮着。这个夜晚没有那么容易结束。">挂断</button>
-            </div>
-          </div>
-        </div>`,
-      old_chat_memory: `
-        <div class="scene-visual chat-visual">
-          <div class="chat-bubble left">知夏：那天你会来吧？</div>
-          <div class="chat-bubble right">林舟：会。</div>
-          <div class="photo-stain"></div>
-        </div>`,
-      rental_room_table: `
-        <div class="scene-visual table-visual">
-          <div class="paper-stack"></div>
-          <div class="coffee-ring"></div>
-          <div class="old-photo"></div>
-          <div class="table-hotspots">
-            <button type="button" data-scene-feedback="纸箱里有潮味，旧物被翻动时发出干涩的响声。">纸箱</button>
-            <button type="button" data-scene-feedback="照片边缘起了毛，像有人反复捏过。">旧照片</button>
-            <button type="button" data-scene-feedback="杯底的咖啡渍已经干透，像一个没说完的句号。">咖啡杯</button>
-          </div>
-          <p>泡面碗旁边，旧纸箱的胶带已经发黄。</p>
-        </div>`,
-      photo_zoom_view: `
-        <div class="scene-visual photo-visual">
-          <div class="photo-frame"><span></span><b></b></div>
-          <div class="magnifier"></div>
-          <div class="photo-inspect">
-            <button type="button" data-scene-feedback="已检查：玻璃反光里只有一截模糊的楼梯扶手。">查看玻璃反光</button>
-            <button type="button" data-scene-feedback="已检查：门牌号码和旧新闻里的地点能对上。">查看门牌</button>
-            <button type="button" data-scene-feedback="已检查：角落阴影里有一个熟悉的侧影。">查看角落阴影</button>
-          </div>
-          <p>照片边缘的颗粒里，藏着一个不该出现的人影。</p>
-        </div>`,
-      old_phone_view: `
-        <div class="scene-visual old-phone-visual">
-          <div class="cracked-phone">
-            <strong>语音备忘</strong>
-            <div class="waveform"><i></i><i></i><i></i><i></i><i></i></div>
-            <button class="voice-archive" type="button" data-scene-feedback="录音已归档。那句没说完的话，还在波形里发亮。">归档录音</button>
-          </div>
-        </div>`,
-      ending_screen: `
-        <div class="scene-visual archive-visual">
-          <div class="archive-folder"></div>
-          <p>案件记录正在归档。</p>
-        </div>`,
-    };
-    return sceneMap[scene] || sceneMap.rental_room_rain_night;
+    const visual = VISUALS.scenes?.[scene] || VISUALS.scenes?.rental_room_rain_night;
+    const chapter = getChapter(node.chapterId);
+    const stateClass = node.type ? `visual-state-${node.type}` : "visual-state-dialogue";
+    const title = visual?.title || chapter?.title || "????";
+    return `
+      <div class="scene-asset-shell ${stateClass}" data-scene-id="${escapeHTML(scene)}">
+        <div class="scene-asset-label">
+          <span>${escapeHTML(title)}</span>
+          <small>${escapeHTML(chapter?.title || node.chapterTitle || "")}</small>
+        </div>
+        ${visual?.art || ""}
+      </div>
+    `;
   }
+
 
   function formatText(text) {
     const paragraphs = escapeHTML(String(text || "").trim())
