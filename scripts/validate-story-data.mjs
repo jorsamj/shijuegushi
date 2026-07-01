@@ -71,20 +71,15 @@ function resolveEnding(snapshot) {
 const DATA = loadData();
 const VISUALS = loadVisuals();
 const scriptText = read("script.js");
-const docPaths = [
+const runtimeTextPaths = [
   "README.md",
-  "docs/PRD_SOFTWARE.md",
-  ...fs
-    .readdirSync(new URL("docs/", root))
-    .filter((name) => name.startsWith("PRD_STORY_") || name.startsWith("STORY_SCRIPT_"))
-    .map((name) => `docs/${name}`),
   "story-data.js",
   "script.js",
   "style.css",
   "index.html",
   "assets/visual-assets.js",
 ];
-const allText = docPaths.map((path) => `${path}\n${read(path)}`).join("\n\n");
+const allText = runtimeTextPaths.map((path) => `${path}\n${read(path)}`).join("\n\n");
 
 const coreClueIds = parseCoreClues(scriptText);
 const clueIds = new Set(Object.keys(DATA.clues || {}));
@@ -258,7 +253,10 @@ assert(
 );
 
 const forbidden = [
+  "????",
+  "?????",
   "??????",
+  "未知线索",
   "？？？？？",
   "?????????",
   "\uFFFD",

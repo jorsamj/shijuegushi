@@ -504,7 +504,11 @@
         <header class="series-brief">
           <div class="series-hero-cover">
             ${renderChapterCover("chapter_01")}
-            ${renderPropStrip(["old_phone", "last_photo", "voice_file"])}
+            ${renderPropStrip([
+              "prop_phone_old_cracked",
+              "prop_photo_polaroid",
+              "prop_recording_file",
+            ])}
           </div>
           <p class="eyebrow">LIFE FILE</p>
           <h1>${escapeHTML(series.title)}</h1>
@@ -1441,7 +1445,7 @@
     const visual = VISUALS.scenes?.[scene] || VISUALS.scenes?.rental_room_rain_night;
     const chapter = getChapter(node.chapterId);
     const stateClass = node.type ? `visual-state-${node.type}` : "visual-state-dialogue";
-    const title = visual?.title || chapter?.title || "????";
+    const title = visual?.title || chapter?.title || "未知场景";
     const overlays = (visual?.overlays || [])
       .map((src) => `<img class="scene-overlay" src="${escapeHTML(src)}" alt="" aria-hidden="true" loading="lazy" />`)
       .join("");
