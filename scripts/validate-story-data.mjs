@@ -3,6 +3,7 @@ import vm from "node:vm";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), "utf8");
+const exists = (path) => fs.existsSync(new URL(path, root));
 const failures = [];
 
 function assert(condition, message) {
@@ -97,7 +98,14 @@ const relationshipIds = new Set([
   "courage_linzou",
 ]);
 const requiredSceneIds = new Set(Object.values(DATA.nodes || {}).map((node) => node.scene).filter(Boolean));
-const requiredCharacterNames = new Set(["林舟", "许知晚", "周屿", "陈妍", "许知夏"]);
+const requiredCharacterIds = new Set(["linzhou", "zhuwan", "zhouyu", "chenyan", "zhixia"]);
+
+function assertAssetPath(path, label) {
+  assert(typeof path === "string" && path.length > 0, `${label} must provide an asset path`);
+  if (typeof path !== "string" || !path.length) return;
+  assert(!/^https?:\/\//i.test(path), `${label} must not use external URL: ${path}`);
+  assert(exists(path), `${label} references missing file: ${path}`);
+}
 
 assert(DATA.chapters?.length === 6, `chapters must be 6, got ${DATA.chapters?.length}`);
 assert(clueIds.size === 6, `clues must be 6, got ${clueIds.size}`);
@@ -115,33 +123,40 @@ assert(VISUALS && typeof VISUALS === "object", "visual assets config is missing"
 for (const sceneId of requiredSceneIds) {
   const scene = VISUALS.scenes?.[sceneId];
   assert(scene, `missing visual scene config: ${sceneId}`);
-  assert(Boolean(scene?.art), `visual scene has no art: ${sceneId}`);
+  assertAssetPath(scene?.bg, `scene ${sceneId} background`);
+  for (const overlay of scene?.overlays || []) assertAssetPath(overlay, `scene ${sceneId} overlay`);
+  for (const propId of scene?.props || []) assert(VISUALS.props?.[propId], `scene ${sceneId} references missing prop: ${propId}`);
 }
 
 for (const clueId of clueIds) {
   const clueVisual = VISUALS.clues?.[clueId];
   assert(clueVisual, `missing clue icon config: ${clueId}`);
-  assert(Boolean(clueVisual?.icon), `clue icon config has no icon class: ${clueId}`);
+  assertAssetPath(clueVisual?.image, `clue ${clueId} image`);
 }
 
 for (const chapter of DATA.chapters || []) {
   const chapterVisual = VISUALS.chapters?.[chapter.chapterId];
   assert(chapterVisual, `missing chapter cover config: ${chapter.chapterId}`);
-  assert(Boolean(chapterVisual?.cover), `chapter cover config has no cover class: ${chapter.chapterId}`);
+  assertAssetPath(chapterVisual?.image, `chapter ${chapter.chapterId} cover`);
 }
 
-for (const characterName of requiredCharacterNames) {
-  const characterVisual = VISUALS.characters?.[characterName];
-  assert(characterVisual, `missing character visual config: ${characterName}`);
-  assert(Boolean(characterVisual?.avatar), `character visual config has no avatar class: ${characterName}`);
+for (const characterId of requiredCharacterIds) {
+  const characterVisual = Object.values(VISUALS.characters || {}).find((item) => item.id === characterId);
+  assert(characterVisual, `missing character visual config: ${characterId}`);
+  assertAssetPath(characterVisual?.image, `character ${characterId} image`);
 }
 
 for (const aliasTarget of Object.values(VISUALS.characterAliases || {})) {
   assert(VISUALS.characters?.[aliasTarget], `character alias references missing character: ${aliasTarget}`);
 }
 
+for (const prop of Object.values(VISUALS.props || {})) assertAssetPath(prop.image, `prop ${prop.id} image`);
+for (const endingId of ["ending_a", "ending_b", "ending_c", "ending_d"]) assertAssetPath(VISUALS.endings?.[endingId]?.image, `ending ${endingId} image`);
+for (const cover of Object.entries(VISUALS.covers || {})) assertAssetPath(cover[1], `cover ${cover[0]}`);
+
 const visualText = JSON.stringify(VISUALS);
 assert(!/https?:\/\//i.test(visualText), "visual assets must not use external image URLs");
+
 
 for (const chapter of DATA.chapters || []) {
   const nodes = Object.values(DATA.nodes || {}).filter((node) => node.chapterId === chapter.chapterId);

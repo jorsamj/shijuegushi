@@ -219,8 +219,10 @@
   function renderCharacterBadge(speaker) {
     const character = getVisualCharacter(speaker);
     return `
-      <aside class="character-presence ${escapeHTML(character.avatar)}" aria-label="${escapeHTML(character.name)}">
-        <div class="character-silhouette"><i></i><b></b></div>
+      <aside class="character-presence character-${escapeHTML(character.id || "narrator")}" aria-label="${escapeHTML(character.name)}">
+        <div class="character-portrait">
+          <img src="${escapeHTML(character.image || "")}" alt="${escapeHTML(character.name)}" loading="lazy" />
+        </div>
         <div>
           <strong>${escapeHTML(character.name)}</strong>
           <span>${escapeHTML(character.role)}</span>
@@ -232,7 +234,7 @@
   function renderClueIcon(clueId, extraClass = "") {
     const visual = VISUALS.clues?.[clueId];
     if (!visual) return `<span class="visual-icon icon-sealed ${extraClass}" aria-hidden="true"></span>`;
-    return `<span class="visual-icon ${escapeHTML(visual.icon)} ${extraClass}" title="${escapeHTML(visual.label)}" aria-hidden="true"><i></i><b></b></span>`;
+    return `<span class="visual-icon ${extraClass}" title="${escapeHTML(visual.label)}" aria-hidden="true"><img src="${escapeHTML(visual.image)}" alt="" loading="lazy" /></span>`;
   }
 
   function renderChapterCover(chapterId, compact = false) {
@@ -240,8 +242,8 @@
     const visual = VISUALS.chapters?.[chapterId];
     if (!visual) return "";
     return `
-      <figure class="chapter-cover ${escapeHTML(visual.cover)} ${compact ? "is-compact" : ""}">
-        <i></i><b></b><span></span>
+      <figure class="chapter-cover ${compact ? "is-compact" : ""}">
+        <img src="${escapeHTML(visual.image)}" alt="${escapeHTML(chapter?.title || visual.title)}" loading="lazy" />
         <figcaption>
           <strong>${escapeHTML(chapter?.title || visual.title)}</strong>
           <small>${escapeHTML(visual.motif)}</small>
@@ -254,7 +256,7 @@
     const rows = ids
       .map((id) => VISUALS.props?.[id])
       .filter(Boolean)
-      .map((prop) => `<span class="prop-token ${escapeHTML(prop.icon)}"><i></i>${escapeHTML(prop.label)}</span>`)
+      .map((prop) => `<span class="prop-token"><img src="${escapeHTML(prop.image)}" alt="" loading="lazy" />${escapeHTML(prop.label)}</span>`)
       .join("");
     return rows ? `<div class="prop-strip">${rows}</div>` : "";
   }
@@ -405,6 +407,7 @@
       "splash",
       `
       <section class="splash-screen">
+        <img class="splash-hero-art" src="${escapeHTML(VISUALS.covers?.home || "")}" alt="" aria-hidden="true" />
         <div class="life-orbit" aria-hidden="true">
           <span></span>
           <span></span>
@@ -425,10 +428,15 @@
     const cards = DATA.series
       .map((series) => {
         const isOpen = series.status === "open";
+        const coverImage = series.seriesId === "series_rain_call"
+          ? VISUALS.covers?.home
+          : series.seriesId === "series_old_building"
+            ? VISUALS.covers?.oldBuilding
+            : VISUALS.covers?.missingPerson;
         return `
           <article class="case-folder ${isOpen ? "is-open" : "is-locked"}" data-series-id="${series.seriesId}">
             <div class="folder-cover ${isOpen ? "cover-rain-call" : "cover-sealed"}">
-              <i></i><b></b><span></span>
+              <img src="${escapeHTML(coverImage || VISUALS.covers?.lockedArchive || "")}" alt="" loading="lazy" />
             </div>
             <div class="folder-tab">${isOpen ? "已开放" : "未开放"}</div>
             <div class="folder-lines" aria-hidden="true"></div>
@@ -952,6 +960,9 @@
       .filter(Boolean);
     return `
       <section class="ending-report">
+        <figure class="ending-art">
+          <img src="${escapeHTML(VISUALS.endings?.[ending.endingId]?.image || "")}" alt="${escapeHTML(report.label)}" loading="lazy" />
+        </figure>
         <div class="report-head">
           <p class="eyebrow">LIFE REPORT</p>
           <h2>本次人生报告</h2>
@@ -1431,16 +1442,27 @@
     const chapter = getChapter(node.chapterId);
     const stateClass = node.type ? `visual-state-${node.type}` : "visual-state-dialogue";
     const title = visual?.title || chapter?.title || "????";
+    const overlays = (visual?.overlays || [])
+      .map((src) => `<img class="scene-overlay" src="${escapeHTML(src)}" alt="" aria-hidden="true" loading="lazy" />`)
+      .join("");
+    const props = (visual?.props || [])
+      .map((id) => VISUALS.props?.[id])
+      .filter(Boolean)
+      .map((prop) => `<img class="scene-prop" src="${escapeHTML(prop.image)}" alt="${escapeHTML(prop.label)}" loading="lazy" />`)
+      .join("");
     return `
-      <div class="scene-asset-shell ${stateClass}" data-scene-id="${escapeHTML(scene)}">
+      <div class="scene-asset-shell ${stateClass} focus-${escapeHTML(visual?.focus || "center")}" data-scene-id="${escapeHTML(scene)}">
+        <img class="scene-bg-image" src="${escapeHTML(visual?.bg || "")}" alt="${escapeHTML(title)}" loading="lazy" />
+        <div class="scene-overlay-layer">${overlays}</div>
+        <div class="scene-prop-layer">${props}</div>
         <div class="scene-asset-label">
           <span>${escapeHTML(title)}</span>
           <small>${escapeHTML(chapter?.title || node.chapterTitle || "")}</small>
         </div>
-        ${visual?.art || ""}
       </div>
     `;
   }
+
 
 
   function formatText(text) {
