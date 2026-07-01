@@ -23,7 +23,7 @@
 
 - [docs/PRD_SOFTWARE.md](docs/PRD_SOFTWARE.md)：软件产品 PRD，描述产品形态、页面结构、功能模块、交互规则、数据结构、存档机制和验收标准。
 - [docs/PRD_STORY_雨夜来电.md](docs/PRD_STORY_雨夜来电.md)：故事剧情 PRD，描述故事设定、人物、章节、线索、推理链、选择分支和结局。
-- [docs/STORY_SCRIPT_雨夜来电.md](docs/STORY_SCRIPT_雨夜来电.md)：《雨夜来电》剧情脚本文档，采用 6 章长章节结构，描述章节、节点、选项、线索、变量和结局节点。
+- [docs/STORY_SCRIPT_雨夜来电.md](docs/STORY_SCRIPT_雨夜来电.md)：《雨夜来电》剧情脚本文档，采用 6 个长章节结构，描述章节、节点、选项、线索、变量和结局节点。
 
 ## 本轮重构说明
 
@@ -31,7 +31,7 @@
 - 将正式线索压缩为 6 条关键线索。
 - 减少剧情过程中的强制弹窗。
 - 强化悬疑张力、连续阅读体验和有效选择。
-- 优化未解锁内容展示，避免大量“？？？”占位。
+- 优化未解锁内容展示，避免大量问号占位。
 - 降低旁白比例，提高对话、动作和当前冲突比例。
 
 ## 运行说明
@@ -48,6 +48,12 @@ python -m http.server 8080
 
 ```text
 http://localhost:8080
+```
+
+## 数据校验
+
+```bash
+node scripts/validate-story-data.mjs
 ```
 
 ## 下一阶段

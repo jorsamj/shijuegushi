@@ -283,14 +283,25 @@
   }
 
   function normalizeState(input) {
+    const validClueIds = new Set(Object.keys(DATA.clues));
+    const normalizedClues = Array.isArray(input.clues)
+      ? input.clues.filter((clueId) => validClueIds.has(clueId))
+      : [];
+    const normalizedUnreadClues = Array.isArray(input.unreadClues)
+      ? input.unreadClues.filter((clueId) => validClueIds.has(clueId))
+      : [];
+    const normalizedNodeId = DATA.nodes[input.nodeId] ? input.nodeId : "ch01_001";
+    const normalizedEndingId = input.endingId && DATA.endings[input.endingId] ? input.endingId : null;
     return {
       ...createInitialState(),
       ...input,
+      nodeId: normalizedNodeId,
+      endingId: normalizedEndingId,
       flags: { ...DATA.defaultFlags, ...(input.flags || {}) },
-      clues: Array.isArray(input.clues) ? input.clues : [],
+      clues: normalizedClues,
       history: Array.isArray(input.history) ? input.history : [],
       deductionScore: Number(input.deductionScore || 0),
-      unreadClues: Array.isArray(input.unreadClues) ? input.unreadClues : [],
+      unreadClues: normalizedUnreadClues,
       chapterStats: input.chapterStats && typeof input.chapterStats === "object" ? input.chapterStats : {},
       triggeredMilestones: Array.isArray(input.triggeredMilestones) ? input.triggeredMilestones : [],
       achievements: Array.from(new Set([...(loadStoredAchievements() || []), ...((Array.isArray(input.achievements) && input.achievements) || [])])),
