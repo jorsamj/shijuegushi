@@ -110,6 +110,16 @@
   let currentView = "splash";
   let feedbackQueue = [];
   let state = createInitialState();
+  let audioState = {
+    context: null,
+    master: null,
+    bgm: null,
+    ambience: null,
+    currentBgm: "",
+    currentAmbience: "",
+    unlocked: false,
+    lastVoiceNodeId: "",
+  };
 
   function createInitialState() {
     return {
@@ -237,6 +247,8 @@
     const character = getVisualCharacter(speaker);
     if (!character?.image || character.id === "narrator") return "";
     const rawSpeaker = String(speaker || "");
+    const variant = resolveCharacterVariant(character, rawSpeaker, node);
+    const image = character.variants?.[variant] || character.image;
     const mode = rawSpeaker.includes("声音")
       ? "is-memory"
       : rawSpeaker.includes("消息")
@@ -244,9 +256,9 @@
         : "is-present";
     const scene = node?.scene || "rental_room_rain_night";
     return `
-      <div class="vn-character-layer character-${escapeHTML(character.id)} ${mode}" data-speaker="${escapeHTML(character.name)}" data-scene="${escapeHTML(scene)}">
+      <div class="vn-character-layer character-${escapeHTML(character.id)} variant-${escapeHTML(variant)} ${mode}" data-speaker="${escapeHTML(character.name)}" data-scene="${escapeHTML(scene)}">
         <figure class="vn-character-standee">
-          <img src="${escapeHTML(character.image)}" alt="${escapeHTML(character.name)}" loading="lazy" />
+          <img src="${escapeHTML(image)}" alt="${escapeHTML(character.name)}" loading="lazy" />
           <figcaption>
             <strong>${escapeHTML(character.name)}</strong>
             <span>${escapeHTML(character.role)}</span>
@@ -254,6 +266,46 @@
         </figure>
       </div>
     `;
+  }
+
+  function resolveCharacterVariant(character, rawSpeaker, node = {}) {
+    const text = `${node.text || ""} ${rawSpeaker} ${node.scene || ""}`;
+    const has = (...words) => words.some((word) => text.includes(word));
+    if (character.id === "zhuwan") {
+      if (has("钥匙", "脚步", "楼道灯灭", "阴影", "门缝")) return "horror";
+      if (has("发抖", "害怕", "惊", "别开门")) return "fear";
+      if (has("闭嘴", "够了", "周屿", "压低", "逼")) return "pressure";
+      if (has("生气", "愤怒", "吼", "骗")) return "angry";
+      if (has("证明", "核验", "你怎么知道", "隐瞒")) return "suspicious";
+      if ((node.scene || "") === "corridor_door") return "wet";
+      if ((node.scene || "") === "photo_zoom_view") return "closeup";
+      return "base";
+    }
+    if (character.id === "linzhou") {
+      if (has("死者", "来电", "许知夏", "不可能")) return "shocked";
+      if (has("害怕", "冷", "门外", "猫眼", "心跳")) return "fear";
+      if (has("质问", "报警", "重启", "不能再逃")) return "angry";
+      if (has("犹豫", "旧案", "三年", "愧疚")) return "worried";
+      return "base";
+    }
+    if (character.id === "zhouyu") {
+      if (has("听到录音", "钥匙", "楼下", "你刚找到", "别再查")) return "horror";
+      if (has("照片", "证据", "别让", "停下")) return "pressure";
+      if (has("怒", "闭嘴", "威胁")) return "angry";
+      return "calm";
+    }
+    if (character.id === "chenyan") {
+      if (has("等等", "不对", "怎么会", "新闻出来前")) return "shocked";
+      if (has("查到", "借贷", "备份", "新闻", "离职")) return "serious";
+      return "base";
+    }
+    if (character.id === "zhixia") {
+      if (has("周屿他", "救", "别开门")) return "fear";
+      if (has("录音", "声音", "语音", "旧手机")) return "recording";
+      if (has("阴影", "无人接听", "黑屏")) return "horror";
+      return "memory";
+    }
+    return "base";
   }
 
   function renderClueIcon(clueId, extraClass = "") {
@@ -294,6 +346,191 @@
     app.dataset.audioAmbience = sceneCue.ambience || "";
     app.dataset.audioSfx = sceneCue.sfx || "";
     app.dataset.audioVoice = speakerProfile;
+    updateAudioForNode(node, sceneCue);
+  }
+
+  function getAudioSettings() {
+    const saved = readJSON(STORAGE_KEYS.settings, {});
+    return {
+      audioEnabled: saved.audioEnabled !== false,
+      voiceEnabled: saved.voiceEnabled !== false,
+      bgmEnabled: saved.bgmEnabled !== false,
+      sfxEnabled: saved.sfxEnabled !== false,
+    };
+  }
+
+  function saveAudioSettings(settings) {
+    const saved = readJSON(STORAGE_KEYS.settings, {});
+    saveJSON(STORAGE_KEYS.settings, { ...saved, ...settings });
+  }
+
+  function isAudioEnabled() {
+    return getAudioSettings().audioEnabled;
+  }
+
+  function ensureAudioContext() {
+    if (!window.AudioContext && !window.webkitAudioContext) return null;
+    if (!audioState.context) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      audioState.context = new Ctx();
+      audioState.master = audioState.context.createGain();
+      audioState.master.gain.value = 0.22;
+      audioState.master.connect(audioState.context.destination);
+    }
+    return audioState.context;
+  }
+
+  function unlockAudio() {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled) return;
+    const context = ensureAudioContext();
+    if (context?.state === "suspended") context.resume();
+    audioState.unlocked = true;
+  }
+
+  function stopAudioHandle(handle) {
+    if (!handle) return;
+    try {
+      handle.gain?.gain?.setTargetAtTime(0, audioState.context.currentTime, 0.08);
+      setTimeout(() => {
+        try { handle.nodes?.forEach((node) => node.stop?.()); } catch (error) {}
+      }, 180);
+    } catch (error) {}
+  }
+
+  function getBgmFreqs(name = "") {
+    if (name.includes("dead_call")) return [73.42, 110, 146.83];
+    if (name.includes("corridor")) return [55, 82.41, 123.47];
+    if (name.includes("evidence")) return [98, 130.81, 196];
+    if (name.includes("voice")) return [65.41, 98, 130.81];
+    if (name.includes("ending")) return [82.41, 123.47, 164.81];
+    return [65.41, 98, 146.83];
+  }
+
+  function startBgm(name) {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
+    const context = ensureAudioContext();
+    if (!context || audioState.currentBgm === name) return;
+    stopAudioHandle(audioState.bgm);
+    const gain = context.createGain();
+    gain.gain.value = 0;
+    gain.connect(audioState.master);
+    const nodes = getBgmFreqs(name).map((freq, index) => {
+      const osc = context.createOscillator();
+      osc.type = index === 0 ? "sine" : "triangle";
+      osc.frequency.value = freq;
+      const localGain = context.createGain();
+      localGain.gain.value = index === 0 ? 0.16 : 0.055;
+      osc.connect(localGain);
+      localGain.connect(gain);
+      osc.start();
+      return osc;
+    });
+    gain.gain.setTargetAtTime(0.42, context.currentTime, 0.24);
+    audioState.bgm = { gain, nodes };
+    audioState.currentBgm = name;
+  }
+
+  function createNoiseBuffer(context) {
+    const length = context.sampleRate * 2;
+    const buffer = context.createBuffer(1, length, context.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i += 1) data[i] = Math.random() * 2 - 1;
+    return buffer;
+  }
+
+  function startAmbience(name) {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
+    const context = ensureAudioContext();
+    if (!context || audioState.currentAmbience === name) return;
+    stopAudioHandle(audioState.ambience);
+    const source = context.createBufferSource();
+    source.buffer = createNoiseBuffer(context);
+    source.loop = true;
+    const filter = context.createBiquadFilter();
+    filter.type = name.includes("phone") ? "bandpass" : "lowpass";
+    filter.frequency.value = name.includes("phone") ? 900 : 1800;
+    const gain = context.createGain();
+    gain.gain.value = 0;
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioState.master);
+    source.start();
+    gain.gain.setTargetAtTime(name.includes("rain") ? 0.24 : 0.1, context.currentTime, 0.2);
+    audioState.ambience = { gain, nodes: [source] };
+    audioState.currentAmbience = name;
+  }
+
+  function playSfx(name = "") {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled || !settings.sfxEnabled || !audioState.unlocked) return;
+    const context = ensureAudioContext();
+    if (!context) return;
+    const gain = context.createGain();
+    gain.gain.value = 0.001;
+    gain.connect(audioState.master);
+    const osc = context.createOscillator();
+    osc.type = name.includes("call") ? "sine" : name.includes("door") ? "square" : "triangle";
+    osc.frequency.value = name.includes("call") ? 660 : name.includes("door") ? 92 : 220;
+    osc.connect(gain);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.22, context.currentTime + 0.025);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + (name.includes("call") ? 0.42 : 0.22));
+    osc.stop(context.currentTime + 0.5);
+  }
+
+  function speakNode(node) {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked || !("speechSynthesis" in window)) return;
+    if (audioState.lastVoiceNodeId === node.nodeId) return;
+    const raw = String(node.text || "").replace(/\s+/g, " ").trim();
+    if (!raw || node.type === "choice" || node.type === "deduction" || node.type === "ending") return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(raw.slice(0, 180));
+    utterance.lang = "zh-CN";
+    const character = getVisualCharacter(node.speaker);
+    utterance.rate = character.id === "zhixia" ? 0.82 : character.id === "zhouyu" ? 0.88 : 0.95;
+    utterance.pitch = character.id === "zhouyu" ? 0.82 : character.id === "zhuwan" ? 0.9 : character.id === "chenyan" ? 1.02 : 0.96;
+    utterance.volume = 0.72;
+    window.speechSynthesis.speak(utterance);
+    audioState.lastVoiceNodeId = node.nodeId;
+  }
+
+  function updateAudioForNode(node, sceneCue = {}) {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled || !audioState.unlocked) return;
+    startBgm(sceneCue.bgm);
+    startAmbience(sceneCue.ambience);
+    if (sceneCue.sfx) playSfx(sceneCue.sfx);
+    if (node.type === "clue") playSfx("clue_reveal");
+    speakNode(node);
+  }
+
+  function stopAllAudio() {
+    stopAudioHandle(audioState.bgm);
+    stopAudioHandle(audioState.ambience);
+    audioState.bgm = null;
+    audioState.ambience = null;
+    audioState.currentBgm = "";
+    audioState.currentAmbience = "";
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  }
+
+  function toggleAudio() {
+    const next = !isAudioEnabled();
+    saveAudioSettings({ audioEnabled: next });
+    if (next) {
+      unlockAudio();
+      const node = getNode();
+      if (node) prepareAudioCue(node);
+      showToast("声音已开启", "clue");
+    } else {
+      stopAllAudio();
+      showToast("声音已关闭", "warn");
+    }
+    refreshGameMeta();
   }
 
   function getTotalClueCount() {
@@ -456,7 +693,10 @@
       </section>
       `
     );
-    app.querySelector("[data-action='enter-hall']").addEventListener("click", showHall);
+    app.querySelector("[data-action='enter-hall']").addEventListener("click", () => {
+      unlockAudio();
+      showHall();
+    });
   }
 
   function showHall() {
@@ -580,6 +820,7 @@
 
 
   function startNewGame() {
+    unlockAudio();
     state = createInitialState();
     autoSave();
     showGame();
@@ -612,6 +853,7 @@
               线索 <span>${state.clues.length}/${getTotalClueCount()}</span>
             </button>
             <button type="button" data-tool="relationships">人物</button>
+            <button type="button" data-tool="audio">${isAudioEnabled() ? "声音 开" : "声音 关"}</button>
 
             <button type="button" data-tool="save">存档</button>
             <button type="button" data-tool="load">读档</button>
@@ -1107,6 +1349,7 @@
   function bindGameToolbar() {
     app.querySelector("[data-tool='clues']").addEventListener("click", openClueModal);
     app.querySelector("[data-tool='relationships']").addEventListener("click", openRelationshipModal);
+    app.querySelector("[data-tool='audio']").addEventListener("click", toggleAudio);
     app.querySelector("[data-tool='save']").addEventListener("click", openSaveModal);
     app.querySelector("[data-tool='load']").addEventListener("click", openLoadModal);
     app.querySelector("[data-tool='history']").addEventListener("click", openHistoryModal);
@@ -1149,6 +1392,8 @@
     }
     const meter = app.querySelector(".truth-meter");
     if (meter) meter.outerHTML = renderTruthMeter();
+    const audioButton = app.querySelector("[data-tool='audio']");
+    if (audioButton) audioButton.textContent = isAudioEnabled() ? "声音 开" : "声音 关";
   }
 
   function bindClueFilters() {

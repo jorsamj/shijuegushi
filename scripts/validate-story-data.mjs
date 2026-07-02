@@ -139,6 +139,9 @@ for (const characterId of requiredCharacterIds) {
   const characterVisual = Object.values(VISUALS.characters || {}).find((item) => item.id === characterId);
   assert(characterVisual, `missing character visual config: ${characterId}`);
   assertAssetPath(characterVisual?.image, `character ${characterId} image`);
+  for (const [variantId, variantPath] of Object.entries(characterVisual?.variants || {})) {
+    assertAssetPath(variantPath, `character ${characterId} variant ${variantId}`);
+  }
 }
 
 for (const aliasTarget of Object.values(VISUALS.characterAliases || {})) {

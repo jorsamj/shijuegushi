@@ -3293,6 +3293,7 @@ button {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: saturate(0.9) contrast(1.12) brightness(0.84);
 }
 
 .scene-asset-shell::before {
@@ -3315,9 +3316,9 @@ button {
 
 .vn-character-standee {
   position: absolute;
-  right: clamp(34px, 8vw, 130px);
-  bottom: -10px;
-  height: min(96%, 620px);
+  right: clamp(18px, 6vw, 100px);
+  bottom: -22px;
+  height: min(112%, 760px);
   margin: 0;
   display: flex;
   align-items: flex-end;
@@ -3327,7 +3328,7 @@ button {
 .vn-character-standee img {
   display: block;
   height: 100%;
-  max-width: min(42vw, 380px);
+  max-width: min(55vw, 560px);
   object-fit: contain;
   object-position: bottom center;
   filter:
@@ -3369,12 +3370,23 @@ button {
 }
 
 .character-zhuwan .vn-character-standee {
-  right: clamp(10px, 7vw, 112px);
-  height: min(101%, 680px);
+  right: clamp(-12px, 4vw, 86px);
+  height: min(124%, 820px);
 }
 
 .character-zhouyu .vn-character-standee {
-  right: clamp(18px, 9vw, 140px);
+  right: clamp(0px, 7vw, 120px);
+  height: min(118%, 780px);
+}
+
+.variant-closeup .vn-character-standee,
+.variant-horror .vn-character-standee,
+.variant-pressure .vn-character-standee {
+  height: min(132%, 900px);
+}
+
+.variant-closeup .vn-character-standee img {
+  max-width: min(62vw, 680px);
 }
 
 .character-zhixia .vn-character-standee {
@@ -3481,16 +3493,23 @@ button {
   .character-zhouyu .vn-character-standee,
   .character-zhuwan .vn-character-standee {
     left: auto;
-    right: -18px;
-    bottom: -4px;
-    height: 82%;
+    right: -34px;
+    bottom: -10px;
+    height: 102%;
     transform: none;
   }
 
   .character-linzhou .vn-character-standee,
   .character-chenyan .vn-character-standee {
-    left: -14px;
+    left: -28px;
     right: auto;
+  }
+
+  .character-zhuwan .vn-character-standee,
+  .character-zhouyu .vn-character-standee,
+  .variant-horror .vn-character-standee,
+  .variant-pressure .vn-character-standee {
+    height: 112%;
   }
 
   .character-zhixia .vn-character-standee {
@@ -3501,7 +3520,7 @@ button {
   }
 
   .vn-character-standee img {
-    max-width: 66vw;
+    max-width: 86vw;
   }
 
   .vn-character-standee figcaption {
