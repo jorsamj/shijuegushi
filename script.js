@@ -208,7 +208,9 @@
 
   function getVisualCharacter(speaker = "旁白") {
     const rawName = String(speaker).split(/[：:]/)[0].trim() || "旁白";
-    const aliasName = VISUALS.characterAliases?.[rawName] || rawName;
+    const characterNames = Object.keys(VISUALS.characters || {});
+    const matchedName = characterNames.find((name) => rawName.includes(name));
+    const aliasName = VISUALS.characterAliases?.[rawName] || matchedName || rawName;
     return VISUALS.characters?.[aliasName] || VISUALS.characters?.旁白 || {
       name: rawName,
       role: "人生记录",
@@ -228,6 +230,29 @@
           <span>${escapeHTML(character.role)}</span>
         </div>
       </aside>
+    `;
+  }
+
+  function renderCharacterLayer(speaker, node) {
+    const character = getVisualCharacter(speaker);
+    if (!character?.image || character.id === "narrator") return "";
+    const rawSpeaker = String(speaker || "");
+    const mode = rawSpeaker.includes("声音")
+      ? "is-memory"
+      : rawSpeaker.includes("消息")
+        ? "is-message"
+        : "is-present";
+    const scene = node?.scene || "rental_room_rain_night";
+    return `
+      <div class="vn-character-layer character-${escapeHTML(character.id)} ${mode}" data-speaker="${escapeHTML(character.name)}" data-scene="${escapeHTML(scene)}">
+        <figure class="vn-character-standee">
+          <img src="${escapeHTML(character.image)}" alt="${escapeHTML(character.name)}" loading="lazy" />
+          <figcaption>
+            <strong>${escapeHTML(character.name)}</strong>
+            <span>${escapeHTML(character.role)}</span>
+          </figcaption>
+        </figure>
+      </div>
     `;
   }
 
@@ -596,7 +621,6 @@
         </header>
         <div class="scene-stage">
           ${renderSceneVisual(node)}
-          ${renderCharacterBadge(node.speaker)}
         </div>
         <section class="dialogue-panel">
           <div class="speaker-tag">${escapeHTML(node.speaker || "旁白")}</div>
@@ -1470,6 +1494,7 @@
     return `
       <div class="scene-asset-shell ${stateClass} focus-${escapeHTML(visual?.focus || "center")}" data-scene-id="${escapeHTML(scene)}">
         <img class="scene-bg-image" src="${escapeHTML(visual?.bg || "")}" alt="${escapeHTML(title)}" loading="lazy" />
+        ${renderCharacterLayer(node.speaker, node)}
         <div class="scene-overlay-layer">${overlays}</div>
         <div class="scene-prop-layer">${props}</div>
         <div class="scene-asset-label">

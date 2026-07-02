@@ -71,11 +71,11 @@
       },
     },
     characters: {
-      林舟: { id: "linzhou", name: "林舟", role: "疲惫上班族", image: `${A}/characters/char_linzhou_base.webp` },
-      许知晚: { id: "zhuwan", name: "许知晚", role: "雨夜里的冷艳来访者", image: `${A}/characters/char_xuzhiwan_wet.webp` },
-      周屿: { id: "zhouyu", name: "周屿", role: "温和旧友的阴影", image: `${A}/characters/char_zhouyu_calm.webp` },
-      陈妍: { id: "chenyan", name: "陈妍", role: "清醒可靠的同事", image: `${A}/characters/char_chenyan_base.webp` },
-      许知夏: { id: "zhixia", name: "许知夏", role: "留在记录里的人", image: `${A}/characters/char_xuzhixia_memory.webp` },
+      林舟: { id: "linzhou", name: "林舟", role: "疲惫上班族", image: `${A}/characters/char_linzhou_standee.webp` },
+      许知晚: { id: "zhuwan", name: "许知晚", role: "雨夜里的冷艳来访者", image: `${A}/characters/char_xuzhiwan_standee.webp` },
+      周屿: { id: "zhouyu", name: "周屿", role: "温和旧友的阴影", image: `${A}/characters/char_zhouyu_standee.webp` },
+      陈妍: { id: "chenyan", name: "陈妍", role: "清醒可靠的同事", image: `${A}/characters/char_chenyan_standee.webp` },
+      许知夏: { id: "zhixia", name: "许知夏", role: "留在记录里的人", image: `${A}/characters/char_xuzhixia_standee.webp` },
       旁白: { id: "narrator", name: "旁白", role: "雨夜记录", image: `${A}/props/prop_archive_folder.webp` },
     },
     characterAliases: {
