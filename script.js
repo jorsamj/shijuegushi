@@ -261,6 +261,16 @@
     return rows ? `<div class="prop-strip">${rows}</div>` : "";
   }
 
+  function prepareAudioCue(node) {
+    const sceneCue = VISUALS.audio?.scenes?.[node.scene || "rental_room_rain_night"] || {};
+    const speakerProfile = getVisualCharacter(node.speaker).id || "narrator";
+    app.dataset.audioScene = node.scene || "rental_room_rain_night";
+    app.dataset.audioBgm = sceneCue.bgm || "";
+    app.dataset.audioAmbience = sceneCue.ambience || "";
+    app.dataset.audioSfx = sceneCue.sfx || "";
+    app.dataset.audioVoice = speakerProfile;
+  }
+
   function getTotalClueCount() {
     return Object.keys(DATA.clues).length;
   }
@@ -479,15 +489,16 @@
     const series = getSeries(seriesId);
     const scripts = series.scriptIds.map((id) => getScript(id)).filter(Boolean);
     const hasLocalProgress = hasProgress();
+    const storyCover = VISUALS.covers?.home || VISUALS.chapters?.chapter_01?.image || "";
     const rows = scripts
       .map((script) => {
         const isOpen = script.status === "open";
-        const actionText = isOpen ? (hasLocalProgress ? "继续体验" : "开始体验") : "未完待续";
+        const actionText = isOpen ? (hasLocalProgress ? "\u7ee7\u7eed\u4f53\u9a8c" : "\u5f00\u59cb\u4f53\u9a8c") : "\u672a\u5b8c\u5f85\u7eed";
         return `
           <article class="script-dossier ${isOpen ? "is-playable" : "is-coming"}" data-script-id="${script.scriptId}">
-            <span class="script-order">故事 ${String(script.order).padStart(2, "0")}</span>
+            <span class="script-order">\u6545\u4e8b ${String(script.order).padStart(2, "0")}</span>
             <div>
-              <h3>《${escapeHTML(script.title)}》</h3>
+              <h3>\u300a${escapeHTML(script.title)}\u300b</h3>
               <p>${escapeHTML(script.summary)}</p>
             </div>
             <button class="case-button" type="button">${actionText}</button>
@@ -499,25 +510,25 @@
     setView(
       "series",
       `
-      <section class="series-screen">
-        <button class="back-link" type="button" data-action="back-hall">← 返回人生档案</button>
-        <header class="series-brief">
-          <div class="series-hero-cover">
-            ${renderChapterCover("chapter_01")}
+      <section class="series-screen story-file-screen">
+        <button class="back-link" type="button" data-action="back-hall">\u2190 \u8fd4\u56de\u4eba\u751f\u6863\u6848</button>
+        <header class="series-brief story-file-brief">
+          <figure class="story-main-visual">
+            <img src="${escapeHTML(storyCover)}" alt="${escapeHTML(series.title)}" loading="lazy" />
+          </figure>
+          <div class="story-file-copy">
+            <p class="eyebrow">LIFE FILE</p>
+            <h1>${escapeHTML(series.title)}</h1>
+            <p>\u66b4\u96e8\u591c\uff0c\u6797\u821f\u63a5\u5230\u6765\u81ea\u5df2\u6545\u5ba4\u53cb\u8bb8\u77e5\u590f\u7684\u7535\u8bdd\uff1b\u95e8\u5916\u5374\u7ad9\u7740\u4e00\u4e2a\u548c\u5979\u6781\u50cf\u7684\u5973\u4eba\u3002</p>
+            <div class="story-file-tags"><span>\u60ac\u7591\u4eba\u751f</span><span>\u90fd\u5e02\u96e8\u591c</span><span>\u4f2a\u7075\u5f02\u65e7\u6848</span></div>
             ${renderPropStrip([
               "prop_phone_old_cracked",
               "prop_photo_polaroid",
               "prop_recording_file",
             ])}
           </div>
-          <p class="eyebrow">LIFE FILE</p>
-          <h1>${escapeHTML(series.title)}</h1>
-          <p>当前开放人生故事：《雨夜来电》。其余故事未完待续。</p>
         </header>
-        <section class="chapter-preview-row" aria-label="章节封面">
-          ${DATA.chapters.map((chapter) => renderChapterCover(chapter.chapterId, true)).join("")}
-        </section>
-        <div class="script-stack">${rows}</div>
+        <div class="script-stack story-entry-stack">${rows}</div>
       </section>
       `
     );
@@ -527,11 +538,11 @@
       card.addEventListener("click", () => {
         const script = getScript(card.dataset.scriptId);
         if (script.status !== "open") {
-          openNotice("未完待续", `《${script.title}》的档案还没有打开。`);
+          openNotice("\u672a\u5b8c\u5f85\u7eed", `\u300a${script.title}\u300b\u7684\u6863\u6848\u8fd8\u6ca1\u6709\u6253\u5f00\u3002`);
           return;
         }
         if (hasLocalProgress) {
-          openConfirm("继续体验", "检测到本地进度。要从上次保存的人生节点继续吗？", () => {
+          openConfirm("\u7ee7\u7eed\u4f53\u9a8c", "\u68c0\u6d4b\u5230\u672c\u5730\u8fdb\u5ea6\u3002\u8981\u4ece\u4e0a\u6b21\u4fdd\u5b58\u7684\u4eba\u751f\u8282\u70b9\u7ee7\u7eed\u5417\uff1f", () => {
             loadProgress();
             showGame();
           }, () => startNewGame());
@@ -541,6 +552,7 @@
       });
     });
   }
+
 
   function startNewGame() {
     state = createInitialState();
@@ -556,6 +568,7 @@
       return;
     }
     applyNodeEffects(node);
+    prepareAudioCue(node);
 
     const chapter = getChapter(node.chapterId);
     const sceneClass = `scene-${node.scene || "rental_room_rain_night"}`;

@@ -127,5 +127,27 @@
       ending_c: { title: "删除证据", image: `${A}/endings/ending_c_deleted_evidence.webp` },
       ending_d: { title: "无人接听", image: `${A}/endings/ending_d_unanswered.webp` },
     },
+    audio: {
+      enabled: false,
+      channels: ["bgm", "ambience", "sfx", "voice"],
+      scenes: {
+        rental_room_rain_night: { bgm: "rain_suspense_low", ambience: "heavy_rain_window" },
+        corridor_door: { bgm: "corridor_pressure", ambience: "hallway_rain_drip", sfx: "door_chain_tension" },
+        phone_call_ui: { bgm: "dead_call_pulse", ambience: "phone_static", sfx: "incoming_call_vibrate" },
+        old_chat_memory: { bgm: "memory_low", ambience: "distant_keyboard" },
+        rental_room_table: { bgm: "searching_old_things", ambience: "room_rain_muffled" },
+        photo_zoom_view: { bgm: "evidence_focus", sfx: "photo_zoom_mark" },
+        old_phone_view: { bgm: "voice_record_pressure", ambience: "phone_noise", sfx: "voice_memo_play" },
+        ending_screen: { bgm: "ending_archive", ambience: "rain_after" },
+      },
+      speakers: {
+        林舟: { voiceProfile: "linzhou_female_tired" },
+        许知晚: { voiceProfile: "xuzhiwan_cold_mature" },
+        周屿: { voiceProfile: "zhouyu_gentle_pressure" },
+        陈妍: { voiceProfile: "chenyan_clear_reliable" },
+        许知夏: { voiceProfile: "xuzhixia_memory_soft" },
+        旁白: { voiceProfile: "narrator_low_suspense" },
+      },
+    },
   };
 })();
