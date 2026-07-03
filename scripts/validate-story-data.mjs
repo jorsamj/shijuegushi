@@ -160,7 +160,10 @@ assert(AUDIO.voiceProfiles && typeof AUDIO.voiceProfiles === "object", "audio-as
 ["narrator", "linzhou", "xuzhiwan", "zhouyu", "chenyan", "xuzhixia"].forEach((profileId) => {
   assert(AUDIO.voiceProfiles?.[profileId], `missing voice profile: ${profileId}`);
 });
-assert(scriptText.includes('voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "real"'), "voiceMode must default to real");
+assert(scriptText.includes('voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "fallback"'), "voiceMode must default to profiled fallback while real voice assets are pending");
+assert(scriptText.includes('settings.voiceMode === "fallback" || settings.voiceMode === "real"'), "real voice mode must fall back to profiled narration when mp3 assets are missing");
+assert(scriptText.includes("function chooseSpeechVoice"), "script.js must choose a speech voice by profile for fallback narration");
+assert(scriptText.includes("function prepareSpeechText"), "script.js must prepare text pauses for fallback narration");
 ["bgm", "ambience", "sfx", "narration", "voice"].forEach((category) => {
   assert(AUDIO[category] && typeof AUDIO[category] === "object", `audio category missing: ${category}`);
   for (const [key, path] of Object.entries(AUDIO[category] || {})) {

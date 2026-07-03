@@ -8,6 +8,8 @@ window.SECOND_LIFE_AUDIO = {
       emotion: "calm_suspense",
       rate: 0.84,
       pitch: 0.88,
+      volume: 0.74,
+      voiceHints: ["Yunyang", "Yunjian", "Kangkang", "Male", "Huihui"],
       direction: "像在讲述一份旧案档案，语气克制但有压迫感，不要播音腔，不要机械。",
     },
     linzhou: {
@@ -18,6 +20,8 @@ window.SECOND_LIFE_AUDIO = {
       emotion: "tired_to_fear",
       rate: 0.92,
       pitch: 0.94,
+      volume: 0.76,
+      voiceHints: ["Yunxi", "Yunyang", "Kangkang", "Male"],
       direction: "声音要像一个被卷入旧案的普通人，开始疲惫，后面越来越紧张。",
     },
     xuzhiwan: {
@@ -28,6 +32,8 @@ window.SECOND_LIFE_AUDIO = {
       emotion: "cold_tense",
       rate: 0.88,
       pitch: 0.9,
+      volume: 0.78,
+      voiceHints: ["Xiaoxiao", "Xiaoyi", "Huihui", "Female"],
       direction: "声音要成熟、冷艳、压得住场。不是甜美少女音，不要机械。",
     },
     zhouyu: {
@@ -38,6 +44,8 @@ window.SECOND_LIFE_AUDIO = {
       emotion: "gentle_to_threat",
       rate: 0.84,
       pitch: 0.78,
+      volume: 0.8,
+      voiceHints: ["Yunyang", "Yunjian", "Kangkang", "Male"],
       direction: "前期像温和旧友，后期语气变低、变慢，带威胁感。",
     },
     chenyan: {
@@ -48,6 +56,8 @@ window.SECOND_LIFE_AUDIO = {
       emotion: "calm_reasonable",
       rate: 1.02,
       pitch: 1.02,
+      volume: 0.76,
+      voiceHints: ["Xiaoyi", "Xiaoxiao", "Huihui", "Female"],
       direction: "声音清醒干练，像能拉住主角回到现实的人。",
     },
     xuzhixia: {
@@ -58,6 +68,8 @@ window.SECOND_LIFE_AUDIO = {
       emotion: "fear_memory",
       rate: 0.82,
       pitch: 0.92,
+      volume: 0.68,
+      voiceHints: ["Xiaoxiao", "Huihui", "Female"],
       direction: "声音像从旧手机或录音里传来，有距离感、噪声感、害怕但克制。",
     },
   },

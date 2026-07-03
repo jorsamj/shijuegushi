@@ -385,7 +385,7 @@
     return {
       audioEnabled: saved.audioEnabled !== false,
       voiceEnabled: saved.voiceEnabled !== false,
-      voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "real",
+      voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "fallback",
       bgmEnabled: saved.bgmEnabled !== false,
       sfxEnabled: saved.sfxEnabled !== false,
     };
@@ -450,6 +450,10 @@
     const audio = new Audio(src);
     audio.loop = options.loop === true;
     audio.volume = options.volume ?? 0.72;
+    audio.addEventListener("error", () => {
+      console.warn(`[Second Life Audio] Unable to load ${src}`);
+      options.onFallback?.();
+    }, { once: true });
     const playPromise = audio.play();
     if (playPromise?.catch) {
       playPromise.catch((error) => {
@@ -633,9 +637,9 @@
   }
 
   function handleMissingRealVoice(node, settings = getAudioSettings()) {
-    if (settings.voiceMode === "fallback") {
+    if (settings.voiceMode === "fallback" || settings.voiceMode === "real") {
       if (!audioState.voiceFallbackNoticeShown) {
-        showToast("当前为临时合成语音，正式配音素材接入后会自动替换。", "warn");
+        showToast("当前为临时剧情语音，已按角色与情绪调整语速、音高和停顿。", "warn");
         audioState.voiceFallbackNoticeShown = true;
       }
       speakSyntheticNode(node);
@@ -652,12 +656,16 @@
     const raw = String(node.text || "").replace(/\s+/g, " ").trim();
     if (!raw || node.type === "choice" || node.type === "deduction" || node.type === "ending") return;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(raw.slice(0, 180));
-    utterance.lang = "zh-CN";
     const profile = getVoiceProfile(node);
-    utterance.rate = Number(node.voiceSpeed || profile.rate || 0.92);
-    utterance.pitch = Number(node.voicePitch || profile.pitch || 0.95);
-    utterance.volume = 0.72;
+    const speechText = prepareSpeechText(raw, node, profile).slice(0, 220);
+    const utterance = new SpeechSynthesisUtterance(speechText);
+    utterance.lang = "zh-CN";
+    const selectedVoice = chooseSpeechVoice(profile);
+    if (selectedVoice) utterance.voice = selectedVoice;
+    const prosody = getSpeechProsody(node, profile);
+    utterance.rate = prosody.rate;
+    utterance.pitch = prosody.pitch;
+    utterance.volume = prosody.volume;
     window.speechSynthesis.speak(utterance);
     audioState.lastVoiceNodeId = node.nodeId;
   }
@@ -675,7 +683,90 @@
       zhixia: { rate: 0.82, pitch: 0.92 },
       xuzhixia: { rate: 0.82, pitch: 0.92 },
     };
-    return { ...(defaults[profileId] || defaults.narrator), ...profile };
+    return { id: profileId, ...(defaults[profileId] || defaults.narrator), ...profile };
+  }
+
+  function clampNumber(value, min, max) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return min;
+    return Math.min(max, Math.max(min, numeric));
+  }
+
+  function chooseSpeechVoice(profile = {}) {
+    if (!("speechSynthesis" in window)) return null;
+    const voices = window.speechSynthesis.getVoices?.() || [];
+    if (!voices.length) return null;
+    const zhVoices = voices.filter((voice) =>
+      /^zh/i.test(voice.lang || "") || /Chinese|Mandarin|中文|普通话|國語/i.test(voice.name || "")
+    );
+    const pool = zhVoices.length ? zhVoices : voices;
+    const hints = profile.voiceHints || getDefaultVoiceHints(profile.id, profile.gender);
+    const hinted = pool.find((voice) => hints.some((hint) => new RegExp(hint, "i").test(voice.name || "")));
+    if (hinted) return hinted;
+    const gender = String(profile.gender || "");
+    if (gender.includes("female")) {
+      return pool.find((voice) => /female|xia|hui|yao|han|female/i.test(voice.name || "")) || pool[0];
+    }
+    if (gender.includes("male")) {
+      return pool.find((voice) => /male|yun|kang|zhi|male/i.test(voice.name || "")) || pool[0];
+    }
+    return pool[0];
+  }
+
+  function getDefaultVoiceHints(profileId = "", gender = "") {
+    const hintMap = {
+      narrator: ["Yunyang", "Yunjian", "Kangkang", "Male", "Huihui"],
+      linzhou: ["Yunxi", "Yunyang", "Kangkang", "Male"],
+      zhouyu: ["Yunyang", "Yunjian", "Kangkang", "Male"],
+      xuzhiwan: ["Xiaoxiao", "Xiaoyi", "Huihui", "Female"],
+      zhuwan: ["Xiaoxiao", "Xiaoyi", "Huihui", "Female"],
+      chenyan: ["Xiaoyi", "Xiaoxiao", "Huihui", "Female"],
+      xuzhixia: ["Xiaoxiao", "Huihui", "Female"],
+      zhixia: ["Xiaoxiao", "Huihui", "Female"],
+    };
+    return hintMap[profileId] || (String(gender).includes("female") ? hintMap.xuzhiwan : hintMap.narrator);
+  }
+
+  function getSpeechProsody(node, profile = {}) {
+    const emotion = `${node.voiceEmotion || ""} ${node.audioMood || ""} ${profile.emotion || ""}`.toLowerCase();
+    let rate = Number(node.voiceSpeed || profile.rate || 0.92);
+    let pitch = Number(node.voicePitch || profile.pitch || 0.95);
+    let volume = Number(profile.volume || 0.74);
+    if (/horror|fear|whisper|recording|memory/.test(emotion)) {
+      rate -= 0.07;
+      pitch -= 0.04;
+      volume -= 0.05;
+    }
+    if (/pressure|threat|angry|cold/.test(emotion)) {
+      rate -= 0.05;
+      pitch -= 0.08;
+      volume += 0.03;
+    }
+    if (/fast|urgent|shocked/.test(emotion)) rate += 0.06;
+    return {
+      rate: clampNumber(rate, 0.68, 1.18),
+      pitch: clampNumber(pitch, 0.65, 1.25),
+      volume: clampNumber(volume, 0.46, 0.9),
+    };
+  }
+
+  function prepareSpeechText(raw, node, profile = {}) {
+    let text = raw
+      .replace(/【([^】]+)】/g, "$1")
+      .replace(/\s+/g, " ")
+      .trim();
+    const emotion = `${node.voiceEmotion || ""} ${node.audioMood || ""} ${profile.emotion || ""}`.toLowerCase();
+    text = text.replace(/。/g, "。 ").replace(/，/g, "， ").replace(/；/g, "； ");
+    if (/horror|fear|whisper|recording|memory/.test(emotion)) {
+      text = text.replace(/。/g, "…… ").replace(/！/g, "。 ");
+    }
+    if (/pressure|threat|cold/.test(emotion)) {
+      text = text.replace(/，/g, "，…… ").replace(/。/g, "。 ");
+    }
+    if (node.voiceDirection && /旧手机|录音|电流|噪声/.test(node.voiceDirection)) {
+      text = `……${text}`;
+    }
+    return text;
   }
 
   function updateAudioForNode(node, sceneCue = {}) {
