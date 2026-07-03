@@ -681,6 +681,18 @@ button {
   background: rgba(216, 182, 106, 0.1);
 }
 
+.game-menu-button {
+  display: none;
+  pointer-events: auto;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 231, 198, 0.14);
+  background: rgba(7, 8, 14, 0.68);
+  color: #fff3d6;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.36), inset 0 1px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+}
+
 .scene-stage {
   position: absolute;
   inset: 0 0 220px;
@@ -3068,13 +3080,53 @@ button {
   }
 
   .game-topbar {
+    left: 10px;
+    right: 10px;
     gap: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .game-title {
+    max-width: calc(100% - 78px);
+    padding: 8px 11px;
+  }
+
+  .game-title span {
+    font-size: 10px;
+  }
+
+  .game-title strong {
+    font-size: 13px;
+  }
+
+  .game-menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .toolbox {
+    display: none;
+    order: 4;
+    width: 100%;
     max-width: 100%;
-    overflow-x: auto;
-    padding-bottom: 4px;
+    padding: 8px;
+    border-radius: 18px;
+    overflow: visible;
+    flex-wrap: wrap;
+    background: rgba(8, 9, 16, 0.86);
+  }
+
+  .toolbox.is-open {
+    display: flex;
+  }
+
+  .toolbox button {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 128px;
+    text-align: center;
   }
 
   .scene-stage {
@@ -3389,6 +3441,41 @@ button {
   max-width: min(62vw, 680px);
 }
 
+.scale-large .vn-character-standee {
+  height: min(142%, 940px);
+}
+
+.scale-large .vn-character-standee img {
+  max-width: min(66vw, 720px);
+}
+
+.scale-medium .vn-character-standee {
+  height: min(118%, 800px);
+}
+
+.position-left .vn-character-standee {
+  left: clamp(18px, 5vw, 96px);
+  right: auto;
+}
+
+.position-right .vn-character-standee {
+  right: clamp(-18px, 4vw, 86px);
+  left: auto;
+}
+
+.position-center .vn-character-standee {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.mood-horror .vn-character-standee img,
+.mood-tense .vn-character-standee img {
+  filter:
+    drop-shadow(0 38px 48px rgba(0, 0, 0, 0.78))
+    drop-shadow(0 0 34px rgba(150, 24, 42, 0.18));
+}
+
 .character-zhixia .vn-character-standee {
   left: 50%;
   right: auto;
@@ -3510,6 +3597,24 @@ button {
   .variant-horror .vn-character-standee,
   .variant-pressure .vn-character-standee {
     height: 112%;
+  }
+
+  .scale-large .vn-character-standee,
+  .scale-large.character-zhuwan .vn-character-standee,
+  .scale-large.character-zhouyu .vn-character-standee {
+    height: 124%;
+    right: -58px;
+  }
+
+  .position-left .vn-character-standee {
+    left: -42px;
+    right: auto;
+  }
+
+  .position-center .vn-character-standee {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
   }
 
   .character-zhixia .vn-character-standee {

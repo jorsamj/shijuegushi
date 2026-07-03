@@ -10,6 +10,13 @@
     chapters: {},
     props: {},
   };
+  const AUDIO = window.SECOND_LIFE_AUDIO || {
+    bgm: {},
+    ambience: {},
+    sfx: {},
+    narration: {},
+    voice: {},
+  };
   const STORAGE_KEYS = {
     progress: "mist.currentProgress",
     saves: "mist.saveSlots",
@@ -115,6 +122,9 @@
     master: null,
     bgm: null,
     ambience: null,
+    realBgm: null,
+    realAmbience: null,
+    realVoice: null,
     currentBgm: "",
     currentAmbience: "",
     unlocked: false,
@@ -244,10 +254,14 @@
   }
 
   function renderCharacterLayer(speaker, node) {
-    const character = getVisualCharacter(speaker);
+    const visualSpeaker = node?.visualCharacter || speaker;
+    const character = getVisualCharacter(visualSpeaker);
     if (!character?.image || character.id === "narrator") return "";
-    const rawSpeaker = String(speaker || "");
-    const variant = resolveCharacterVariant(character, rawSpeaker, node);
+    const rawSpeaker = String(visualSpeaker || speaker || "");
+    const explicitVariant = node?.characterVariant;
+    const variant = explicitVariant && character.variants?.[explicitVariant]
+      ? explicitVariant
+      : resolveCharacterVariant(character, rawSpeaker, node);
     const image = character.variants?.[variant] || character.image;
     const mode = rawSpeaker.includes("声音")
       ? "is-memory"
@@ -255,8 +269,11 @@
         ? "is-message"
         : "is-present";
     const scene = node?.scene || "rental_room_rain_night";
+    const scale = node?.characterScale || "auto";
+    const position = node?.characterPosition || "auto";
+    const mood = node?.visualMood || "normal";
     return `
-      <div class="vn-character-layer character-${escapeHTML(character.id)} variant-${escapeHTML(variant)} ${mode}" data-speaker="${escapeHTML(character.name)}" data-scene="${escapeHTML(scene)}">
+      <div class="vn-character-layer character-${escapeHTML(character.id)} variant-${escapeHTML(variant)} scale-${escapeHTML(scale)} position-${escapeHTML(position)} mood-${escapeHTML(mood)} ${mode}" data-speaker="${escapeHTML(character.name)}" data-scene="${escapeHTML(scene)}">
         <figure class="vn-character-standee">
           <img src="${escapeHTML(image)}" alt="${escapeHTML(character.name)}" loading="lazy" />
           <figcaption>
@@ -341,12 +358,21 @@
   function prepareAudioCue(node) {
     const sceneCue = VISUALS.audio?.scenes?.[node.scene || "rental_room_rain_night"] || {};
     const speakerProfile = getVisualCharacter(node.speaker).id || "narrator";
+    const sfxList = []
+      .concat(sceneCue.sfx || [])
+      .concat(node.sfxOnEnter || [])
+      .filter(Boolean);
+    const resolvedCue = {
+      bgm: node.bgm || sceneCue.bgm || "",
+      ambience: node.ambience || sceneCue.ambience || "",
+      sfx: sfxList,
+    };
     app.dataset.audioScene = node.scene || "rental_room_rain_night";
-    app.dataset.audioBgm = sceneCue.bgm || "";
-    app.dataset.audioAmbience = sceneCue.ambience || "";
-    app.dataset.audioSfx = sceneCue.sfx || "";
+    app.dataset.audioBgm = resolvedCue.bgm || "";
+    app.dataset.audioAmbience = resolvedCue.ambience || "";
+    app.dataset.audioSfx = sfxList.join(",");
     app.dataset.audioVoice = speakerProfile;
-    updateAudioForNode(node, sceneCue);
+    updateAudioForNode(node, resolvedCue);
   }
 
   function getAudioSettings() {
@@ -398,6 +424,36 @@
     } catch (error) {}
   }
 
+  function stopRealAudio(audio) {
+    if (!audio) return;
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+    } catch (error) {}
+  }
+
+  function getAudioSource(category, key) {
+    if (!key) return "";
+    const src = AUDIO?.[category]?.[key] || "";
+    if (!src) console.warn(`[Second Life Audio] Missing ${category}: ${key}`);
+    return src;
+  }
+
+  function playRealAudio(src, options = {}) {
+    if (!src || typeof Audio !== "function") return null;
+    const audio = new Audio(src);
+    audio.loop = options.loop === true;
+    audio.volume = options.volume ?? 0.72;
+    const playPromise = audio.play();
+    if (playPromise?.catch) {
+      playPromise.catch((error) => {
+        console.warn(`[Second Life Audio] Unable to play ${src}`, error);
+        options.onFallback?.();
+      });
+    }
+    return audio;
+  }
+
   function getBgmFreqs(name = "") {
     if (name.includes("dead_call")) return [73.42, 110, 146.83];
     if (name.includes("corridor")) return [55, 82.41, 123.47];
@@ -407,7 +463,7 @@
     return [65.41, 98, 146.83];
   }
 
-  function startBgm(name) {
+  function startSyntheticBgm(name) {
     const settings = getAudioSettings();
     if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
     const context = ensureAudioContext();
@@ -432,6 +488,33 @@
     audioState.currentBgm = name;
   }
 
+  function startBgm(name) {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
+    if (audioState.currentBgm === name) return;
+    const src = getAudioSource("bgm", name);
+    stopRealAudio(audioState.realBgm);
+    audioState.realBgm = null;
+    stopAudioHandle(audioState.bgm);
+    audioState.bgm = null;
+    audioState.currentBgm = "";
+    if (src) {
+      audioState.currentBgm = name;
+      audioState.realBgm = playRealAudio(src, {
+        loop: true,
+        volume: 0.34,
+        onFallback: () => {
+          if (audioState.currentBgm === name) {
+            audioState.currentBgm = "";
+            startSyntheticBgm(name);
+          }
+        },
+      });
+      return;
+    }
+    startSyntheticBgm(name);
+  }
+
   function createNoiseBuffer(context) {
     const length = context.sampleRate * 2;
     const buffer = context.createBuffer(1, length, context.sampleRate);
@@ -440,7 +523,7 @@
     return buffer;
   }
 
-  function startAmbience(name) {
+  function startSyntheticAmbience(name) {
     const settings = getAudioSettings();
     if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
     const context = ensureAudioContext();
@@ -463,7 +546,34 @@
     audioState.currentAmbience = name;
   }
 
-  function playSfx(name = "") {
+  function startAmbience(name) {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
+    if (audioState.currentAmbience === name) return;
+    const src = getAudioSource("ambience", name);
+    stopRealAudio(audioState.realAmbience);
+    audioState.realAmbience = null;
+    stopAudioHandle(audioState.ambience);
+    audioState.ambience = null;
+    audioState.currentAmbience = "";
+    if (src) {
+      audioState.currentAmbience = name;
+      audioState.realAmbience = playRealAudio(src, {
+        loop: true,
+        volume: 0.32,
+        onFallback: () => {
+          if (audioState.currentAmbience === name) {
+            audioState.currentAmbience = "";
+            startSyntheticAmbience(name);
+          }
+        },
+      });
+      return;
+    }
+    startSyntheticAmbience(name);
+  }
+
+  function playSyntheticSfx(name = "") {
     const settings = getAudioSettings();
     if (!settings.audioEnabled || !settings.sfxEnabled || !audioState.unlocked) return;
     const context = ensureAudioContext();
@@ -481,10 +591,43 @@
     osc.stop(context.currentTime + 0.5);
   }
 
+  function playSfx(name = "") {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled || !settings.sfxEnabled || !audioState.unlocked || !name) return;
+    const src = getAudioSource("sfx", name);
+    if (src) {
+      playRealAudio(src, {
+        loop: false,
+        volume: 0.74,
+        onFallback: () => playSyntheticSfx(name),
+      });
+      return;
+    }
+    playSyntheticSfx(name);
+  }
+
   function speakNode(node) {
     const settings = getAudioSettings();
-    if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked || !("speechSynthesis" in window)) return;
+    if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked) return;
     if (audioState.lastVoiceNodeId === node.nodeId) return;
+    const realVoiceKey = node.voiceAudio || node.narrationAudio || "";
+    const realVoiceCategory = node.voiceAudio ? "voice" : node.narrationAudio ? "narration" : "";
+    const realVoiceSrc = realVoiceCategory ? getAudioSource(realVoiceCategory, realVoiceKey) : "";
+    if (realVoiceSrc) {
+      stopRealAudio(audioState.realVoice);
+      audioState.realVoice = playRealAudio(realVoiceSrc, {
+        loop: false,
+        volume: 0.82,
+        onFallback: () => speakSyntheticNode(node),
+      });
+      audioState.lastVoiceNodeId = node.nodeId;
+      return;
+    }
+    speakSyntheticNode(node);
+  }
+
+  function speakSyntheticNode(node) {
+    if (!("speechSynthesis" in window)) return;
     const raw = String(node.text || "").replace(/\s+/g, " ").trim();
     if (!raw || node.type === "choice" || node.type === "deduction" || node.type === "ending") return;
     window.speechSynthesis.cancel();
@@ -503,7 +646,8 @@
     if (!settings.audioEnabled || !audioState.unlocked) return;
     startBgm(sceneCue.bgm);
     startAmbience(sceneCue.ambience);
-    if (sceneCue.sfx) playSfx(sceneCue.sfx);
+    const sfxList = Array.isArray(sceneCue.sfx) ? sceneCue.sfx : sceneCue.sfx ? [sceneCue.sfx] : [];
+    sfxList.forEach((name) => playSfx(name));
     if (node.type === "clue") playSfx("clue_reveal");
     speakNode(node);
   }
@@ -511,8 +655,14 @@
   function stopAllAudio() {
     stopAudioHandle(audioState.bgm);
     stopAudioHandle(audioState.ambience);
+    stopRealAudio(audioState.realBgm);
+    stopRealAudio(audioState.realAmbience);
+    stopRealAudio(audioState.realVoice);
     audioState.bgm = null;
     audioState.ambience = null;
+    audioState.realBgm = null;
+    audioState.realAmbience = null;
+    audioState.realVoice = null;
     audioState.currentBgm = "";
     audioState.currentAmbience = "";
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
@@ -848,6 +998,7 @@
             <strong>${escapeHTML(chapter?.title || node.chapterTitle || "")}</strong>
           </div>
           ${renderTruthMeter()}
+          <button class="game-menu-button" type="button" data-tool="menu" aria-expanded="false">菜单</button>
           <nav class="toolbox" aria-label="游戏工具栏">
             <button type="button" data-tool="clues" class="clue-tool ${state.unreadClues.length ? "has-unread" : ""}">
               线索 <span>${state.clues.length}/${getTotalClueCount()}</span>
@@ -958,6 +1109,15 @@
     recordEndingPathTags(choice.endingPathTags || []);
     if (node.type === "deduction" && choice.isCorrect === true) {
       state.deductionScore += 1;
+    }
+    const choiceSfx = []
+      .concat(choice.sfxOnChoice || [])
+      .concat(node.sfxOnChoice || [])
+      .filter(Boolean);
+    if (choiceSfx.length) {
+      choiceSfx.forEach((name) => playSfx(name));
+    } else {
+      playSfx("choice_confirm");
     }
     evaluateProgressTriggers();
     evaluateAchievements();
@@ -1347,13 +1507,28 @@
   }
 
   function bindGameToolbar() {
-    app.querySelector("[data-tool='clues']").addEventListener("click", openClueModal);
-    app.querySelector("[data-tool='relationships']").addEventListener("click", openRelationshipModal);
-    app.querySelector("[data-tool='audio']").addEventListener("click", toggleAudio);
-    app.querySelector("[data-tool='save']").addEventListener("click", openSaveModal);
-    app.querySelector("[data-tool='load']").addEventListener("click", openLoadModal);
-    app.querySelector("[data-tool='history']").addEventListener("click", openHistoryModal);
-    app.querySelector("[data-tool='hall']").addEventListener("click", () => {
+    const toolbox = app.querySelector(".toolbox");
+    const menuButton = app.querySelector("[data-tool='menu']");
+    menuButton?.addEventListener("click", () => {
+      const isOpen = toolbox?.classList.toggle("is-open") || false;
+      menuButton.setAttribute("aria-expanded", String(isOpen));
+    });
+    const bindTool = (tool, handler) => {
+      app.querySelector(`[data-tool='${tool}']`)?.addEventListener("click", (event) => {
+        if (tool !== "menu") {
+          toolbox?.classList.remove("is-open");
+          menuButton?.setAttribute("aria-expanded", "false");
+        }
+        handler(event);
+      });
+    };
+    bindTool("clues", openClueModal);
+    bindTool("relationships", openRelationshipModal);
+    bindTool("audio", toggleAudio);
+    bindTool("save", openSaveModal);
+    bindTool("load", openLoadModal);
+    bindTool("history", openHistoryModal);
+    bindTool("hall", () => {
       openConfirm("返回人生档案", "返回前会自动保存当前进度。要离开当前故事吗？", () => {
         autoSave();
         showHall();

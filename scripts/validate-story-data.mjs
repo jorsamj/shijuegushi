@@ -22,6 +22,12 @@ function loadVisuals() {
   return context.window.SECOND_LIFE_VISUALS;
 }
 
+function loadAudio() {
+  const context = { window: {} };
+  vm.runInNewContext(read("assets/audio/audio-assets.js"), context, { filename: "assets/audio/audio-assets.js" });
+  return context.window.SECOND_LIFE_AUDIO;
+}
+
 function parseCoreClues(scriptText) {
   const match = scriptText.match(/const CORE_CLUE_IDS = \[([\s\S]*?)\];/);
   if (!match) return [];
@@ -70,7 +76,9 @@ function resolveEnding(snapshot) {
 
 const DATA = loadData();
 const VISUALS = loadVisuals();
+const AUDIO = loadAudio();
 const scriptText = read("script.js");
+const indexText = read("index.html");
 const runtimeTextPaths = [
   "README.md",
   "story-data.js",
@@ -78,6 +86,7 @@ const runtimeTextPaths = [
   "style.css",
   "index.html",
   "assets/visual-assets.js",
+  "assets/audio/audio-assets.js",
 ];
 const allText = runtimeTextPaths.map((path) => `${path}\n${read(path)}`).join("\n\n");
 
@@ -92,6 +101,13 @@ const relationshipIds = new Set([
   "suspicion_zhou",
   "courage_linzou",
 ]);
+const audioKeySets = {
+  bgm: new Set(Object.keys(AUDIO.bgm || {})),
+  ambience: new Set(Object.keys(AUDIO.ambience || {})),
+  sfx: new Set(Object.keys(AUDIO.sfx || {})),
+  narration: new Set(Object.keys(AUDIO.narration || {})),
+  voice: new Set(Object.keys(AUDIO.voice || {})),
+};
 const requiredSceneIds = new Set(Object.values(DATA.nodes || {}).map((node) => node.scene).filter(Boolean));
 const requiredCharacterIds = new Set(["linzhou", "zhuwan", "zhouyu", "chenyan", "zhixia"]);
 
@@ -100,6 +116,25 @@ function assertAssetPath(path, label) {
   if (typeof path !== "string" || !path.length) return;
   assert(!/^https?:\/\//i.test(path), `${label} must not use external URL: ${path}`);
   assert(exists(path), `${label} references missing file: ${path}`);
+}
+
+function getVisualCharacter(node) {
+  const speaker = node.visualCharacter || node.speaker || "旁白";
+  const rawName = String(speaker).split(/[：:]/)[0].trim() || "旁白";
+  const characterNames = Object.keys(VISUALS.characters || {});
+  const matchedName = characterNames.find((name) => rawName.includes(name));
+  const aliasName = VISUALS.characterAliases?.[rawName] || matchedName || rawName;
+  return VISUALS.characters?.[aliasName];
+}
+
+function assertOptionalString(value, label) {
+  if (value !== undefined) assert(typeof value === "string", `${label} must be a string`);
+}
+
+function assertOptionalStringList(value, label) {
+  if (value === undefined) return;
+  const items = Array.isArray(value) ? value : [value];
+  items.forEach((item) => assert(typeof item === "string", `${label} must contain strings`));
 }
 
 assert(DATA.chapters?.length === 6, `chapters must be 6, got ${DATA.chapters?.length}`);
@@ -114,6 +149,17 @@ assert(
 ["ending_a", "ending_b", "ending_c", "ending_d"].forEach((id) => assert(endingIds.has(id), `missing ending: ${id}`));
 assert(countMilestones(scriptText) <= 4, "MILESTONES must be at most 4");
 assert(VISUALS && typeof VISUALS === "object", "visual assets config is missing");
+assert(exists("assets/audio/audio-assets.js"), "audio assets config file is missing");
+assert(AUDIO && typeof AUDIO === "object", "window.SECOND_LIFE_AUDIO is missing");
+assert(indexText.includes("assets/audio/audio-assets.js"), "index.html must load assets/audio/audio-assets.js");
+["bgm", "ambience", "sfx", "narration", "voice"].forEach((category) => {
+  assert(AUDIO[category] && typeof AUDIO[category] === "object", `audio category missing: ${category}`);
+  for (const [key, path] of Object.entries(AUDIO[category] || {})) {
+    assert(typeof key === "string" && key.length > 0, `audio ${category} has invalid key`);
+    assert(typeof path === "string" && path.length > 0, `audio ${category}.${key} must provide a path`);
+    assert(!/^https?:\/\//i.test(path), `audio ${category}.${key} must not use external URL: ${path}`);
+  }
+});
 
 for (const sceneId of requiredSceneIds) {
   const scene = VISUALS.scenes?.[sceneId];
@@ -144,6 +190,21 @@ for (const characterId of requiredCharacterIds) {
   }
 }
 
+const zhuwanVisual = Object.values(VISUALS.characters || {}).find((item) => item.id === "zhuwan");
+[
+  "base",
+  "wet",
+  "suspicious",
+  "pressure",
+  "angry",
+  "fear",
+  "horror",
+  "closeup",
+  "fullbody",
+].forEach((variant) => {
+  assert(zhuwanVisual?.variants?.[variant], `许知晚 missing required variant: ${variant}`);
+});
+
 for (const aliasTarget of Object.values(VISUALS.characterAliases || {})) {
   assert(VISUALS.characters?.[aliasTarget], `character alias references missing character: ${aliasTarget}`);
 }
@@ -164,6 +225,31 @@ for (const chapter of DATA.chapters || []) {
   assert(choices.length >= 3, `${chapter.chapterId} has fewer than 3 choice/deduction nodes`);
 }
 
+const requiredVisualStateNodes = {
+  ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_ring"] },
+  ch01_005: { visualMood: true, characterVariant: "recording", voiceAudio: true },
+  ch01_007: { visualMood: true, characterVariant: "wet" },
+  ch01_008: { visualMood: true, characterVariant: "fullbody" },
+  ch02_003: { visualMood: true, characterVariant: "pressure" },
+  ch05_011: { visualMood: true, characterVariant: "fear", sfxOnEnter: ["recording_play", "static_noise"] },
+  ch05_015: { visualMood: true, characterVariant: "recording", sfxOnEnter: ["recording_play", "static_noise"] },
+  ch05_016: { visualMood: true, characterVariant: "horror" },
+  ch06_020: { visualMood: true, bgm: "ending_archive" },
+};
+
+for (const [nodeId, requirement] of Object.entries(requiredVisualStateNodes)) {
+  const node = DATA.nodes?.[nodeId];
+  assert(node, `required visual state node is missing: ${nodeId}`);
+  if (!node) continue;
+  if (requirement.visualMood) assert(typeof node.visualMood === "string" && node.visualMood.length > 0, `${nodeId} must define visualMood`);
+  if (requirement.characterVariant) assert(node.characterVariant === requirement.characterVariant, `${nodeId} must use characterVariant=${requirement.characterVariant}`);
+  if (requirement.bgm) assert(node.bgm === requirement.bgm, `${nodeId} must use bgm=${requirement.bgm}`);
+  if (requirement.voiceAudio) assert(typeof node.voiceAudio === "string" && node.voiceAudio.length > 0, `${nodeId} must define voiceAudio`);
+  for (const sfx of requirement.sfxOnEnter || []) {
+    assert((node.sfxOnEnter || []).includes(sfx), `${nodeId} must include sfxOnEnter=${sfx}`);
+  }
+}
+
 for (const node of Object.values(DATA.nodes || {})) {
   assert(
     DATA.chapters.some((chapter) => chapter.chapterId === node.chapterId),
@@ -172,6 +258,30 @@ for (const node of Object.values(DATA.nodes || {})) {
   if (node.nextNodeId) assert(nodeIds.has(node.nextNodeId), `${node.nodeId}.nextNodeId missing: ${node.nextNodeId}`);
   for (const clueId of node.gainClues || []) assert(clueIds.has(clueId), `${node.nodeId}.gainClues missing clue: ${clueId}`);
   for (const flagId of node.setFlags || []) assert(defaultFlagIds.has(flagId), `${node.nodeId}.setFlags missing flag: ${flagId}`);
+
+  assertOptionalString(node.visualMood, `${node.nodeId}.visualMood`);
+  assertOptionalString(node.visualCharacter, `${node.nodeId}.visualCharacter`);
+  assertOptionalString(node.characterVariant, `${node.nodeId}.characterVariant`);
+  assertOptionalString(node.characterScale, `${node.nodeId}.characterScale`);
+  assertOptionalString(node.characterPosition, `${node.nodeId}.characterPosition`);
+  assertOptionalString(node.overlayPreset, `${node.nodeId}.overlayPreset`);
+  assertOptionalString(node.bgm, `${node.nodeId}.bgm`);
+  assertOptionalString(node.ambience, `${node.nodeId}.ambience`);
+  assertOptionalString(node.narrationAudio, `${node.nodeId}.narrationAudio`);
+  assertOptionalString(node.voiceAudio, `${node.nodeId}.voiceAudio`);
+  assertOptionalString(node.voiceCharacter, `${node.nodeId}.voiceCharacter`);
+  assertOptionalString(node.audioMood, `${node.nodeId}.audioMood`);
+  assertOptionalStringList(node.sfxOnEnter, `${node.nodeId}.sfxOnEnter`);
+  assertOptionalStringList(node.sfxOnChoice, `${node.nodeId}.sfxOnChoice`);
+  if (node.characterVariant) {
+    const visualCharacter = getVisualCharacter(node);
+    assert(visualCharacter, `${node.nodeId}.characterVariant cannot resolve visual character`);
+    assert(visualCharacter?.variants?.[node.characterVariant], `${node.nodeId}.characterVariant missing variant ${node.characterVariant}`);
+  }
+  if (node.bgm) assert(audioKeySets.bgm.has(node.bgm), `${node.nodeId}.bgm references missing audio key: ${node.bgm}`);
+  if (node.ambience) assert(audioKeySets.ambience.has(node.ambience), `${node.nodeId}.ambience references missing audio key: ${node.ambience}`);
+  for (const sfx of node.sfxOnEnter || []) assert(audioKeySets.sfx.has(sfx), `${node.nodeId}.sfxOnEnter references missing audio key: ${sfx}`);
+  for (const sfx of node.sfxOnChoice || []) assert(audioKeySets.sfx.has(sfx), `${node.nodeId}.sfxOnChoice references missing audio key: ${sfx}`);
 
   for (const choice of node.choices || []) {
     if (choice.nextNodeId) {
@@ -189,6 +299,10 @@ for (const node of Object.values(DATA.nodes || {})) {
     assert(Array.isArray(choice.endingPathTags || []), `${node.nodeId}.${choice.choiceId}.endingPathTags must be an array`);
     for (const tag of choice.endingPathTags || []) {
       assert(typeof tag === "string", `${node.nodeId}.${choice.choiceId}.endingPathTags must contain strings`);
+    }
+    assertOptionalStringList(choice.sfxOnChoice, `${node.nodeId}.${choice.choiceId}.sfxOnChoice`);
+    for (const sfx of choice.sfxOnChoice || []) {
+      assert(audioKeySets.sfx.has(sfx), `${node.nodeId}.${choice.choiceId}.sfxOnChoice references missing audio key: ${sfx}`);
     }
     assert(
       (choice.setFlags || []).length ||

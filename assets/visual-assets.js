@@ -139,6 +139,7 @@
       旁白: { id: "narrator", name: "旁白", role: "雨夜记录", image: `${A}/props/prop_archive_folder.webp` },
     },
     characterAliases: {
+      "女人": "许知晚",
       "许知夏的声音": "许知夏",
       "周屿消息": "周屿",
       "陈妍消息": "陈妍",
