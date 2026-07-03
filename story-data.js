@@ -218,9 +218,9 @@ window.MIST_DATA = (() => {
 
   // 第 1 章：雨夜来电
   add(1, 1, { speaker: "旁白", text: "暴雨把窗户拍得发白。林舟盯着电脑里还没写完的周报，泡面汤已经凉透，杯沿留着半圈咖啡渍。", voiceProfile: "narrator", voiceEmotion: "suspense_low", voiceDirection: "低沉、克制、像翻开旧案档案，不要夸张。", voiceSpeed: 0.86, voicePitch: 0.9, narrationAudio: "narration_ch01_001" });
-  add(1, 2, { speaker: "林舟", text: "再改一版……就睡。", scene: "rental_room_table" });
-  add(1, 3, { speaker: "旁白", text: "手机突然震动。来电显示跳出来的名字，让林舟的手停在键盘上。\n\n许知夏。", scene: "phone_call_ui", type: "clue", gainClues: ["clue_dead_call"], visualMood: "tense", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["phone_ring"], audioMood: "tense" });
-  add(1, 4, { speaker: "林舟", text: "不可能。", scene: "phone_call_ui" });
+  add(1, 2, { speaker: "林舟", text: "再改一版……就睡。", scene: "rental_room_table", voiceProfile: "linzhou", voiceEmotion: "tired_low", voiceDirection: "疲惫、普通上班族，像熬夜加班后的自言自语。", voiceSpeed: 0.92, voicePitch: 0.94, voiceAudio: "voice_linzhou_ch01_002", voiceCharacter: "linzhou" });
+  add(1, 3, { speaker: "旁白", text: "手机突然震动。来电显示跳出来的名字，让林舟的手停在键盘上。\n\n许知夏。", scene: "phone_call_ui", type: "clue", gainClues: ["clue_dead_call"], visualMood: "tense", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["phone_ring"], voiceProfile: "narrator", voiceEmotion: "suspense_low", voiceDirection: "前半句平稳，许知夏前明显停顿，名字压低。", voiceSpeed: 0.84, voicePitch: 0.88, narrationAudio: "narration_ch01_003", audioMood: "tense" });
+  add(1, 4, { speaker: "林舟", text: "不可能。", scene: "phone_call_ui", voiceProfile: "linzhou", voiceEmotion: "shocked_low", voiceDirection: "短促、震惊、压低，像看到不该出现的名字。", voiceSpeed: 0.9, voicePitch: 0.92, voiceAudio: "voice_linzhou_ch01_004", voiceCharacter: "linzhou" });
   add(1, 5, { speaker: "许知夏的声音", text: "别开门，她不是我。", scene: "phone_call_ui", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "recording", characterScale: "impact", characterPosition: "center", characterFraming: "halfbody", characterHeadSafe: true, characterFocus: "face", voiceProfile: "xuzhixia", voiceEmotion: "fear_whisper", voiceDirection: "旧手机里的女声，虚弱、急促、带电流噪声，最后三个字要明显压低。", voiceSpeed: 0.82, voicePitch: 0.92, bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["phone_ring", "static_noise"], voiceAudio: "voice_xuzhixia_ch01_005", voiceCharacter: "xuzhixia", audioMood: "horror" });
   add(1, 6, {
     type: "choice",
@@ -245,8 +245,8 @@ window.MIST_DATA = (() => {
     ],
   });
   add(1, 7, { speaker: "女人", text: "林舟？我是许知晚。许知夏的妹妹。雨太大了，你先别怕。", scene: "corridor_door", visualCharacter: "许知晚", visualMood: "tense", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterHeadSafe: true, characterFocus: "upperBody", bgm: "horror_corridor", ambience: "corridor_hum", sfxOnEnter: ["door_chain", "rain_hit_window"], voiceAudio: "voice_xuzhiwan_ch01_007", voiceCharacter: "xuzhiwan", voiceProfile: "xuzhiwan", voiceEmotion: "cold_tense", voiceDirection: "门外低声，成熟冷艳，带雨夜里的克制和试探，不要甜美。", voiceSpeed: 0.88, voicePitch: 0.9, audioMood: "tense" });
-  add(1, 8, { speaker: "旁白", text: "猫眼外站着一个浑身湿透的女人。她抬头时，林舟差点后退。\n\n那张脸和许知夏太像了。", scene: "corridor_door", visualMood: "tense", visualCharacter: "许知晚", characterVariant: "fullbody", characterScale: "large", characterPosition: "center", characterFraming: "fullbody", characterHeadSafe: true, characterFocus: "fullBody", bgm: "horror_corridor", ambience: "corridor_hum", sfxOnEnter: ["door_chain", "rain_hit_window"], audioMood: "tense" });
-  add(1, 9, { speaker: "陈妍", text: "你最好别开门。还有，把门链扣上。你这破楼连灯都一闪一闪的。", scene: "old_chat_memory" });
+  add(1, 8, { speaker: "旁白", text: "猫眼外站着一个浑身湿透的女人。她抬头时，林舟差点后退。\n\n那张脸和许知夏太像了。", scene: "corridor_door", visualMood: "tense", visualCharacter: "许知晚", characterVariant: "fullbody", characterScale: "large", characterPosition: "center", characterFraming: "fullbody", characterHeadSafe: true, characterFocus: "fullBody", bgm: "horror_corridor", ambience: "corridor_hum", sfxOnEnter: ["door_chain", "rain_hit_window"], voiceProfile: "narrator", voiceEmotion: "suspense_low", voiceDirection: "低声，画面感强，她抬头时停顿，太像了带冷意。", voiceSpeed: 0.84, voicePitch: 0.88, narrationAudio: "narration_ch01_008", audioMood: "tense" });
+  add(1, 9, { speaker: "陈妍", text: "你最好别开门。还有，把门链扣上。你这破楼连灯都一闪一闪的。", scene: "old_chat_memory", voiceProfile: "chenyan", voiceEmotion: "clear_warning", voiceDirection: "干练、直接、稍快，现实支撑感。", voiceSpeed: 1.04, voicePitch: 1.02, voiceAudio: "voice_chenyan_ch01_009", voiceCharacter: "chenyan" });
   add(1, 10, {
     type: "choice",
     scene: "corridor_door",

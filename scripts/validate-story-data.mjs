@@ -5,9 +5,14 @@ const root = new URL("../", import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), "utf8");
 const exists = (path) => fs.existsSync(new URL(path, root));
 const failures = [];
+const warnings = [];
 
 function assert(condition, message) {
   if (!condition) failures.push(message);
+}
+
+function warn(condition, message) {
+  if (!condition) warnings.push(message);
 }
 
 function loadData() {
@@ -122,6 +127,14 @@ function assertAssetPath(path, label) {
   assert(exists(path), `${label} references missing file: ${path}`);
 }
 
+function fileSize(path) {
+  try {
+    return fs.statSync(new URL(path, root)).size;
+  } catch (error) {
+    return 0;
+  }
+}
+
 function getVisualCharacter(node) {
   const speaker = node.visualCharacter || node.speaker || "旁白";
   const rawName = String(speaker).split(/[：:]/)[0].trim() || "旁白";
@@ -154,6 +167,8 @@ assert(
 assert(countMilestones(scriptText) <= 4, "MILESTONES must be at most 4");
 assert(VISUALS && typeof VISUALS === "object", "visual assets config is missing");
 assert(exists("assets/audio/audio-assets.js"), "audio assets config file is missing");
+assert(exists("scripts/generate-voice-assets.mjs"), "voice generation script is missing");
+assert(exists(".env.example"), ".env.example is missing");
 assert(AUDIO && typeof AUDIO === "object", "window.SECOND_LIFE_AUDIO is missing");
 assert(indexText.includes("assets/audio/audio-assets.js"), "index.html must load assets/audio/audio-assets.js");
 assert(AUDIO.voiceProfiles && typeof AUDIO.voiceProfiles === "object", "audio-assets.js must define voiceProfiles");
@@ -170,8 +185,45 @@ assert(scriptText.includes("function prepareSpeechText"), "script.js must prepar
     assert(typeof key === "string" && key.length > 0, `audio ${category} has invalid key`);
     assert(typeof path === "string" && path.length > 0, `audio ${category}.${key} must provide a path`);
     assert(!/^https?:\/\//i.test(path), `audio ${category}.${key} must not use external URL: ${path}`);
+    if (category === "voice" || category === "narration") {
+      assert(exists(path), `audio ${category}.${key} references missing file: ${path}`);
+    }
   }
 });
+
+const requiredVoiceFiles = [
+  "assets/audio/narration/narration_ch01_001.mp3",
+  "assets/audio/narration/narration_ch01_003.mp3",
+  "assets/audio/narration/narration_ch01_008.mp3",
+  "assets/audio/voice/xuzhixia/voice_xuzhixia_ch01_005.mp3",
+  "assets/audio/voice/xuzhiwan/voice_xuzhiwan_ch01_007.mp3",
+  "assets/audio/voice/xuzhiwan/voice_xuzhiwan_ch02_003.mp3",
+  "assets/audio/voice/zhouyu/voice_zhouyu_ch04_020.mp3",
+  "assets/audio/voice/chenyan/voice_chenyan_ch01_009.mp3",
+  "assets/audio/voice/linzhou/voice_linzhou_ch01_004.mp3",
+];
+requiredVoiceFiles.forEach((assetPath) => {
+  assert(exists(assetPath), `first-batch voice file is missing: ${assetPath}`);
+});
+
+const requiredImage2Assets = [
+  ["character", "assets/characters/char_xuzhixia_recording.webp"],
+  ["character", "assets/characters/char_xuzhiwan_wet.webp"],
+  ["character", "assets/characters/char_xuzhiwan_pressure.webp"],
+  ["character", "assets/characters/char_xuzhiwan_closeup.webp"],
+  ["character", "assets/characters/char_zhouyu_pressure.webp"],
+  ["background", "assets/bg/bg_rental_room_rain_night.webp"],
+  ["background", "assets/bg/bg_corridor_door.webp"],
+  ["background", "assets/bg/bg_phone_call_ui.webp"],
+  ["background", "assets/bg/bg_old_phone_view.webp"],
+  ["background", "assets/covers/cover_home_hero.webp"],
+];
+for (const [kind, assetPath] of requiredImage2Assets) {
+  assert(exists(assetPath), `first-batch image2 asset is missing: ${assetPath}`);
+  const size = fileSize(assetPath);
+  if (kind === "character") warn(size >= 120000, `character asset may still be low quality placeholder: ${assetPath} (${size} bytes)`);
+  if (kind === "background") warn(size >= 250000, `background/cover asset may still be low quality placeholder: ${assetPath} (${size} bytes)`);
+}
 
 for (const sceneId of requiredSceneIds) {
   const scene = VISUALS.scenes?.[sceneId];
@@ -439,6 +491,11 @@ if (failures.length) {
   console.error("Story data validation failed:");
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
+}
+
+if (warnings.length) {
+  console.warn("Story data validation warnings:");
+  for (const warning of warnings) console.warn(`- ${warning}`);
 }
 
 console.log("Story data validation passed.");
