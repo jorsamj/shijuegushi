@@ -129,6 +129,8 @@
     currentAmbience: "",
     unlocked: false,
     lastVoiceNodeId: "",
+    voiceFallbackNoticeShown: false,
+    voiceMissingNoticeShown: false,
   };
 
   function createInitialState() {
@@ -269,11 +271,14 @@
         ? "is-message"
         : "is-present";
     const scene = node?.scene || "rental_room_rain_night";
-    const scale = node?.characterScale || "auto";
-    const position = node?.characterPosition || "auto";
+    const scale = node?.characterScale || "normal";
+    const position = node?.characterPosition || "center";
+    const framing = node?.characterFraming || (scale === "fullscreen" ? "face" : scale === "closeup" ? "bust" : "halfbody");
+    const focus = node?.characterFocus || (framing === "fullbody" ? "fullBody" : framing === "face" ? "face" : "upperBody");
+    const headSafe = node?.characterHeadSafe !== false;
     const mood = node?.visualMood || "normal";
     return `
-      <div class="vn-character-layer character-${escapeHTML(character.id)} variant-${escapeHTML(variant)} scale-${escapeHTML(scale)} position-${escapeHTML(position)} mood-${escapeHTML(mood)} ${mode}" data-speaker="${escapeHTML(character.name)}" data-scene="${escapeHTML(scene)}">
+      <div class="vn-character-layer character-${escapeHTML(character.id)} variant-${escapeHTML(variant)} scale-${escapeHTML(scale)} position-${escapeHTML(position)} framing-${escapeHTML(framing)} focus-${escapeHTML(focus)} ${headSafe ? "head-safe" : ""} mood-${escapeHTML(mood)} ${mode}" data-speaker="${escapeHTML(character.name)}" data-scene="${escapeHTML(scene)}">
         <figure class="vn-character-standee">
           <img src="${escapeHTML(image)}" alt="${escapeHTML(character.name)}" loading="lazy" />
           <figcaption>
@@ -380,6 +385,7 @@
     return {
       audioEnabled: saved.audioEnabled !== false,
       voiceEnabled: saved.voiceEnabled !== false,
+      voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "real",
       bgmEnabled: saved.bgmEnabled !== false,
       sfxEnabled: saved.sfxEnabled !== false,
     };
@@ -608,7 +614,7 @@
 
   function speakNode(node) {
     const settings = getAudioSettings();
-    if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked) return;
+    if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked || settings.voiceMode === "off") return;
     if (audioState.lastVoiceNodeId === node.nodeId) return;
     const realVoiceKey = node.voiceAudio || node.narrationAudio || "";
     const realVoiceCategory = node.voiceAudio ? "voice" : node.narrationAudio ? "narration" : "";
@@ -618,12 +624,27 @@
       audioState.realVoice = playRealAudio(realVoiceSrc, {
         loop: false,
         volume: 0.82,
-        onFallback: () => speakSyntheticNode(node),
+        onFallback: () => handleMissingRealVoice(node, settings),
       });
       audioState.lastVoiceNodeId = node.nodeId;
       return;
     }
-    speakSyntheticNode(node);
+    handleMissingRealVoice(node, settings);
+  }
+
+  function handleMissingRealVoice(node, settings = getAudioSettings()) {
+    if (settings.voiceMode === "fallback") {
+      if (!audioState.voiceFallbackNoticeShown) {
+        showToast("当前为临时合成语音，正式配音素材接入后会自动替换。", "warn");
+        audioState.voiceFallbackNoticeShown = true;
+      }
+      speakSyntheticNode(node);
+      return;
+    }
+    if ((node.voiceAudio || node.narrationAudio) && !audioState.voiceMissingNoticeShown) {
+      showToast("真实语音素材未就绪，已跳过临时机械朗读。", "warn");
+      audioState.voiceMissingNoticeShown = true;
+    }
   }
 
   function speakSyntheticNode(node) {
@@ -633,12 +654,28 @@
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(raw.slice(0, 180));
     utterance.lang = "zh-CN";
-    const character = getVisualCharacter(node.speaker);
-    utterance.rate = character.id === "zhixia" ? 0.82 : character.id === "zhouyu" ? 0.88 : 0.95;
-    utterance.pitch = character.id === "zhouyu" ? 0.82 : character.id === "zhuwan" ? 0.9 : character.id === "chenyan" ? 1.02 : 0.96;
+    const profile = getVoiceProfile(node);
+    utterance.rate = Number(node.voiceSpeed || profile.rate || 0.92);
+    utterance.pitch = Number(node.voicePitch || profile.pitch || 0.95);
     utterance.volume = 0.72;
     window.speechSynthesis.speak(utterance);
     audioState.lastVoiceNodeId = node.nodeId;
+  }
+
+  function getVoiceProfile(node) {
+    const profileId = node.voiceProfile || getVisualCharacter(node.visualCharacter || node.speaker).id || "narrator";
+    const profile = AUDIO.voiceProfiles?.[profileId] || {};
+    const defaults = {
+      narrator: { rate: 0.84, pitch: 0.88 },
+      linzhou: { rate: 0.92, pitch: 0.94 },
+      zhuwan: { rate: 0.88, pitch: 0.9 },
+      xuzhiwan: { rate: 0.88, pitch: 0.9 },
+      zhouyu: { rate: 0.84, pitch: 0.78 },
+      chenyan: { rate: 1.02, pitch: 1.02 },
+      zhixia: { rate: 0.82, pitch: 0.92 },
+      xuzhixia: { rate: 0.82, pitch: 0.92 },
+    };
+    return { ...(defaults[profileId] || defaults.narrator), ...profile };
   }
 
   function updateAudioForNode(node, sceneCue = {}) {

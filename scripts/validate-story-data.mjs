@@ -101,6 +101,10 @@ const relationshipIds = new Set([
   "suspicion_zhou",
   "courage_linzou",
 ]);
+const characterScaleIds = new Set(["normal", "large", "impact", "closeup", "fullscreen"]);
+const characterFramingIds = new Set(["fullbody", "three-quarter", "halfbody", "bust", "face"]);
+const characterPositionIds = new Set(["left", "center", "right"]);
+const characterFocusIds = new Set(["face", "upperBody", "fullBody"]);
 const audioKeySets = {
   bgm: new Set(Object.keys(AUDIO.bgm || {})),
   ambience: new Set(Object.keys(AUDIO.ambience || {})),
@@ -152,6 +156,11 @@ assert(VISUALS && typeof VISUALS === "object", "visual assets config is missing"
 assert(exists("assets/audio/audio-assets.js"), "audio assets config file is missing");
 assert(AUDIO && typeof AUDIO === "object", "window.SECOND_LIFE_AUDIO is missing");
 assert(indexText.includes("assets/audio/audio-assets.js"), "index.html must load assets/audio/audio-assets.js");
+assert(AUDIO.voiceProfiles && typeof AUDIO.voiceProfiles === "object", "audio-assets.js must define voiceProfiles");
+["narrator", "linzhou", "xuzhiwan", "zhouyu", "chenyan", "xuzhixia"].forEach((profileId) => {
+  assert(AUDIO.voiceProfiles?.[profileId], `missing voice profile: ${profileId}`);
+});
+assert(scriptText.includes('voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "real"'), "voiceMode must default to real");
 ["bgm", "ambience", "sfx", "narration", "voice"].forEach((category) => {
   assert(AUDIO[category] && typeof AUDIO[category] === "object", `audio category missing: ${category}`);
   for (const [key, path] of Object.entries(AUDIO[category] || {})) {
@@ -227,13 +236,13 @@ for (const chapter of DATA.chapters || []) {
 
 const requiredVisualStateNodes = {
   ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_ring"] },
-  ch01_005: { visualMood: true, characterVariant: "recording", voiceAudio: true },
-  ch01_007: { visualMood: true, characterVariant: "wet" },
-  ch01_008: { visualMood: true, characterVariant: "fullbody" },
-  ch02_003: { visualMood: true, characterVariant: "pressure" },
-  ch05_011: { visualMood: true, characterVariant: "fear", sfxOnEnter: ["recording_play", "static_noise"] },
-  ch05_015: { visualMood: true, characterVariant: "recording", sfxOnEnter: ["recording_play", "static_noise"] },
-  ch05_016: { visualMood: true, characterVariant: "horror" },
+  ch01_005: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "impact", characterFraming: "halfbody", characterFocus: "face", headSafe: true, voiceAudio: true },
+  ch01_007: { visualMood: true, visualCharacter: "许知晚", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterFocus: "upperBody", headSafe: true },
+  ch01_008: { visualMood: true, visualCharacter: "许知晚", characterVariant: "fullbody", characterScale: "large", characterPosition: "center", characterFraming: "fullbody", characterFocus: "fullBody", headSafe: true },
+  ch02_003: { visualMood: true, visualCharacter: "许知晚", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterFocus: "face", headSafe: true },
+  ch05_011: { visualMood: true, visualCharacter: "许知夏", characterVariant: "fear", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["recording_play", "static_noise"] },
+  ch05_015: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["recording_play", "static_noise"] },
+  ch05_016: { visualMood: true, visualCharacter: "周屿", characterVariant: "horror", characterScale: "fullscreen", characterFraming: "face", characterFocus: "face", headSafe: true },
   ch06_020: { visualMood: true, bgm: "ending_archive" },
 };
 
@@ -242,7 +251,13 @@ for (const [nodeId, requirement] of Object.entries(requiredVisualStateNodes)) {
   assert(node, `required visual state node is missing: ${nodeId}`);
   if (!node) continue;
   if (requirement.visualMood) assert(typeof node.visualMood === "string" && node.visualMood.length > 0, `${nodeId} must define visualMood`);
+  if (requirement.visualCharacter) assert(node.visualCharacter === requirement.visualCharacter, `${nodeId} must use visualCharacter=${requirement.visualCharacter}`);
   if (requirement.characterVariant) assert(node.characterVariant === requirement.characterVariant, `${nodeId} must use characterVariant=${requirement.characterVariant}`);
+  if (requirement.characterScale) assert(node.characterScale === requirement.characterScale, `${nodeId} must use characterScale=${requirement.characterScale}`);
+  if (requirement.characterPosition) assert(node.characterPosition === requirement.characterPosition, `${nodeId} must use characterPosition=${requirement.characterPosition}`);
+  if (requirement.characterFraming) assert(node.characterFraming === requirement.characterFraming, `${nodeId} must use characterFraming=${requirement.characterFraming}`);
+  if (requirement.characterFocus) assert(node.characterFocus === requirement.characterFocus, `${nodeId} must use characterFocus=${requirement.characterFocus}`);
+  if (requirement.headSafe) assert(node.characterHeadSafe === true, `${nodeId} must set characterHeadSafe=true`);
   if (requirement.bgm) assert(node.bgm === requirement.bgm, `${nodeId} must use bgm=${requirement.bgm}`);
   if (requirement.voiceAudio) assert(typeof node.voiceAudio === "string" && node.voiceAudio.length > 0, `${nodeId} must define voiceAudio`);
   for (const sfx of requirement.sfxOnEnter || []) {
@@ -264,15 +279,32 @@ for (const node of Object.values(DATA.nodes || {})) {
   assertOptionalString(node.characterVariant, `${node.nodeId}.characterVariant`);
   assertOptionalString(node.characterScale, `${node.nodeId}.characterScale`);
   assertOptionalString(node.characterPosition, `${node.nodeId}.characterPosition`);
+  assertOptionalString(node.characterFraming, `${node.nodeId}.characterFraming`);
+  if (node.characterHeadSafe !== undefined) assert(typeof node.characterHeadSafe === "boolean", `${node.nodeId}.characterHeadSafe must be boolean`);
+  assertOptionalString(node.characterFocus, `${node.nodeId}.characterFocus`);
   assertOptionalString(node.overlayPreset, `${node.nodeId}.overlayPreset`);
   assertOptionalString(node.bgm, `${node.nodeId}.bgm`);
   assertOptionalString(node.ambience, `${node.nodeId}.ambience`);
   assertOptionalString(node.narrationAudio, `${node.nodeId}.narrationAudio`);
   assertOptionalString(node.voiceAudio, `${node.nodeId}.voiceAudio`);
   assertOptionalString(node.voiceCharacter, `${node.nodeId}.voiceCharacter`);
+  assertOptionalString(node.voiceProfile, `${node.nodeId}.voiceProfile`);
+  assertOptionalString(node.voiceEmotion, `${node.nodeId}.voiceEmotion`);
+  assertOptionalString(node.voiceDirection, `${node.nodeId}.voiceDirection`);
+  if (node.voiceSpeed !== undefined) assert(typeof node.voiceSpeed === "number", `${node.nodeId}.voiceSpeed must be a number`);
+  if (node.voicePitch !== undefined) assert(typeof node.voicePitch === "number", `${node.nodeId}.voicePitch must be a number`);
   assertOptionalString(node.audioMood, `${node.nodeId}.audioMood`);
   assertOptionalStringList(node.sfxOnEnter, `${node.nodeId}.sfxOnEnter`);
   assertOptionalStringList(node.sfxOnChoice, `${node.nodeId}.sfxOnChoice`);
+  if (node.characterScale) assert(characterScaleIds.has(node.characterScale), `${node.nodeId}.characterScale is invalid: ${node.characterScale}`);
+  if (node.characterPosition) assert(characterPositionIds.has(node.characterPosition), `${node.nodeId}.characterPosition is invalid: ${node.characterPosition}`);
+  if (node.characterFraming) assert(characterFramingIds.has(node.characterFraming), `${node.nodeId}.characterFraming is invalid: ${node.characterFraming}`);
+  if (node.characterFocus) assert(characterFocusIds.has(node.characterFocus), `${node.nodeId}.characterFocus is invalid: ${node.characterFocus}`);
+  if (node.characterScale === "closeup" || node.characterScale === "fullscreen") {
+    assert(Boolean(node.characterFraming), `${node.nodeId}.${node.characterScale} must define characterFraming`);
+    assert(node.characterHeadSafe === true, `${node.nodeId}.${node.characterScale} must set characterHeadSafe=true`);
+    assert(Boolean(node.visualCharacter || getVisualCharacter(node)), `${node.nodeId}.${node.characterScale} must resolve a visible character`);
+  }
   if (node.characterVariant) {
     const visualCharacter = getVisualCharacter(node);
     assert(visualCharacter, `${node.nodeId}.characterVariant cannot resolve visual character`);
@@ -282,6 +314,14 @@ for (const node of Object.values(DATA.nodes || {})) {
   if (node.ambience) assert(audioKeySets.ambience.has(node.ambience), `${node.nodeId}.ambience references missing audio key: ${node.ambience}`);
   for (const sfx of node.sfxOnEnter || []) assert(audioKeySets.sfx.has(sfx), `${node.nodeId}.sfxOnEnter references missing audio key: ${sfx}`);
   for (const sfx of node.sfxOnChoice || []) assert(audioKeySets.sfx.has(sfx), `${node.nodeId}.sfxOnChoice references missing audio key: ${sfx}`);
+  if (node.voiceAudio) assert(audioKeySets.voice.has(node.voiceAudio), `${node.nodeId}.voiceAudio references missing audio key: ${node.voiceAudio}`);
+  if (node.narrationAudio) assert(audioKeySets.narration.has(node.narrationAudio), `${node.nodeId}.narrationAudio references missing audio key: ${node.narrationAudio}`);
+  if (node.voiceProfile) assert(AUDIO.voiceProfiles?.[node.voiceProfile], `${node.nodeId}.voiceProfile references missing profile: ${node.voiceProfile}`);
+  if (node.voiceAudio || node.narrationAudio) {
+    assert(Boolean(node.voiceProfile), `${node.nodeId} voice node must define voiceProfile`);
+    assert(Boolean(node.voiceEmotion), `${node.nodeId} voice node must define voiceEmotion`);
+    assert(Boolean(node.voiceDirection), `${node.nodeId} voice node must define voiceDirection`);
+  }
 
   for (const choice of node.choices || []) {
     if (choice.nextNodeId) {
