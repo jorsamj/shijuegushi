@@ -3370,7 +3370,7 @@ button {
   position: absolute;
   right: clamp(18px, 6vw, 100px);
   bottom: -22px;
-  height: min(112%, 760px);
+  height: min(118%, 820px);
   margin: 0;
   display: flex;
   align-items: flex-end;
@@ -3380,7 +3380,7 @@ button {
 .vn-character-standee img {
   display: block;
   height: 100%;
-  max-width: min(55vw, 560px);
+  max-width: min(72vw, 860px);
   object-fit: contain;
   object-position: bottom center;
   filter:
@@ -3423,30 +3423,66 @@ button {
 
 .character-zhuwan .vn-character-standee {
   right: clamp(-12px, 4vw, 86px);
-  height: min(124%, 820px);
+  height: min(132%, 900px);
 }
 
 .character-zhouyu .vn-character-standee {
   right: clamp(0px, 7vw, 120px);
-  height: min(118%, 780px);
+  height: min(128%, 880px);
 }
 
-.variant-closeup .vn-character-standee,
 .variant-horror .vn-character-standee,
 .variant-pressure .vn-character-standee {
-  height: min(132%, 900px);
+  height: min(170%, 1120px);
+}
+
+.variant-horror .vn-character-standee img,
+.variant-pressure .vn-character-standee img {
+  max-width: min(90vw, 1120px);
+}
+
+.variant-closeup .vn-character-standee {
+  height: min(205%, 1280px);
 }
 
 .variant-closeup .vn-character-standee img {
-  max-width: min(62vw, 680px);
+  max-width: min(96vw, 1200px);
+}
+
+.scale-normal .vn-character-standee {
+  height: min(118%, 820px);
 }
 
 .scale-large .vn-character-standee {
-  height: min(142%, 940px);
+  height: min(150%, 980px);
 }
 
 .scale-large .vn-character-standee img {
-  max-width: min(66vw, 720px);
+  max-width: min(76vw, 920px);
+}
+
+.scale-impact .vn-character-standee {
+  height: min(175%, 1120px);
+}
+
+.scale-impact .vn-character-standee img {
+  max-width: min(86vw, 1080px);
+}
+
+.scale-closeup .vn-character-standee {
+  height: min(205%, 1280px);
+}
+
+.scale-closeup .vn-character-standee img {
+  max-width: min(96vw, 1200px);
+}
+
+.scale-fullscreen .vn-character-standee {
+  height: min(235%, 1460px);
+}
+
+.scale-fullscreen .vn-character-standee img {
+  max-width: 110vw;
 }
 
 .scale-medium .vn-character-standee {
@@ -3580,9 +3616,9 @@ button {
   .character-zhouyu .vn-character-standee,
   .character-zhuwan .vn-character-standee {
     left: auto;
-    right: -34px;
-    bottom: -10px;
-    height: 102%;
+    right: -44px;
+    bottom: -16px;
+    height: 112%;
     transform: none;
   }
 
@@ -3596,14 +3632,40 @@ button {
   .character-zhouyu .vn-character-standee,
   .variant-horror .vn-character-standee,
   .variant-pressure .vn-character-standee {
-    height: 112%;
+    height: 138%;
   }
 
   .scale-large .vn-character-standee,
   .scale-large.character-zhuwan .vn-character-standee,
   .scale-large.character-zhouyu .vn-character-standee {
-    height: 124%;
-    right: -58px;
+    height: 150%;
+    right: -68px;
+  }
+
+  .scale-impact .vn-character-standee,
+  .scale-impact.character-zhuwan .vn-character-standee,
+  .scale-impact.character-zhouyu .vn-character-standee {
+    height: 176%;
+    right: -88px;
+  }
+
+  .scale-closeup .vn-character-standee,
+  .variant-closeup .vn-character-standee {
+    height: 210%;
+    right: -108px;
+    bottom: -34px;
+  }
+
+  .scale-fullscreen .vn-character-standee {
+    height: 238%;
+    right: -128px;
+    bottom: -46px;
+  }
+
+  .scale-impact .vn-character-standee img,
+  .scale-closeup .vn-character-standee img,
+  .scale-fullscreen .vn-character-standee img {
+    max-width: 122vw;
   }
 
   .position-left .vn-character-standee {
