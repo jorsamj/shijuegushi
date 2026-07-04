@@ -17,6 +17,44 @@
     narration: {},
     voice: {},
   };
+  if (AUDIO.voiceProfiles) {
+    AUDIO.voiceProfiles.narrator = {
+      ...AUDIO.voiceProfiles.narrator,
+      name: "旁白",
+      tone: "低沉、克制、档案感",
+      direction: "像在翻开一份旧案档案，语气克制但有压迫感，不要机械。",
+    };
+    AUDIO.voiceProfiles.linzhou = {
+      ...AUDIO.voiceProfiles.linzhou,
+      name: "林舟",
+      tone: "疲惫、压抑、逐渐慌乱",
+      direction: "普通上班族被旧案拖回雨夜，前期疲惫，后期越来越紧张。",
+    };
+    AUDIO.voiceProfiles.xuzhiwan = {
+      ...AUDIO.voiceProfiles.xuzhiwan,
+      name: "许知晚",
+      tone: "成熟冷艳、低声、压迫感",
+      direction: "成熟、冷艳、压得住场，不要甜美少女音。",
+    };
+    AUDIO.voiceProfiles.zhouyu = {
+      ...AUDIO.voiceProfiles.zhouyu,
+      name: "周屿",
+      tone: "表面温和，后期低沉控制",
+      direction: "前期像温和旧友，后期语气变低、变慢，带威胁感。",
+    };
+    AUDIO.voiceProfiles.chenyan = {
+      ...AUDIO.voiceProfiles.chenyan,
+      name: "陈妍",
+      tone: "清醒、利落、现实支撑",
+      direction: "清醒干练，像能把主角拉回现实的人。",
+    };
+    AUDIO.voiceProfiles.xuzhixia = {
+      ...AUDIO.voiceProfiles.xuzhixia,
+      name: "许知夏",
+      tone: "旧录音、虚弱、遥远",
+      direction: "像从旧手机或录音里传来，有距离感、噪声感、害怕但克制。",
+    };
+  }
   const STORAGE_KEYS = {
     progress: "mist.currentProgress",
     saves: "mist.saveSlots",
@@ -34,6 +72,7 @@
     "clue_photo_background",
     "clue_timed_voice",
   ];
+  const FOCUSED_CLUE_REVEALS = new Set(["clue_dead_call", "clue_photo_background", "clue_timed_voice"]);
 
   const CLUE_FILTERS = ["全部", "关键线索", "通话", "人物", "照片", "旧案"];
 
@@ -131,6 +170,7 @@
     lastVoiceNodeId: "",
     voiceFallbackNoticeShown: false,
     voiceMissingNoticeShown: false,
+    dialogueToken: 0,
   };
 
   function createInitialState() {
@@ -385,7 +425,7 @@
     return {
       audioEnabled: saved.audioEnabled !== false,
       voiceEnabled: saved.voiceEnabled !== false,
-      voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "fallback",
+      voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "real",
       bgmEnabled: saved.bgmEnabled !== false,
       sfxEnabled: saved.sfxEnabled !== false,
     };
@@ -462,6 +502,31 @@
       });
     }
     return audio;
+  }
+
+  function stopCurrentVoice() {
+    stopRealAudio(audioState.realVoice);
+    audioState.realVoice = null;
+    audioState.lastVoiceNodeId = "";
+  }
+
+  function stopCurrentNarration() {
+    stopCurrentVoice();
+  }
+
+  function stopSyntheticSpeech() {
+    if ("speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (error) {}
+    }
+  }
+
+  function stopAllDialogueAudio() {
+    audioState.dialogueToken += 1;
+    stopCurrentVoice();
+    stopCurrentNarration();
+    stopSyntheticSpeech();
   }
 
   function getBgmFreqs(name = "") {
@@ -620,15 +685,18 @@
     const settings = getAudioSettings();
     if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked || settings.voiceMode === "off") return;
     if (audioState.lastVoiceNodeId === node.nodeId) return;
+    stopAllDialogueAudio();
+    const token = audioState.dialogueToken;
     const realVoiceKey = node.voiceAudio || node.narrationAudio || "";
     const realVoiceCategory = node.voiceAudio ? "voice" : node.narrationAudio ? "narration" : "";
     const realVoiceSrc = realVoiceCategory ? getAudioSource(realVoiceCategory, realVoiceKey) : "";
     if (realVoiceSrc) {
-      stopRealAudio(audioState.realVoice);
       audioState.realVoice = playRealAudio(realVoiceSrc, {
         loop: false,
         volume: 0.82,
-        onFallback: () => handleMissingRealVoice(node, settings),
+        onFallback: () => {
+          if (token === audioState.dialogueToken) handleMissingRealVoice(node, settings);
+        },
       });
       audioState.lastVoiceNodeId = node.nodeId;
       return;
@@ -637,16 +705,16 @@
   }
 
   function handleMissingRealVoice(node, settings = getAudioSettings()) {
-    if (settings.voiceMode === "fallback" || settings.voiceMode === "real") {
+    if (settings.voiceMode === "fallback") {
       if (!audioState.voiceFallbackNoticeShown) {
-        showToast("当前为临时剧情语音，已按角色与情绪调整语速、音高和停顿。", "warn");
+        showToast("当前为临时合成语音，已按角色与情绪调整语速和音高。", "warn");
         audioState.voiceFallbackNoticeShown = true;
       }
       speakSyntheticNode(node);
       return;
     }
     if ((node.voiceAudio || node.narrationAudio) && !audioState.voiceMissingNoticeShown) {
-      showToast("真实语音素材未就绪，已跳过临时机械朗读。", "warn");
+      showToast("当前节点缺少真实语音，已跳过机械朗读。", "warn");
       audioState.voiceMissingNoticeShown = true;
     }
   }
@@ -655,7 +723,8 @@
     if (!("speechSynthesis" in window)) return;
     const raw = String(node.text || "").replace(/\s+/g, " ").trim();
     if (!raw || node.type === "choice" || node.type === "deduction" || node.type === "ending") return;
-    window.speechSynthesis.cancel();
+    stopSyntheticSpeech();
+    const token = audioState.dialogueToken;
     const profile = getVoiceProfile(node);
     const speechText = prepareSpeechText(raw, node, profile).slice(0, 220);
     const utterance = new SpeechSynthesisUtterance(speechText);
@@ -666,6 +735,9 @@
     utterance.rate = prosody.rate;
     utterance.pitch = prosody.pitch;
     utterance.volume = prosody.volume;
+    utterance.onstart = () => {
+      if (token !== audioState.dialogueToken) stopSyntheticSpeech();
+    };
     window.speechSynthesis.speak(utterance);
     audioState.lastVoiceNodeId = node.nodeId;
   }
@@ -781,19 +853,17 @@
   }
 
   function stopAllAudio() {
+    stopAllDialogueAudio();
     stopAudioHandle(audioState.bgm);
     stopAudioHandle(audioState.ambience);
     stopRealAudio(audioState.realBgm);
     stopRealAudio(audioState.realAmbience);
-    stopRealAudio(audioState.realVoice);
     audioState.bgm = null;
     audioState.ambience = null;
     audioState.realBgm = null;
     audioState.realAmbience = null;
-    audioState.realVoice = null;
     audioState.currentBgm = "";
     audioState.currentAmbience = "";
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   }
 
   function toggleAudio() {
@@ -1032,7 +1102,6 @@
     const series = getSeries(seriesId);
     const scripts = series.scriptIds.map((id) => getScript(id)).filter(Boolean);
     const hasLocalProgress = hasProgress();
-    const storyCover = VISUALS.covers?.home || VISUALS.chapters?.chapter_01?.image || "";
     const rows = scripts
       .map((script) => {
         const isOpen = script.status === "open";
@@ -1056,9 +1125,6 @@
       <section class="series-screen story-file-screen">
         <button class="back-link" type="button" data-action="back-hall">\u2190 \u8fd4\u56de\u4eba\u751f\u6863\u6848</button>
         <header class="series-brief story-file-brief">
-          <figure class="story-main-visual">
-            <img src="${escapeHTML(storyCover)}" alt="${escapeHTML(series.title)}" loading="lazy" />
-          </figure>
           <div class="story-file-copy">
             <p class="eyebrow">LIFE FILE</p>
             <h1>${escapeHTML(series.title)}</h1>
@@ -1183,6 +1249,7 @@
     if (node.resolveEnding === true) {
       continueButton.textContent = "查看结局";
       continueButton.addEventListener("click", () => {
+        stopAllDialogueAudio();
         state.endingId = resolveEnding();
         autoSave();
         showEnding(state.endingId);
@@ -1207,11 +1274,15 @@
 
     if (node.type === "ending" && DATA.endings[node.nodeId]) {
       continueButton.textContent = "查看结局";
-      continueButton.addEventListener("click", () => showEnding(node.nodeId));
+      continueButton.addEventListener("click", () => {
+        stopAllDialogueAudio();
+        showEnding(node.nodeId);
+      });
       return;
     }
 
     continueButton.addEventListener("click", () => {
+      stopAllDialogueAudio();
       if (node.nextNodeId) {
         goToNode(node.nextNodeId);
       } else {
@@ -1224,6 +1295,7 @@
   function handleChoice(node, choiceId) {
     const choice = (node.choices || []).find((item) => item.choiceId === choiceId);
     if (!choice) return;
+    stopAllDialogueAudio();
     recordChoice(node, choice);
     addHistory({
       type: "choice",
@@ -1290,6 +1362,7 @@
     });
   }
   function goToNode(nodeId) {
+    stopAllDialogueAudio();
     if (DATA.endings[nodeId]) {
       showEnding(nodeId);
       return;
@@ -1313,8 +1386,10 @@
       state.clues.push(clueId);
       if (!state.unreadClues.includes(clueId)) state.unreadClues.push(clueId);
       recordChapterClue(clueId);
-      showToast(`获得线索：${DATA.clues[clueId].title}`, "clue");
-      enqueueFeedback({ type: "clue", clueId });
+      showToast(`线索已归档：${DATA.clues[clueId].title}`, "clue");
+      if (FOCUSED_CLUE_REVEALS.has(clueId)) {
+        enqueueFeedback({ type: "clue", clueId });
+      }
       maybeShowTruthNotice();
     });
     evaluateProgressTriggers();
@@ -1374,11 +1449,7 @@
       if (state.triggeredMilestones.includes(milestone.milestoneId)) return;
       if (!milestone.test()) return;
       state.triggeredMilestones.push(milestone.milestoneId);
-      enqueueFeedback({
-        type: "milestone",
-        title: milestone.title,
-        text: milestone.text,
-      });
+      showToast(`${milestone.title}：${milestone.text}`, "clue");
     });
   }
 
