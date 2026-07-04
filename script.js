@@ -1466,14 +1466,8 @@
 
   function maybeShowTruthNotice() {
     const count = getCoreClueCount();
-    const noticeMap = {
-      3: "真相正在靠近",
-      5: "证据链逐渐成形",
-      6: "旧案轮廓已经完整",
-    };
-    if (!noticeMap[count] || state.truthNotices.includes(count)) return;
+    if (![3, 5, 6].includes(count) || state.truthNotices.includes(count)) return;
     state.truthNotices.push(count);
-    showToast(noticeMap[count], "clue");
   }
 
   function enqueueFeedback(item, first = false) {
