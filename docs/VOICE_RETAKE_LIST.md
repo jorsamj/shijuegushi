@@ -95,3 +95,12 @@
 - 默认 `voiceMode=real`，没有真实语音时静默跳过，不强行机械朗读。
 - `voiceMode=fallback` 仅用于开发测试，必须提示临时合成语音。
 - 快速连续翻页时不出现两条人声叠加。
+## 2026-07-05 P0 Placeholder Fill
+
+- P0 short voice files are present in `assets/audio/voice/` and can be used for integration QA.
+- P0 stinger files are present in `assets/audio/stingers/`.
+- The current P0 voice/stinger files were generated as temporary placeholder audio.
+- They are still `placeholder / need-retake / not-final`.
+- Retake priority remains: Xu Zhixia dead-call line, Xu Zhiwan first door line, Xu Zhiwan pressure line, Zhou Yu pressure line, Chen Yan warning, Lin Zhou reaction.
+- Formal retakes must keep each character on a fixed voice identity; emotion should change through delivery, not by swapping voices.
+- Recommended final pipeline: ElevenLabs, Azure Neural TTS, MiniMax, Volcano Engine, Tencent/Alibaba emotional TTS, or real voice actors.

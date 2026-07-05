@@ -75,3 +75,11 @@
 | SFX | Phone, door, corridor, old phone | The game needed action feedback without full voice acting. | Fixed | Added SFX keys for phone vibration, dead call ring, doorbell, chain, wet footsteps, old phone, photo zoom, marker, soft choice confirm. | Produce short non-harsh real SFX assets. |
 | Stingers | Character short sounds | Character breath and short sonic memory points were missing. | Routed | Added stingers category and P0 keys for Lin Zhou breath, Xu Zhiwan low breath, Zhou Yu low laugh/breath, Xu Zhixia static breath/cut. | Produce 0.5-3s high-quality stingers. |
 | BGM and ambience | Global | White noise and synthetic ambience are unacceptable. | Fixed | Missing BGM/ambience is silent; no random white noise fallback is allowed. | Add soft cinematic loops only when they are good enough. |
+## 2026-07-05 P0 Audio Asset Closure
+
+| Category | Scope | Current State | Status | Treatment | Next Step |
+|---|---|---|---|---|---|
+| P0 SFX | Phone, door, corridor, old phone, photo, choice confirm | All required P0 SFX files now exist under `assets/audio/sfx/`. | Filled | Added playable MP3 files and tightened validation so missing mapped SFX fails. | Human listen test; retake anything that sounds synthetic or harsh. |
+| P0 stingers | Lin Zhou, Xu Zhiwan, Zhou Yu, Xu Zhixia, Chen Yan short sounds | All required P0 stinger files now exist under `assets/audio/stingers/`. | Filled | Added short playable MP3 files and tightened validation so missing mapped stingers fail. | Retake with high-quality voice/SFX production. |
+| P0 key voices | Dead call, first door voice, pressure lines, warning, reaction | Required P0 voice files exist and were refreshed as short clips. | Placeholder | Files remain `placeholder / need-retake / not-final`; they are suitable for integration QA only. | Replace with fixed-character high-quality TTS or real actor takes. |
+| Validation | Audio asset completeness | Missing SFX/stinger/voice files were previously easy to miss. | Fixed | `scripts/validate-story-data.mjs` now checks mapped SFX, stingers, voice, narration, P0 required keys, external URLs, and small-file warnings. | Keep this gate before each push. |

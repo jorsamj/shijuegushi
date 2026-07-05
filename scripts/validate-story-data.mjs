@@ -157,6 +157,14 @@ function assertOptionalStringList(value, label) {
   items.forEach((item) => assert(typeof item === "string", `${label} must contain strings`));
 }
 
+function assertAudioFile(path, label, minWarnBytes) {
+  assert(typeof path === "string" && path.length > 0, `${label} must provide an audio path`);
+  if (typeof path !== "string" || !path.length) return;
+  assert(!/^https?:\/\//i.test(path), `${label} must not use external URL: ${path}`);
+  assert(exists(path), `${label} references missing file: ${path}`);
+  if (exists(path) && minWarnBytes) warn(fileSize(path) >= minWarnBytes, `${label} may be too small: ${path} (${fileSize(path)} bytes)`);
+}
+
 assert(DATA.chapters?.length === 6, `chapters must be 6, got ${DATA.chapters?.length}`);
 assert(clueIds.size === 6, `clues must be 6, got ${clueIds.size}`);
 assert(coreClueIds.length === 6, `CORE_CLUE_IDS must be 6, got ${coreClueIds.length}`);
@@ -209,11 +217,60 @@ assert(voiceGeneratorText.includes("Edge TTS is only allowed"), "voice generator
     assert(typeof key === "string" && key.length > 0, `audio ${category} has invalid key`);
     assert(typeof path === "string" && path.length > 0, `audio ${category}.${key} must provide a path`);
     assert(!/^https?:\/\//i.test(path), `audio ${category}.${key} must not use external URL: ${path}`);
-    if (category === "voice" || category === "narration") {
-      assert(exists(path), `audio ${category}.${key} references missing file: ${path}`);
-    }
+    if (category === "sfx") assertAudioFile(path, `audio ${category}.${key}`, 2048);
+    if (category === "stingers") assertAudioFile(path, `audio ${category}.${key}`, 2048);
+    if (category === "voice") assertAudioFile(path, `audio ${category}.${key}`, 5120);
+    if (category === "narration") assertAudioFile(path, `audio ${category}.${key}`, 5120);
   }
 });
+
+const requiredP0SfxKeys = [
+  "phone_vibrate",
+  "phone_ring_dead_call",
+  "message_pop_cold",
+  "doorbell_rain_night",
+  "knock_soft",
+  "door_chain_close",
+  "door_lock_turn",
+  "door_open_slow",
+  "footstep_corridor_wet",
+  "corridor_light_flicker",
+  "old_phone_start",
+  "recording_static_short",
+  "photo_zoom",
+  "marker_circle",
+  "choice_confirm_soft",
+];
+const requiredP0StingerKeys = [
+  "linzhou_gasp_short",
+  "linzhou_breath_tense",
+  "xuzhiwan_low_breath",
+  "xuzhiwan_step_wet",
+  "zhouyu_low_laugh",
+  "zhouyu_pressure_breath",
+  "xuzhixia_static_breath",
+  "xuzhixia_recording_cut",
+];
+const requiredP0VoiceKeys = [
+  "voice_xuzhixia_ch01_005",
+  "voice_xuzhiwan_ch01_007",
+  "voice_xuzhiwan_ch02_003",
+  "voice_zhouyu_ch04_020",
+  "voice_chenyan_ch01_009",
+  "voice_linzhou_ch01_004",
+];
+for (const key of requiredP0SfxKeys) {
+  assert(AUDIO.sfx?.[key], `P0 SFX key missing from audio-assets.js: ${key}`);
+  if (AUDIO.sfx?.[key]) assertAudioFile(AUDIO.sfx[key], `P0 SFX ${key}`, 2048);
+}
+for (const key of requiredP0StingerKeys) {
+  assert(AUDIO.stingers?.[key], `P0 stinger key missing from audio-assets.js: ${key}`);
+  if (AUDIO.stingers?.[key]) assertAudioFile(AUDIO.stingers[key], `P0 stinger ${key}`, 2048);
+}
+for (const key of requiredP0VoiceKeys) {
+  assert(AUDIO.voice?.[key], `P0 voice key missing from audio-assets.js: ${key}`);
+  if (AUDIO.voice?.[key]) assertAudioFile(AUDIO.voice[key], `P0 voice ${key}`, 5120);
+}
 
 const requiredVoiceFiles = [
   "assets/audio/narration/narration_ch01_001.mp3",

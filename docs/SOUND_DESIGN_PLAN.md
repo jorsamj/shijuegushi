@@ -72,4 +72,13 @@
 - 没有配置语音字段的节点只播放 SFX / BGM / ambience，不朗读正文。
 - 翻页时必须先停止上一条 voice / narration / stinger，避免重叠。
 - BGM 与 ambience 缺失时只打印警告并静默。
+## 2026-07-05 P0 Audio Fill Status
+
+- P0 SFX files have been created under `assets/audio/sfx/`.
+- P0 stinger files have been created under `assets/audio/stingers/`.
+- P0 short voice files have been refreshed under `assets/audio/voice/`.
+- These files are playable placeholder MP3 assets for integration QA.
+- They are not final production audio and remain `placeholder / need-retake / not-final`.
+- No new BGM or ambience loops were added in this pass. Silence is still preferred over noisy ambience.
+- `scripts/validate-story-data.mjs` now fails when mapped SFX, stingers, voice, or narration files are missing.
 
