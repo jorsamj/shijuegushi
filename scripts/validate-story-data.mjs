@@ -116,6 +116,7 @@ const audioKeySets = {
   bgm: new Set(Object.keys(AUDIO.bgm || {})),
   ambience: new Set(Object.keys(AUDIO.ambience || {})),
   sfx: new Set(Object.keys(AUDIO.sfx || {})),
+  stingers: new Set(Object.keys(AUDIO.stingers || {})),
   narration: new Set(Object.keys(AUDIO.narration || {})),
   voice: new Set(Object.keys(AUDIO.voice || {})),
 };
@@ -190,7 +191,9 @@ assert(scriptText.includes("currentDialogueAudio"), "script.js must use a single
 assert(scriptText.includes("dialogueSessionId"), "script.js must guard dialogue async callbacks with dialogueSessionId");
 assert(scriptText.includes("allowPlaceholderVoices: saved.allowPlaceholderVoices === true"), "placeholder voices must be opt-in only");
 assert(scriptText.includes("isPlaceholderDialogueAsset"), "script.js must detect placeholder dialogue assets");
-assert(scriptText.includes("占位音已默认关闭"), "script.js must warn that placeholder TTS is disabled by default");
+assert(scriptText.includes("placeholderVoiceNoticeShown"), "script.js must warn that placeholder TTS is disabled by default");
+assert(scriptText.includes("node.voiceStinger"), "script.js must support key voice stingers");
+assert(scriptText.includes("!realVoiceKey || !realVoiceCategory"), "ordinary text nodes must not auto-read without explicit audio keys");
 assert(!scriptText.includes("createNoiseBuffer"), "script.js must not generate random noise buffers for ambience");
 assert(!scriptText.includes("Math.random() * 2 - 1"), "script.js must not synthesize white noise");
 assert(scriptText.includes("BGM missing, skip synthetic bgm in production mode"), "missing BGM must skip synthetic fallback");
@@ -200,7 +203,7 @@ assert(envExampleText.includes("VOICE_STRICT_CHARACTER_LOCK=true"), ".env.exampl
 assert(voiceGeneratorText.includes("VOICE_STRICT_CHARACTER_LOCK"), "voice generator must enforce strict character voice locking");
 assert(voiceGeneratorText.includes("placeholderMode"), "voice generator must support explicit placeholder mode");
 assert(voiceGeneratorText.includes("Edge TTS is only allowed"), "voice generator must forbid silent Edge TTS formal fallback");
-["bgm", "ambience", "sfx", "narration", "voice"].forEach((category) => {
+["bgm", "ambience", "sfx", "stingers", "narration", "voice"].forEach((category) => {
   assert(AUDIO[category] && typeof AUDIO[category] === "object", `audio category missing: ${category}`);
   for (const [key, path] of Object.entries(AUDIO[category] || {})) {
     assert(typeof key === "string" && key.length > 0, `audio ${category} has invalid key`);
@@ -324,13 +327,16 @@ for (const chapter of DATA.chapters || []) {
 }
 
 const requiredVisualStateNodes = {
-  ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_ring"] },
-  ch01_005: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "impact", characterFraming: "halfbody", characterFocus: "face", headSafe: true, voiceAudio: true },
-  ch01_007: { visualMood: true, visualCharacter: "许知晚", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterFocus: "upperBody", headSafe: true },
+  ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_vibrate", "phone_ring_dead_call"] },
+  ch01_004: { voiceAudio: "voice_linzhou_ch01_004" },
+  ch01_005: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "impact", characterFraming: "halfbody", characterFocus: "face", headSafe: true, voiceAudio: "voice_xuzhixia_ch01_005", sfxOnEnter: ["recording_static_short"] },
+  ch01_007: { visualMood: true, visualCharacter: "许知晚", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterFocus: "upperBody", headSafe: true, voiceAudio: "voice_xuzhiwan_ch01_007_short", sfxOnEnter: ["doorbell_rain_night"] },
+  ch01_009: { voiceAudio: "voice_chenyan_ch01_009_short" },
   ch01_008: { visualMood: true, visualCharacter: "许知晚", characterVariant: "fullbody", characterScale: "large", characterPosition: "center", characterFraming: "fullbody", characterFocus: "fullBody", headSafe: true },
-  ch02_003: { visualMood: true, visualCharacter: "许知晚", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterFocus: "face", headSafe: true },
-  ch05_011: { visualMood: true, visualCharacter: "许知夏", characterVariant: "fear", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["recording_play", "static_noise"] },
-  ch05_015: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["recording_play", "static_noise"] },
+  ch02_003: { visualMood: true, visualCharacter: "许知晚", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterFocus: "face", headSafe: true, voiceAudio: "voice_xuzhiwan_ch02_003_short", sfxOnEnter: ["corridor_light_flicker"] },
+  ch04_020: { voiceAudio: "voice_zhouyu_ch04_020_short", sfxOnEnter: ["message_pop_cold"] },
+  ch05_011: { visualMood: true, visualCharacter: "许知夏", characterVariant: "fear", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_static_breath" },
+  ch05_015: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["old_phone_start", "recording_static_short"] },
   ch05_016: { visualMood: true, visualCharacter: "周屿", characterVariant: "horror", characterScale: "fullscreen", characterFraming: "face", characterFocus: "face", headSafe: true },
   ch06_020: { visualMood: true, bgm: "ending_archive" },
 };
@@ -348,7 +354,8 @@ for (const [nodeId, requirement] of Object.entries(requiredVisualStateNodes)) {
   if (requirement.characterFocus) assert(node.characterFocus === requirement.characterFocus, `${nodeId} must use characterFocus=${requirement.characterFocus}`);
   if (requirement.headSafe) assert(node.characterHeadSafe === true, `${nodeId} must set characterHeadSafe=true`);
   if (requirement.bgm) assert(node.bgm === requirement.bgm, `${nodeId} must use bgm=${requirement.bgm}`);
-  if (requirement.voiceAudio) assert(typeof node.voiceAudio === "string" && node.voiceAudio.length > 0, `${nodeId} must define voiceAudio`);
+  if (requirement.voiceAudio) assert(node.voiceAudio === requirement.voiceAudio, `${nodeId} must define voiceAudio=${requirement.voiceAudio}`);
+  if (requirement.voiceStinger) assert(node.voiceStinger === requirement.voiceStinger, `${nodeId} must define voiceStinger=${requirement.voiceStinger}`);
   for (const sfx of requirement.sfxOnEnter || []) {
     assert((node.sfxOnEnter || []).includes(sfx), `${nodeId} must include sfxOnEnter=${sfx}`);
   }
@@ -376,6 +383,7 @@ for (const node of Object.values(DATA.nodes || {})) {
   assertOptionalString(node.ambience, `${node.nodeId}.ambience`);
   assertOptionalString(node.narrationAudio, `${node.nodeId}.narrationAudio`);
   assertOptionalString(node.voiceAudio, `${node.nodeId}.voiceAudio`);
+  assertOptionalString(node.voiceStinger, `${node.nodeId}.voiceStinger`);
   assertOptionalString(node.voiceCharacter, `${node.nodeId}.voiceCharacter`);
   assertOptionalString(node.voiceProfile, `${node.nodeId}.voiceProfile`);
   assertOptionalString(node.voiceEmotion, `${node.nodeId}.voiceEmotion`);
@@ -405,6 +413,7 @@ for (const node of Object.values(DATA.nodes || {})) {
   for (const sfx of node.sfxOnChoice || []) assert(audioKeySets.sfx.has(sfx), `${node.nodeId}.sfxOnChoice references missing audio key: ${sfx}`);
   if (node.voiceAudio) assert(audioKeySets.voice.has(node.voiceAudio), `${node.nodeId}.voiceAudio references missing audio key: ${node.voiceAudio}`);
   if (node.narrationAudio) assert(audioKeySets.narration.has(node.narrationAudio), `${node.nodeId}.narrationAudio references missing audio key: ${node.narrationAudio}`);
+  if (node.voiceStinger) assert(audioKeySets.stingers.has(node.voiceStinger), `${node.nodeId}.voiceStinger references missing audio key: ${node.voiceStinger}`);
   if (node.voiceProfile) assert(AUDIO.voiceProfiles?.[node.voiceProfile], `${node.nodeId}.voiceProfile references missing profile: ${node.voiceProfile}`);
   if (node.voiceAudio || node.narrationAudio) {
     assert(Boolean(node.voiceProfile), `${node.nodeId} voice node must define voiceProfile`);
@@ -444,6 +453,11 @@ for (const node of Object.values(DATA.nodes || {})) {
     );
   }
 }
+
+const dialogueAudioNodes = Object.values(DATA.nodes || {}).filter((node) => node.voiceAudio || node.narrationAudio || node.voiceStinger);
+const narrationNodes = Object.values(DATA.nodes || {}).filter((node) => node.narrationAudio);
+assert(dialogueAudioNodes.length <= 12, `key voice/stinger nodes must stay sparse, got ${dialogueAudioNodes.length}`);
+assert(narrationNodes.length <= 2, `narrationAudio should be rare, got ${narrationNodes.length}`);
 
 const reachable = new Set();
 const stack = ["ch01_001"];

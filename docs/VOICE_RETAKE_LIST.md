@@ -1,5 +1,42 @@
 # 《第二人生：雨夜来电》语音重录清单
 
+## 2026-07 声音策略调整
+
+当前项目不再追求全量配音。所有普通旁白、普通角色台词不自动朗读；现有长语音一律降级为 `placeholder / need-retake / not-final`，只允许开发核对节点时参考。
+
+正式制作优先级改为：
+
+1. P0 短关键语音
+2. P0 角色 stinger
+3. P0 高质量动作音效
+4. 克制 BGM / ambience
+
+每条短语音建议 0.5-3 秒，不要长篇朗读。
+
+## P0 短语音重录
+
+| 文件 | 文本 | 情绪与表演 | 建议时长 |
+|---|---|---|---|
+| `voice_xuzhixia_ch01_005.mp3` | 别开门，她不是我。 | 旧手机录音感，虚弱、急促、带轻微电流，不要鬼叫。 | 2-3s |
+| `voice_xuzhiwan_ch01_007_short.mp3` | 林舟？ | 成熟冷艳，低声，雨夜门外压迫感。 | 0.8-1.5s |
+| `voice_xuzhiwan_ch02_003_short.mp3` | 先让所有人闭嘴。 | 低声、冷、压抑怒意。 | 1.2-2s |
+| `voice_zhouyu_ch04_020_short.mp3` | 对吗？ | 低沉、贴近、控制感。 | 0.7-1.2s |
+| `voice_chenyan_ch01_009_short.mp3` | 别开门。 | 干练、短促、清醒。 | 0.7-1.2s |
+| `voice_linzhou_ch01_004.mp3` | 不可能。 | 短促、压低、震惊。 | 0.6-1.2s |
+
+## P0 Stinger 重录
+
+| 文件 | 内容 | 要求 |
+|---|---|---|
+| `linzhou_gasp_short.mp3` | 林舟短促吸气 | 轻、近、紧张，不夸张。 |
+| `linzhou_breath_tense.mp3` | 林舟紧张呼吸 | 1-2 秒，低音量。 |
+| `xuzhiwan_low_breath.mp3` | 许知晚门外低声呼吸 | 成熟、克制、雨夜湿冷。 |
+| `xuzhiwan_step_wet.mp3` | 许知晚湿鞋轻响 | 不尖锐，贴近楼道。 |
+| `zhouyu_low_laugh.mp3` | 周屿很轻的低笑 | 不夸张，不像反派笑。 |
+| `zhouyu_pressure_breath.mp3` | 周屿电话里的近距离呼吸 | 有压迫感，不刺耳。 |
+| `xuzhixia_static_breath.mp3` | 许知夏旧录音里的微弱呼吸 | 带轻微录音质感，不做廉价鬼声。 |
+| `xuzhixia_recording_cut.mp3` | 录音突然中断 | 短促、干净，不用高频白噪。 |
+
 版本：v0.1  
 日期：2026-07-04  
 状态：当前仓库内已有 mp3 可播放，但主要来自临时 TTS，占位性质为 `placeholder / need-retake / not-final`。

@@ -14,47 +14,11 @@
     bgm: {},
     ambience: {},
     sfx: {},
+    stingers: {},
     narration: {},
     voice: {},
+    voiceProfiles: {},
   };
-  if (AUDIO.voiceProfiles) {
-    AUDIO.voiceProfiles.narrator = {
-      ...AUDIO.voiceProfiles.narrator,
-      name: "旁白",
-      tone: "低沉、克制、档案感",
-      direction: "像在翻开一份旧案档案，语气克制但有压迫感，不要机械。",
-    };
-    AUDIO.voiceProfiles.linzhou = {
-      ...AUDIO.voiceProfiles.linzhou,
-      name: "林舟",
-      tone: "疲惫、压抑、逐渐慌乱",
-      direction: "普通上班族被旧案拖回雨夜，前期疲惫，后期越来越紧张。",
-    };
-    AUDIO.voiceProfiles.xuzhiwan = {
-      ...AUDIO.voiceProfiles.xuzhiwan,
-      name: "许知晚",
-      tone: "成熟冷艳、低声、压迫感",
-      direction: "成熟、冷艳、压得住场，不要甜美少女音。",
-    };
-    AUDIO.voiceProfiles.zhouyu = {
-      ...AUDIO.voiceProfiles.zhouyu,
-      name: "周屿",
-      tone: "表面温和，后期低沉控制",
-      direction: "前期像温和旧友，后期语气变低、变慢，带威胁感。",
-    };
-    AUDIO.voiceProfiles.chenyan = {
-      ...AUDIO.voiceProfiles.chenyan,
-      name: "陈妍",
-      tone: "清醒、利落、现实支撑",
-      direction: "清醒干练，像能把主角拉回现实的人。",
-    };
-    AUDIO.voiceProfiles.xuzhixia = {
-      ...AUDIO.voiceProfiles.xuzhixia,
-      name: "许知夏",
-      tone: "旧录音、虚弱、遥远",
-      direction: "像从旧手机或录音里传来，有距离感、噪声感、害怕但克制。",
-    };
-  }
   const STORAGE_KEYS = {
     progress: "mist.currentProgress",
     saves: "mist.saveSlots",
@@ -631,17 +595,22 @@
     if (!settings.audioEnabled || !settings.sfxEnabled || !audioState.unlocked) return;
     const context = ensureAudioContext();
     if (!context) return;
+    const now = context.currentTime;
     const gain = context.createGain();
-    gain.gain.value = 0.001;
+    gain.gain.value = 0.0001;
     gain.connect(audioState.master);
     const osc = context.createOscillator();
-    osc.type = name.includes("call") ? "sine" : name.includes("door") ? "square" : "triangle";
-    osc.frequency.value = name.includes("call") ? 660 : name.includes("door") ? 92 : 220;
+    const isDoor = /door|lock|chain|knock|footstep/.test(name);
+    const isPhone = /phone|call|vibrate/.test(name);
+    const isMessage = /message/.test(name);
+    osc.type = isDoor ? "sine" : "triangle";
+    osc.frequency.value = isPhone ? 172 : isMessage ? 620 : isDoor ? 118 : 330;
     osc.connect(gain);
-    osc.start();
-    gain.gain.exponentialRampToValueAtTime(0.22, context.currentTime + 0.025);
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + (name.includes("call") ? 0.42 : 0.22));
-    osc.stop(context.currentTime + 0.5);
+    osc.start(now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(isDoor ? 0.08 : 0.11, now + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + (isPhone ? 0.26 : 0.16));
+    osc.stop(now + 0.32);
   }
 
   function playSfx(name = "") {
@@ -670,10 +639,11 @@
     stopAllDialogueAudio();
     const token = audioState.dialogueToken;
     const sessionId = audioState.dialogueSessionId;
-    const realVoiceKey = node.voiceAudio || node.narrationAudio || "";
-    const realVoiceCategory = node.voiceAudio ? "voice" : node.narrationAudio ? "narration" : "";
-    const realVoiceSrc = realVoiceCategory ? getAudioSource(realVoiceCategory, realVoiceKey) : "";
-    if (realVoiceSrc && isPlaceholderDialogueAsset(node) && !settings.allowPlaceholderVoices) {
+    const realVoiceKey = node.voiceAudio || node.narrationAudio || node.voiceStinger || "";
+    const realVoiceCategory = node.voiceAudio ? "voice" : node.narrationAudio ? "narration" : node.voiceStinger ? "stingers" : "";
+    if (!realVoiceKey || !realVoiceCategory) return;
+    const realVoiceSrc = getAudioSource(realVoiceCategory, realVoiceKey);
+    if (realVoiceCategory !== "stingers" && realVoiceSrc && isPlaceholderDialogueAsset(node) && !settings.allowPlaceholderVoices) {
       if (!audioState.placeholderVoiceNoticeShown) {
         showToast("当前语音仍是临时 TTS，占位音已默认关闭，避免破坏体验。", "warn");
         audioState.placeholderVoiceNoticeShown = true;
@@ -686,7 +656,7 @@
       audioState.currentDialogueAbortController = controller;
       const audio = playRealAudio(realVoiceSrc, {
         loop: false,
-        volume: 0.85,
+        volume: realVoiceCategory === "stingers" ? 0.7 : 0.85,
         onFallback: () => {
           if (sessionId === audioState.dialogueSessionId && token === audioState.dialogueToken) handleMissingRealVoice(node, settings);
         },
@@ -714,14 +684,14 @@
   function handleMissingRealVoice(node, settings = getAudioSettings()) {
     if (settings.voiceMode === "fallback") {
       if (!audioState.voiceFallbackNoticeShown) {
-        showToast("当前为临时合成语音，已按角色与情绪调整语速和音高。", "warn");
+        showToast("当前为开发用临时合成语音，正式体验不会自动朗读普通文本。", "warn");
         audioState.voiceFallbackNoticeShown = true;
       }
       speakSyntheticNode(node);
       return;
     }
-    if ((node.voiceAudio || node.narrationAudio) && !audioState.voiceMissingNoticeShown) {
-      showToast("当前节点缺少真实语音，已跳过机械朗读。", "warn");
+    if ((node.voiceAudio || node.narrationAudio || node.voiceStinger) && !audioState.voiceMissingNoticeShown) {
+      showToast("当前关键声音缺少真实音频，已跳过机械朗读。", "warn");
       audioState.voiceMissingNoticeShown = true;
     }
   }
@@ -1331,7 +1301,7 @@
     if (choiceSfx.length) {
       choiceSfx.forEach((name) => playSfx(name));
     } else {
-      playSfx("choice_confirm");
+      playSfx("choice_confirm_soft");
     }
     evaluateProgressTriggers();
     evaluateAchievements();

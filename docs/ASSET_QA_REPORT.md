@@ -64,3 +64,14 @@
 本轮已完成结构、播放体验和故事沉浸修复：故事详情页更纯粹，切页语音重叠已修，反馈系统不再频繁抢戏，关键剧情节点更像悬疑视觉小说文本。
 
 音频资产仍处于“可播放真实 mp3，但演绎质量待提升”的阶段。建议下一轮不要继续扩功能，而是集中用 ElevenLabs / Azure 情绪语音 / 真人配音重生成上述关键节点。
+
+
+## Sound Design Revision - Key Voices, SFX, and Silence-First Ambience
+
+| Category | Scope | Current Issue | Status | Treatment | Next Step |
+|---|---|---|---|---|---|
+| Voice strategy | Ordinary narration/dialogue | Full narration and full character reading harmed pacing and sounded mechanical. | Fixed | Ordinary nodes no longer auto-read text. Only explicit voiceAudio, narrationAudio, or voiceStinger can play voice-like audio. | Keep this sparse strategy for the playable prototype. |
+| Key voice | P0 story hooks | Existing MP3 files are placeholders and still need retakes. | Routed | P0 keys are mapped only for the strongest moments: dead call, first door voice, Xu Zhiwan pressure, Zhou Yu pressure, Chen Yan warning, Lin Zhou reaction. | Retake with ElevenLabs, Azure Neural TTS, strong Chinese emotional TTS, or real actors. |
+| SFX | Phone, door, corridor, old phone | The game needed action feedback without full voice acting. | Fixed | Added SFX keys for phone vibration, dead call ring, doorbell, chain, wet footsteps, old phone, photo zoom, marker, soft choice confirm. | Produce short non-harsh real SFX assets. |
+| Stingers | Character short sounds | Character breath and short sonic memory points were missing. | Routed | Added stingers category and P0 keys for Lin Zhou breath, Xu Zhiwan low breath, Zhou Yu low laugh/breath, Xu Zhixia static breath/cut. | Produce 0.5-3s high-quality stingers. |
+| BGM and ambience | Global | White noise and synthetic ambience are unacceptable. | Fixed | Missing BGM/ambience is silent; no random white noise fallback is allowed. | Add soft cinematic loops only when they are good enough. |
