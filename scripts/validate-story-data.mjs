@@ -84,6 +84,8 @@ const VISUALS = loadVisuals();
 const AUDIO = loadAudio();
 const scriptText = read("script.js");
 const indexText = read("index.html");
+const voiceGeneratorText = read("scripts/generate-voice-assets.mjs");
+const envExampleText = read(".env.example");
 const runtimeTextPaths = [
   "README.md",
   "story-data.js",
@@ -174,6 +176,9 @@ assert(indexText.includes("assets/audio/audio-assets.js"), "index.html must load
 assert(AUDIO.voiceProfiles && typeof AUDIO.voiceProfiles === "object", "audio-assets.js must define voiceProfiles");
 ["narrator", "linzhou", "xuzhiwan", "zhouyu", "chenyan", "xuzhixia"].forEach((profileId) => {
   assert(AUDIO.voiceProfiles?.[profileId], `missing voice profile: ${profileId}`);
+  assert(AUDIO.voiceProfiles?.[profileId]?.voiceEnvKey, `voice profile ${profileId} must declare a fixed voiceEnvKey`);
+  assert(AUDIO.voiceProfiles?.[profileId]?.lockedVoiceRequired === true, `voice profile ${profileId} must require locked voice`);
+  assert(AUDIO.voiceProfiles?.[profileId]?.productionStatus === "need-retake", `voice profile ${profileId} must mark current audio as need-retake`);
 });
 assert(scriptText.includes('voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "real"'), "voiceMode must default to real mp3 playback");
 assert(scriptText.includes('settings.voiceMode === "fallback"'), "synthetic narration must only run in explicit fallback mode");
@@ -181,6 +186,20 @@ assert(scriptText.includes("function stopAllDialogueAudio"), "script.js must sto
 assert(scriptText.includes("speechSynthesis.cancel()"), "script.js must cancel synthetic speech on node changes");
 assert(scriptText.includes("function chooseSpeechVoice"), "script.js must choose a speech voice by profile for fallback narration");
 assert(scriptText.includes("function prepareSpeechText"), "script.js must prepare text pauses for fallback narration");
+assert(scriptText.includes("currentDialogueAudio"), "script.js must use a single currentDialogueAudio track for voice/narration");
+assert(scriptText.includes("dialogueSessionId"), "script.js must guard dialogue async callbacks with dialogueSessionId");
+assert(scriptText.includes("allowPlaceholderVoices: saved.allowPlaceholderVoices === true"), "placeholder voices must be opt-in only");
+assert(scriptText.includes("isPlaceholderDialogueAsset"), "script.js must detect placeholder dialogue assets");
+assert(scriptText.includes("占位音已默认关闭"), "script.js must warn that placeholder TTS is disabled by default");
+assert(!scriptText.includes("createNoiseBuffer"), "script.js must not generate random noise buffers for ambience");
+assert(!scriptText.includes("Math.random() * 2 - 1"), "script.js must not synthesize white noise");
+assert(scriptText.includes("BGM missing, skip synthetic bgm in production mode"), "missing BGM must skip synthetic fallback");
+assert(scriptText.includes("Ambience missing, skip synthetic noise ambience"), "missing ambience must skip synthetic noise fallback");
+assert(scriptText.includes("static_noise missing, skip synthetic noise fallback"), "missing static_noise must skip synthetic noise fallback");
+assert(envExampleText.includes("VOICE_STRICT_CHARACTER_LOCK=true"), ".env.example must enable strict character voice locking");
+assert(voiceGeneratorText.includes("VOICE_STRICT_CHARACTER_LOCK"), "voice generator must enforce strict character voice locking");
+assert(voiceGeneratorText.includes("placeholderMode"), "voice generator must support explicit placeholder mode");
+assert(voiceGeneratorText.includes("Edge TTS is only allowed"), "voice generator must forbid silent Edge TTS formal fallback");
 ["bgm", "ambience", "sfx", "narration", "voice"].forEach((category) => {
   assert(AUDIO[category] && typeof AUDIO[category] === "object", `audio category missing: ${category}`);
   for (const [key, path] of Object.entries(AUDIO[category] || {})) {

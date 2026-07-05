@@ -12,8 +12,10 @@ const args = parseArgs(process.argv.slice(2));
 const provider = args.provider || process.env.VOICE_PROVIDER || "elevenlabs";
 const dryRun = args["dry-run"] === true;
 const strictProvider = args.strict === true;
+const placeholderMode = args.placeholder === true || provider === "edge";
 
 loadDotEnv(path.join(rootDir, ".env"));
+const strictCharacterLock = String(process.env.VOICE_STRICT_CHARACTER_LOCK || "true").toLowerCase() !== "false";
 
 const storyData = loadWindowScript("story-data.js", "MIST_DATA");
 const audioAssets = loadWindowScript("assets/audio/audio-assets.js", "SECOND_LIFE_AUDIO");
@@ -48,12 +50,20 @@ const firstBatch = [
 const tasks = args.all ? mergeTasks(firstBatch, parseTodoTasks(voiceTodoText)) : firstBatch;
 
 console.log(`voice provider: ${provider}${dryRun ? " (dry-run)" : ""}`);
+console.log(`placeholder mode: ${placeholderMode ? "yes (not-final)" : "no"}`);
+console.log(`strict character lock: ${strictCharacterLock ? "on" : "off"}`);
 console.log(`story nodes: ${Object.keys(storyData.nodes || {}).length}`);
 console.log(`voice profiles: ${Object.keys(audioAssets.voiceProfiles || {}).join(", ")}`);
 console.log(`planned files: ${tasks.length}`);
 
 for (const item of tasks) {
-  console.log(`- ${item.key} -> ${item.outputPath}`);
+  const voiceBinding = getVoiceBinding(item.profileId);
+  const finalStatus = placeholderMode
+    ? "no (placeholder / need-retake)"
+    : voiceBinding.voiceId
+      ? "yes"
+      : "blocked (missing fixed voice id)";
+  console.log(`- role=${item.profileId} voiceId=${voiceBinding.voiceId || "(missing)"} emotion="${item.direction}" output=${item.outputPath} final=${finalStatus}`);
   if (dryRun) continue;
   await generateTask(item);
 }
@@ -142,6 +152,17 @@ function mergeTasks(primary, extra) {
 async function generateTask(item) {
   const absoluteOut = path.join(rootDir, item.outputPath);
   fs.mkdirSync(path.dirname(absoluteOut), { recursive: true });
+  if (provider === "elevenlabs") {
+    if (!process.env.ELEVENLABS_API_KEY) {
+      if (!placeholderMode) {
+        throw new Error("Missing ELEVENLABS_API_KEY. Use --dry-run to inspect tasks or --provider edge --placeholder for dev placeholder audio.");
+      }
+    } else {
+      assertLockedVoice(item.profileId);
+      await generateWithElevenLabs(item, absoluteOut);
+      return;
+    }
+  }
   if (provider === "elevenlabs" && process.env.ELEVENLABS_API_KEY) {
     await generateWithElevenLabs(item, absoluteOut);
     return;
@@ -149,16 +170,16 @@ async function generateTask(item) {
   if (provider === "azure" && process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION) {
     throw new Error("Azure provider is reserved but not implemented yet. Use ElevenLabs or Edge fallback.");
   }
-  if (strictProvider) {
-    throw new Error(`Missing credentials for provider ${provider}. Remove --strict to use Edge TTS fallback.`);
+  if (!placeholderMode || strictProvider) {
+    throw new Error(`Missing formal provider credentials for ${provider}. Edge TTS is only allowed with --provider edge --placeholder and must be marked need-retake.`);
   }
-  console.warn(`No API credentials for ${provider}; generating ${item.key} with Edge neural TTS fallback.`);
+  console.warn(`Generating DEV PLACEHOLDER ${item.key} with Edge neural TTS. This is not final and must be retaken.`);
   await generateWithEdgeTts(item, absoluteOut);
 }
 
 async function generateWithElevenLabs(item, absoluteOut) {
-  const voiceId = process.env[`ELEVENLABS_VOICE_${item.profileId.toUpperCase()}`] || process.env.ELEVENLABS_VOICE_NARRATOR;
-  if (!voiceId) throw new Error(`Missing ElevenLabs voice id for ${item.profileId}`);
+  const { voiceId, envKey } = getVoiceBinding(item.profileId);
+  if (!voiceId) throw new Error(`Missing ElevenLabs voice id for ${item.profileId}: ${envKey}`);
   const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
     method: "POST",
     headers: {
@@ -177,6 +198,22 @@ async function generateWithElevenLabs(item, absoluteOut) {
     throw new Error(`ElevenLabs failed for ${item.key}: ${response.status} ${body}`);
   }
   fs.writeFileSync(absoluteOut, Buffer.from(await response.arrayBuffer()));
+}
+
+function getVoiceBinding(profileId) {
+  const profile = audioAssets.voiceProfiles?.[profileId] || {};
+  const envKey = profile.voiceEnvKey || `ELEVENLABS_VOICE_${profileId.toUpperCase()}`;
+  return { envKey, voiceId: process.env[envKey] || "" };
+}
+
+function assertLockedVoice(profileId) {
+  const { envKey, voiceId } = getVoiceBinding(profileId);
+  if (strictCharacterLock && !voiceId) {
+    throw new Error(`VOICE_STRICT_CHARACTER_LOCK is enabled. Missing fixed voice id for ${profileId}: ${envKey}`);
+  }
+  if (strictCharacterLock && profileId !== "narrator" && envKey === "ELEVENLABS_VOICE_NARRATOR") {
+    throw new Error(`VOICE_STRICT_CHARACTER_LOCK forbids using narrator voice for role ${profileId}`);
+  }
 }
 
 async function generateWithEdgeTts(item, absoluteOut) {

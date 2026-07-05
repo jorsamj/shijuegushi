@@ -24,14 +24,18 @@
 | 周屿 | `voice_zhouyu_ch04_020.mp3` | 当前缺少“我知道你刚刚做了什么”的贴近威胁感；文本已加厚。 | 待重生成 | 节点保留真实 mp3 链路。 | 需要低沉、慢速、近距离压迫，像电话那头的人就在楼道。 |
 | 陈妍 | `voice_chenyan_ch01_009.mp3` | 清醒利落感基本成立，但仍有 TTS 直读感。 | 待优化 | 保留现状作为可用版本。 | 后续可用更自然中文情绪语音重录。 |
 | 林舟 | `voice_linzhou_ch01_004.mp3` | “不可能”需要更短促、更压低，现在情绪还不够像真实惊惧。 | 待优化 | 保留现状作为可用版本。 | 建议真人或强情绪 TTS 重录，突出疲惫后的突然惊恐。 |
+| 固定音色 | 全部角色语音 | 当前语音虽可播放，但仍来自临时 TTS 生产链，角色一致性和表演感不足。 | 已标记 | 新增 `docs/VOICE_RETAKE_LIST.md`，并在生成脚本中要求正式模式锁定每个角色 voice id。 | P0 优先重录旁白、许知夏、许知晚、周屿关键句。 |
+| Edge TTS | 全部临时语音 | Edge TTS 不应作为正式语音验收依据。 | 已修 | 生产方案和生成脚本均标记 Edge 仅允许 `--placeholder` 开发占位。 | 正式体验走 ElevenLabs / Azure / MiniMax / 火山 / 真人配音。 |
+| 占位人声 | 全部已生成 mp3 | 当前 mp3 仍然不够好听，继续播放会破坏视觉小说体验。 | 已修 | 前端默认关闭 `productionStatus=need-retake` 的占位人声，除非显式打开 `allowPlaceholderVoices`。 | 接入固定角色 voice id 后重新生成，再移除 need-retake 状态。 |
 
 ## C. 音频重叠问题
 
 | 类别 | 节点/页面 | 当前问题 | 是否已修 | 处理方式 | 后续建议 |
 |---|---|---|---|---|---|
-| 音频播放 | 翻页/继续按钮 | 上一页语音未停，新节点语音开始，导致旁白和角色声重叠。 | 已修 | 新增 `stopCurrentVoice()`、`stopCurrentNarration()`、`stopSyntheticSpeech()`、`stopAllDialogueAudio()`，节点切换前先停止对话语音。 | 后续可做 80-120ms 的短淡出，但不要牺牲响应速度。 |
-| 音频播放 | 快速连续点击 | 异步音频 fallback 可能在切页后继续触发。 | 已修 | 增加 `dialogueToken`，旧播放会话的 fallback 不再影响新节点。 | 继续观察真实浏览器上极端连点情况。 |
+| 音频播放 | 翻页/继续按钮 | 上一页语音未停，新节点语音开始，导致旁白和角色声重叠。 | 已修 | voice/narration 合并为唯一 `currentDialogueAudio`，`stopAllDialogueAudio()` 会中止当前 HTMLAudioElement、清空 src、取消 `speechSynthesis`。 | 后续可做 80-120ms 的短淡出，但不要牺牲响应速度。 |
+| 音频播放 | 快速连续点击 | 异步音频 fallback 可能在切页后继续触发。 | 已修 | 增加 `dialogueSessionId` 与 `dialogueToken` 双重校验，旧会话的 onerror / onended / fallback 不再影响新节点。 | 继续观察真实浏览器上极端连点情况。 |
 | 音频播放 | BGM / ambience | 对话语音停止时不应误杀背景雨声和 BGM。 | 已修 | `stopAllDialogueAudio()` 只停止 voice/narration/speechSynthesis；`stopAllAudio()` 才停止全部音频。 | 后续可按场景切 ambience 时做淡入淡出。 |
+| 背景声音 | BGM / ambience | 之前缺少真实文件时会用 WebAudio 合成 BGM/白噪声 ambience，听感刺耳。 | 已修 | 缺少真实 BGM / ambience 时只输出 warn 并静默，不再生成随机白噪声。当前仓库没有正式 BGM/ambience mp3，因此运行时会保持静默。 | 后续补柔和循环雨声、低频悬疑 BGM 和弱楼道 hum。 |
 
 ## D. 剧情节奏问题
 

@@ -164,13 +164,17 @@
     realBgm: null,
     realAmbience: null,
     realVoice: null,
+    currentDialogueAudio: null,
+    currentDialogueAbortController: null,
     currentBgm: "",
     currentAmbience: "",
     unlocked: false,
     lastVoiceNodeId: "",
     voiceFallbackNoticeShown: false,
     voiceMissingNoticeShown: false,
+    placeholderVoiceNoticeShown: false,
     dialogueToken: 0,
+    dialogueSessionId: 0,
   };
 
   function createInitialState() {
@@ -426,6 +430,7 @@
       audioEnabled: saved.audioEnabled !== false,
       voiceEnabled: saved.voiceEnabled !== false,
       voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "real",
+      allowPlaceholderVoices: saved.allowPlaceholderVoices === true,
       bgmEnabled: saved.bgmEnabled !== false,
       sfxEnabled: saved.sfxEnabled !== false,
     };
@@ -475,6 +480,8 @@
     try {
       audio.pause();
       audio.currentTime = 0;
+      audio.src = "";
+      audio.load?.();
     } catch (error) {}
   }
 
@@ -483,6 +490,12 @@
     const src = AUDIO?.[category]?.[key] || "";
     if (!src) console.warn(`[Second Life Audio] Missing ${category}: ${key}`);
     return src;
+  }
+
+  function isPlaceholderDialogueAsset(node) {
+    const profileId = node.voiceProfile || getVisualCharacter(node.visualCharacter || node.speaker).id || "narrator";
+    const profile = AUDIO.voiceProfiles?.[profileId];
+    return profile?.productionStatus === "need-retake" || profile?.productionStatus === "placeholder";
   }
 
   function playRealAudio(src, options = {}) {
@@ -505,7 +518,13 @@
   }
 
   function stopCurrentVoice() {
-    stopRealAudio(audioState.realVoice);
+    const current = audioState.currentDialogueAudio;
+    stopRealAudio(current);
+    audioState.currentDialogueAudio = null;
+    audioState.currentDialogueAbortController = null;
+    if (audioState.realVoice && audioState.realVoice !== current) {
+      stopRealAudio(audioState.realVoice);
+    }
     audioState.realVoice = null;
     audioState.lastVoiceNodeId = "";
   }
@@ -524,9 +543,16 @@
 
   function stopAllDialogueAudio() {
     audioState.dialogueToken += 1;
+    audioState.dialogueSessionId += 1;
+    if (audioState.currentDialogueAbortController) {
+      try {
+        audioState.currentDialogueAbortController.abort();
+      } catch (error) {}
+      audioState.currentDialogueAbortController = null;
+    }
     stopCurrentVoice();
-    stopCurrentNarration();
     stopSyntheticSpeech();
+    audioState.lastVoiceNodeId = "";
   }
 
   function getBgmFreqs(name = "") {
@@ -539,28 +565,7 @@
   }
 
   function startSyntheticBgm(name) {
-    const settings = getAudioSettings();
-    if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
-    const context = ensureAudioContext();
-    if (!context || audioState.currentBgm === name) return;
-    stopAudioHandle(audioState.bgm);
-    const gain = context.createGain();
-    gain.gain.value = 0;
-    gain.connect(audioState.master);
-    const nodes = getBgmFreqs(name).map((freq, index) => {
-      const osc = context.createOscillator();
-      osc.type = index === 0 ? "sine" : "triangle";
-      osc.frequency.value = freq;
-      const localGain = context.createGain();
-      localGain.gain.value = index === 0 ? 0.16 : 0.055;
-      osc.connect(localGain);
-      localGain.connect(gain);
-      osc.start();
-      return osc;
-    });
-    gain.gain.setTargetAtTime(0.42, context.currentTime, 0.24);
-    audioState.bgm = { gain, nodes };
-    audioState.currentBgm = name;
+    if (name) console.warn(`[Second Life Audio] BGM missing, skip synthetic bgm in production mode: ${name}`);
   }
 
   function startBgm(name) {
@@ -577,7 +582,7 @@
       audioState.currentBgm = name;
       audioState.realBgm = playRealAudio(src, {
         loop: true,
-        volume: 0.34,
+        volume: 0.22,
         onFallback: () => {
           if (audioState.currentBgm === name) {
             audioState.currentBgm = "";
@@ -590,35 +595,8 @@
     startSyntheticBgm(name);
   }
 
-  function createNoiseBuffer(context) {
-    const length = context.sampleRate * 2;
-    const buffer = context.createBuffer(1, length, context.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < length; i += 1) data[i] = Math.random() * 2 - 1;
-    return buffer;
-  }
-
   function startSyntheticAmbience(name) {
-    const settings = getAudioSettings();
-    if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
-    const context = ensureAudioContext();
-    if (!context || audioState.currentAmbience === name) return;
-    stopAudioHandle(audioState.ambience);
-    const source = context.createBufferSource();
-    source.buffer = createNoiseBuffer(context);
-    source.loop = true;
-    const filter = context.createBiquadFilter();
-    filter.type = name.includes("phone") ? "bandpass" : "lowpass";
-    filter.frequency.value = name.includes("phone") ? 900 : 1800;
-    const gain = context.createGain();
-    gain.gain.value = 0;
-    source.connect(filter);
-    filter.connect(gain);
-    gain.connect(audioState.master);
-    source.start();
-    gain.gain.setTargetAtTime(name.includes("rain") ? 0.24 : 0.1, context.currentTime, 0.2);
-    audioState.ambience = { gain, nodes: [source] };
-    audioState.currentAmbience = name;
+    if (name) console.warn(`[Second Life Audio] Ambience missing, skip synthetic noise ambience: ${name}`);
   }
 
   function startAmbience(name) {
@@ -635,7 +613,7 @@
       audioState.currentAmbience = name;
       audioState.realAmbience = playRealAudio(src, {
         loop: true,
-        volume: 0.32,
+        volume: 0.16,
         onFallback: () => {
           if (audioState.currentAmbience === name) {
             audioState.currentAmbience = "";
@@ -673,9 +651,13 @@
     if (src) {
       playRealAudio(src, {
         loop: false,
-        volume: 0.74,
+        volume: 0.55,
         onFallback: () => playSyntheticSfx(name),
       });
+      return;
+    }
+    if (name === "static_noise") {
+      console.warn("[Second Life Audio] static_noise missing, skip synthetic noise fallback.");
       return;
     }
     playSyntheticSfx(name);
@@ -687,17 +669,42 @@
     if (audioState.lastVoiceNodeId === node.nodeId) return;
     stopAllDialogueAudio();
     const token = audioState.dialogueToken;
+    const sessionId = audioState.dialogueSessionId;
     const realVoiceKey = node.voiceAudio || node.narrationAudio || "";
     const realVoiceCategory = node.voiceAudio ? "voice" : node.narrationAudio ? "narration" : "";
     const realVoiceSrc = realVoiceCategory ? getAudioSource(realVoiceCategory, realVoiceKey) : "";
+    if (realVoiceSrc && isPlaceholderDialogueAsset(node) && !settings.allowPlaceholderVoices) {
+      if (!audioState.placeholderVoiceNoticeShown) {
+        showToast("当前语音仍是临时 TTS，占位音已默认关闭，避免破坏体验。", "warn");
+        audioState.placeholderVoiceNoticeShown = true;
+      }
+      audioState.lastVoiceNodeId = node.nodeId;
+      return;
+    }
     if (realVoiceSrc) {
-      audioState.realVoice = playRealAudio(realVoiceSrc, {
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      audioState.currentDialogueAbortController = controller;
+      const audio = playRealAudio(realVoiceSrc, {
         loop: false,
-        volume: 0.82,
+        volume: 0.85,
         onFallback: () => {
-          if (token === audioState.dialogueToken) handleMissingRealVoice(node, settings);
+          if (sessionId === audioState.dialogueSessionId && token === audioState.dialogueToken) handleMissingRealVoice(node, settings);
         },
       });
+      if (!audio) {
+        handleMissingRealVoice(node, settings);
+        return;
+      }
+      const abortPlayback = () => stopRealAudio(audio);
+      controller?.signal?.addEventListener("abort", abortPlayback, { once: true });
+      audio.addEventListener("ended", () => {
+        if (sessionId !== audioState.dialogueSessionId) return;
+        audioState.currentDialogueAudio = null;
+        audioState.realVoice = null;
+        audioState.currentDialogueAbortController = null;
+      }, { once: true });
+      audioState.currentDialogueAudio = audio;
+      audioState.realVoice = audio;
       audioState.lastVoiceNodeId = node.nodeId;
       return;
     }
@@ -725,6 +732,7 @@
     if (!raw || node.type === "choice" || node.type === "deduction" || node.type === "ending") return;
     stopSyntheticSpeech();
     const token = audioState.dialogueToken;
+    const sessionId = audioState.dialogueSessionId;
     const profile = getVoiceProfile(node);
     const speechText = prepareSpeechText(raw, node, profile).slice(0, 220);
     const utterance = new SpeechSynthesisUtterance(speechText);
@@ -736,7 +744,11 @@
     utterance.pitch = prosody.pitch;
     utterance.volume = prosody.volume;
     utterance.onstart = () => {
-      if (token !== audioState.dialogueToken) stopSyntheticSpeech();
+      if (sessionId !== audioState.dialogueSessionId || token !== audioState.dialogueToken) stopSyntheticSpeech();
+    };
+    utterance.onend = () => {
+      if (sessionId !== audioState.dialogueSessionId) return;
+      audioState.lastVoiceNodeId = "";
     };
     window.speechSynthesis.speak(utterance);
     audioState.lastVoiceNodeId = node.nodeId;
@@ -1048,6 +1060,7 @@
   }
 
   function showHall() {
+    stopAllDialogueAudio();
     const cards = DATA.series
       .map((series) => {
         const isOpen = series.status === "open";
@@ -1164,6 +1177,7 @@
 
 
   function startNewGame() {
+    stopAllDialogueAudio();
     unlockAudio();
     state = createInitialState();
     autoSave();
@@ -1545,6 +1559,7 @@
   }
 
   function showEnding(endingId) {
+    stopAllDialogueAudio();
     const ending = DATA.endings[endingId] || DATA.endings.ending_d;
     state.endingId = ending.endingId;
     state.nodeId = ending.endingId;
@@ -1722,7 +1737,8 @@
     bindTool("load", openLoadModal);
     bindTool("history", openHistoryModal);
     bindTool("hall", () => {
-      openConfirm("返回人生档案", "返回前会自动保存当前进度。要离开当前故事吗？", () => {
+        openConfirm("返回人生档案", "返回前会自动保存当前进度。要离开当前故事吗？", () => {
+        stopAllDialogueAudio();
         autoSave();
         showHall();
       });
@@ -1890,6 +1906,7 @@
         const slot = slots[index];
         if (!slot) return;
         openConfirm("读取存档", "读取后会覆盖当前临时进度。确认继续吗？", () => {
+          stopAllDialogueAudio();
           state = normalizeState(slot);
           closeModal();
           if (state.endingId && DATA.endings[state.endingId]) {

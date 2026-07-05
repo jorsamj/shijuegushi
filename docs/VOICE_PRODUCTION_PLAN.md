@@ -74,8 +74,12 @@ voiceMode: "real"
 
 推荐方案：
 
-- Azure Neural TTS
 - ElevenLabs
+- Azure Neural TTS
+- MiniMax 语音
+- 火山引擎语音
+- 腾讯云 / 阿里云情绪语音
+- 真人配音
 - 其他支持 voice style / emotion / speed / pitch 的 TTS 服务
 
 必须支持：
@@ -87,6 +91,30 @@ voiceMode: "real"
 - 批量生成
 - 输出 mp3 或 wav
 - API 自动调用
+
+Edge TTS / 浏览器 `speechSynthesis` 只能用于开发占位，不得作为正式体验验收依据。使用 Edge TTS 生成的文件必须在报告或重录清单中标记为 `placeholder`、`need-retake`、`not-final`。
+
+## 4.1 固定角色音色规则
+
+每个角色必须绑定一个固定 voice id / voice name：
+
+| 角色 | 环境变量 | 规则 |
+|---|---|---|
+| 旁白 | `ELEVENLABS_VOICE_NARRATOR` | 固定低沉克制旁白音色 |
+| 林舟 | `ELEVENLABS_VOICE_LINZHOU` | 固定疲惫、压抑男性音色 |
+| 许知晚 | `ELEVENLABS_VOICE_XUZHIWAN` | 固定成熟冷艳、低声女性音色 |
+| 周屿 | `ELEVENLABS_VOICE_ZHOUYU` | 固定温和转压迫男性音色 |
+| 陈妍 | `ELEVENLABS_VOICE_CHENYAN` | 固定清醒利落女性音色 |
+| 许知夏 | `ELEVENLABS_VOICE_XUZHIXIA` | 固定虚弱、旧录音感女性音色 |
+
+要求：
+
+- 同一角色所有语音文件必须使用同一个基础音色。
+- 不允许用旁白音色代替人物音色。
+- 不允许为了表现情绪更换另一个角色音色。
+- 情绪变化只能通过 `voiceDirection`、style、speed、pitch、pause、后期滤镜控制。
+- `VOICE_STRICT_CHARACTER_LOCK=true` 时，缺少某角色 voice id 不允许正式生成该角色语音。
+- `dry-run` 必须输出角色、voice id、情绪方向、输出文件和是否正式音频。
 
 ## 5. 环境变量建议
 
