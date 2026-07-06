@@ -41,3 +41,7 @@ Scope: page experience, visual presentation, readability, story detail cleanup, 
 ## Recommendation
 
 Use `node scripts/check-ui-flow.mjs` before UI commits. For the next visual pass, capture screenshots from mobile and desktop viewports and compare against this report.
+
+## Full Flow QA Addendum
+
+The next QA layer is full story-flow playability. This pass does not change the audio system, does not restore TTS, and does not restore the story-detail hero image or chapter list. Use `node scripts/check-story-flow.mjs` together with the UI and data validators to confirm that the visual-novel shell still supports a complete start-to-ending playthrough.

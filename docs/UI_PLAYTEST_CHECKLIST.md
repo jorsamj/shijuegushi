@@ -31,3 +31,13 @@ Run:
 node scripts/check-ui-flow.mjs
 node scripts/validate-story-data.mjs
 ```
+
+## Full Flow QA Addendum
+
+This project is now in full playability QA. Audio remains frozen, ordinary story text still does not auto-read, and the story detail page must stay in the clean LIFE FILE style without a large hero image or chapter directory.
+
+Additional command:
+
+```bash
+node scripts/check-story-flow.mjs
+```

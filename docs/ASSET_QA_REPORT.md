@@ -104,3 +104,7 @@
 | Stingers | Character non-verbal beats | More key pressure moments needed subtle human-like reactions. | Expanded | Added swallow, heartbeat, cold exhale, sleeve drip, phone silence, tiny smile, weak static exhale, and memory fade. | Keep them sparse and non-verbal. |
 | Runtime policy | Ordinary text | Ordinary text should not be read aloud. | Protected | Validation still fails if story nodes use `voiceAudio` or `narrationAudio`. | Do not reintroduce full narration. |
 | Validation | Second audio batch | New generated assets need automated coverage. | Fixed | Validation now checks second-batch SFX/stinger files and audio mappings. | Run validation before every audio push. |
+
+## 2026-07-06 Full Playability QA Addendum
+
+This pass moves into story-flow, ending-path, and save/load QA. The audio system remains frozen: no TTS was restored, no generated audio mappings were removed, and ordinary narration/dialogue should remain silent unless a specific SFX or stinger is configured. The story detail page remains a clean LIFE FILE view and should not regain a large hero image, chapter list, or marketing-page layout.
