@@ -1084,23 +1084,19 @@
   function showSeries(seriesId) {
     const series = getSeries(seriesId);
     const scripts = series.scriptIds.map((id) => getScript(id)).filter(Boolean);
+    const openScript = scripts.find((script) => script.status === "open") || scripts[0];
+    const sealedScripts = scripts.filter((script) => script.scriptId !== openScript.scriptId);
     const hasLocalProgress = hasProgress();
-    const rows = scripts
-      .map((script) => {
-        const isOpen = script.status === "open";
-        const actionText = isOpen ? (hasLocalProgress ? "\u7ee7\u7eed\u4f53\u9a8c" : "\u5f00\u59cb\u4f53\u9a8c") : "\u672a\u5b8c\u5f85\u7eed";
-        return `
-          <article class="script-dossier ${isOpen ? "is-playable" : "is-coming"}" data-script-id="${script.scriptId}">
-            <span class="script-order">\u6545\u4e8b ${String(script.order).padStart(2, "0")}</span>
-            <div>
-              <h3>\u300a${escapeHTML(script.title)}\u300b</h3>
-              <p>${escapeHTML(script.summary)}</p>
-            </div>
-            <button class="case-button" type="button">${actionText}</button>
-          </article>
-        `;
-      })
+    const sealedRows = sealedScripts
+      .map((script) => `
+        <article class="sealed-story-note">
+          <span>\u6863\u6848\u5c01\u5b58\u4e2d</span>
+          <strong>\u300a${escapeHTML(script.title)}\u300b</strong>
+          <p>${escapeHTML(script.summary || "\u8fd9\u6bb5\u4eba\u751f\u8fd8\u6ca1\u6709\u5411\u4f60\u6253\u5f00\u3002")}</p>
+        </article>
+      `)
       .join("");
+    const primaryActionText = hasLocalProgress ? "\u7ee7\u7eed\u4f53\u9a8c" : "\u5f00\u59cb\u4f53\u9a8c";
 
     setView(
       "series",
@@ -1110,7 +1106,7 @@
         <header class="series-brief story-file-brief">
           <div class="story-file-copy">
             <p class="eyebrow">LIFE FILE</p>
-            <h1>${escapeHTML(series.title)}</h1>
+            <h1>${escapeHTML(openScript.title)}</h1>
             <p>\u66b4\u96e8\u591c\uff0c\u6797\u821f\u63a5\u5230\u6765\u81ea\u5df2\u6545\u5ba4\u53cb\u8bb8\u77e5\u590f\u7684\u7535\u8bdd\uff1b\u95e8\u5916\u5374\u7ad9\u7740\u4e00\u4e2a\u548c\u5979\u6781\u50cf\u7684\u5973\u4eba\u3002</p>
             <div class="story-file-tags"><span>\u60ac\u7591\u4eba\u751f</span><span>\u90fd\u5e02\u96e8\u591c</span><span>\u4f2a\u7075\u5f02\u65e7\u6848</span></div>
             ${renderPropStrip([
@@ -1118,30 +1114,34 @@
               "prop_photo_polaroid",
               "prop_recording_file",
             ])}
+            <p class="story-file-intro">${escapeHTML(openScript.summary)}</p>
+            <div class="story-file-actions">
+              <button class="case-button" type="button" data-action="start-script">${primaryActionText}</button>
+              ${hasLocalProgress ? `<button class="ghost-button" type="button" data-action="restart-script">\u91cd\u65b0\u5f00\u59cb</button>` : ""}
+            </div>
           </div>
         </header>
-        <div class="script-stack story-entry-stack">${rows}</div>
+        <aside class="story-file-sealed" aria-label="\u540e\u7eed\u6545\u4e8b">
+          <p>\u540e\u7eed\u4eba\u751f</p>
+          ${sealedRows}
+        </aside>
       </section>
       `
     );
 
     app.querySelector("[data-action='back-hall']").addEventListener("click", showHall);
-    app.querySelectorAll(".script-dossier").forEach((card) => {
-      card.addEventListener("click", () => {
-        const script = getScript(card.dataset.scriptId);
-        if (script.status !== "open") {
-          openNotice("\u672a\u5b8c\u5f85\u7eed", `\u300a${script.title}\u300b\u7684\u6863\u6848\u8fd8\u6ca1\u6709\u6253\u5f00\u3002`);
-          return;
-        }
-        if (hasLocalProgress) {
-          openConfirm("\u7ee7\u7eed\u4f53\u9a8c", "\u68c0\u6d4b\u5230\u672c\u5730\u8fdb\u5ea6\u3002\u8981\u4ece\u4e0a\u6b21\u4fdd\u5b58\u7684\u4eba\u751f\u8282\u70b9\u7ee7\u7eed\u5417\uff1f", () => {
-            loadProgress();
-            showGame();
-          }, () => startNewGame());
-        } else {
-          startNewGame();
-        }
-      });
+    app.querySelector("[data-action='start-script']").addEventListener("click", () => {
+      if (hasLocalProgress) {
+        openConfirm("\u7ee7\u7eed\u4f53\u9a8c", "\u68c0\u6d4b\u5230\u672c\u5730\u8fdb\u5ea6\u3002\u8981\u4ece\u4e0a\u6b21\u4fdd\u5b58\u7684\u4eba\u751f\u8282\u70b9\u7ee7\u7eed\u5417\uff1f", () => {
+          loadProgress();
+          showGame();
+        }, () => startNewGame());
+      } else {
+        startNewGame();
+      }
+    });
+    app.querySelector("[data-action='restart-script']")?.addEventListener("click", () => {
+      openConfirm("\u91cd\u65b0\u5f00\u59cb", "\u5c06\u4ece\u300a\u96e8\u591c\u6765\u7535\u300b\u7684\u7b2c\u4e00\u4e2a\u8282\u70b9\u91cd\u65b0\u8fdb\u5165\u3002", startNewGame);
     });
   }
 
