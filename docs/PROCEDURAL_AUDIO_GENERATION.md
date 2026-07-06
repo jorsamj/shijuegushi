@@ -59,3 +59,21 @@ node scripts/generate-procedural-audio.mjs
 node scripts/validate-story-data.mjs
 ```
 
+## 2026-07-06 Coverage Expansion
+
+The second procedural pass adds more action-focused cues:
+
+- phone call end, phone screen wake, cold chat typing
+- evidence reveal, old photo pickup, photo reflection find
+- backup start/success, delete warning, archive stamp
+- rain-on-window and room-silence-drop pressure cues
+- extra non-verbal stingers for Linzhou, Xuzhiwan, Zhouyu, and Xuzhixia
+
+The generator also lowers BGM and ambience peaks so the project stays restrained:
+
+- BGM is generated with lower peak targets and should play around 0.16 in the frontend.
+- Ambience is generated softer and should play around 0.10 in the frontend.
+- SFX and stingers remain clearer than ambience but should never become jump-scare loud.
+
+Validation now checks the generated second-pass files, the audio asset mappings,
+and the playtest checklist.

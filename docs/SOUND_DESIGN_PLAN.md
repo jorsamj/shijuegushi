@@ -91,3 +91,11 @@
 - BGM, ambience, SFX, and stingers are generated locally by `scripts/generate-procedural-audio.mjs`.
 - The generated WAV assets do not use external downloads, unknown licenses, Edge TTS, or browser speech synthesis.
 - BGM and ambience should remain low-volume and restrained; silence is preferred over harsh noise.
+
+## 2026-07-06 Coverage Expansion
+
+- Added a second generated SFX batch for phone call end, phone screen wake, chat typing, evidence reveal, old photo pickup, photo reflection discovery, backup, delete warning, archive stamp, rain-window hit, and silence-drop pressure.
+- Added a second generated stinger batch for Linzhou swallow/heartbeat, Xuzhiwan cold exhale/sleeve drip, Zhouyu phone silence/tiny smile, and Xuzhixia weak static exhale/memory fade.
+- Expanded key-node coverage across Chapter 1, Chapter 3 evidence moments, Chapter 4 photo investigation, Chapter 5 old-phone playback, and Chapter 6 final evidence decisions.
+- Frontend volume targets are intentionally restrained: BGM around 0.16, ambience around 0.10, SFX around 0.50, stingers around 0.58.
+- Ordinary narration and ordinary character dialogue remain silent. Only explicit `sfxOnEnter`, `sfxOnChoice`, and `voiceStinger` fields play.

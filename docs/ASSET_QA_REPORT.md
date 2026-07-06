@@ -93,3 +93,14 @@
 | Key moments | Character emotion beats | Spoken lines are no longer used as the default. | Fixed | Converted key moments to non-verbal stingers: breath, gasp, low laugh, recording cut. | Human listen pass on mobile. |
 | Background audio | BGM/ambience | Prior fallback could sound like white noise. | Fixed | Generated low-volume pads/rain/hum as WAV and mapped them in `audio-assets.js`. | Adjust gain after in-browser listening. |
 | Validation | Generated audio | The repo needed a repeatable local build path. | Fixed | `node scripts/generate-procedural-audio.mjs` regenerates all current demo audio; validation checks generated files. | Run generation before major audio edits. |
+
+## 2026-07-06 Procedural Audio Coverage Expansion QA
+
+| Category | Scope | Current State | Status | Treatment | Next Step |
+|---|---|---|---|---|---|
+| BGM | rain_night_loop, horror_corridor, ending_archive | First procedural pass was usable but could feel too forward. | Adjusted | Lowered generator peak targets and reduced frontend BGM playback to 0.16. | Manual listen on headphones and phone speaker. |
+| Ambience | rain, room, corridor | Must never become constant white noise. | Adjusted | Lowered noise gain, reduced high frequency content, and reduced frontend ambience playback to 0.10. | If still tiring, prefer silence. |
+| SFX coverage | Key story actions | Some actions were still silent. | Expanded | Added procedural cues for call end, screen wake, evidence reveal, photo pickup, reflection find, backup, delete warning, archive stamp, rain-window hit, and silence drop. | Use `docs/AUDIO_PLAYTEST_CHECKLIST.md` for node-by-node review. |
+| Stingers | Character non-verbal beats | More key pressure moments needed subtle human-like reactions. | Expanded | Added swallow, heartbeat, cold exhale, sleeve drip, phone silence, tiny smile, weak static exhale, and memory fade. | Keep them sparse and non-verbal. |
+| Runtime policy | Ordinary text | Ordinary text should not be read aloud. | Protected | Validation still fails if story nodes use `voiceAudio` or `narrationAudio`. | Do not reintroduce full narration. |
+| Validation | Second audio batch | New generated assets need automated coverage. | Fixed | Validation now checks second-batch SFX/stinger files and audio mappings. | Run validation before every audio push. |

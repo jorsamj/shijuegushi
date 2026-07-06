@@ -180,6 +180,8 @@ assert(VISUALS && typeof VISUALS === "object", "visual assets config is missing"
 assert(exists("assets/audio/audio-assets.js"), "audio assets config file is missing");
 assert(exists("scripts/generate-voice-assets.mjs"), "voice generation script is missing");
 assert(exists("scripts/generate-procedural-audio.mjs"), "procedural audio generation script is missing");
+assert(exists("docs/PROCEDURAL_AUDIO_GENERATION.md"), "procedural audio generation doc is missing");
+assert(exists("docs/AUDIO_PLAYTEST_CHECKLIST.md"), "audio playtest checklist doc is missing");
 assert(exists(".env.example"), ".env.example is missing");
 assert(AUDIO && typeof AUDIO === "object", "window.SECOND_LIFE_AUDIO is missing");
 assert(indexText.includes("assets/audio/audio-assets.js"), "index.html must load assets/audio/audio-assets.js");
@@ -254,6 +256,31 @@ const requiredP0StingerKeys = [
   "xuzhixia_static_breath",
   "xuzhixia_recording_cut",
 ];
+const requiredP1SfxKeys = [
+  "phone_call_end",
+  "phone_screen_wake",
+  "chat_typing_short",
+  "evidence_reveal",
+  "old_photo_pickup",
+  "photo_reflection_find",
+  "backup_start",
+  "backup_success",
+  "delete_warning",
+  "archive_stamp",
+  "rain_window_soft",
+  "room_silence_drop",
+  "clue_reveal",
+];
+const requiredP1StingerKeys = [
+  "linzhou_swallow_tense",
+  "linzhou_heartbeat_soft",
+  "xuzhiwan_cold_exhale",
+  "xuzhiwan_sleeve_drip",
+  "zhouyu_phone_silence",
+  "zhouyu_tiny_smile",
+  "xuzhixia_weak_static_exhale",
+  "xuzhixia_memory_fade",
+];
 const requiredP0VoiceKeys = [
   "voice_xuzhixia_ch01_005",
   "voice_xuzhiwan_ch01_007",
@@ -284,6 +311,18 @@ const generatedAudioFiles = [
   "assets/audio/generated/sfx/sfx_photo_zoom.wav",
   "assets/audio/generated/sfx/sfx_marker_circle.wav",
   "assets/audio/generated/sfx/sfx_choice_confirm_soft.wav",
+  "assets/audio/generated/sfx/sfx_phone_call_end.wav",
+  "assets/audio/generated/sfx/sfx_phone_screen_wake.wav",
+  "assets/audio/generated/sfx/sfx_chat_typing_short.wav",
+  "assets/audio/generated/sfx/sfx_evidence_reveal.wav",
+  "assets/audio/generated/sfx/sfx_old_photo_pickup.wav",
+  "assets/audio/generated/sfx/sfx_photo_reflection_find.wav",
+  "assets/audio/generated/sfx/sfx_backup_start.wav",
+  "assets/audio/generated/sfx/sfx_backup_success.wav",
+  "assets/audio/generated/sfx/sfx_delete_warning.wav",
+  "assets/audio/generated/sfx/sfx_archive_stamp.wav",
+  "assets/audio/generated/sfx/sfx_rain_window_soft.wav",
+  "assets/audio/generated/sfx/sfx_room_silence_drop.wav",
   "assets/audio/generated/stingers/linzhou_gasp_short.wav",
   "assets/audio/generated/stingers/linzhou_breath_tense.wav",
   "assets/audio/generated/stingers/xuzhiwan_low_breath.wav",
@@ -292,6 +331,14 @@ const generatedAudioFiles = [
   "assets/audio/generated/stingers/zhouyu_pressure_breath.wav",
   "assets/audio/generated/stingers/xuzhixia_static_breath.wav",
   "assets/audio/generated/stingers/xuzhixia_recording_cut.wav",
+  "assets/audio/generated/stingers/linzhou_swallow_tense.wav",
+  "assets/audio/generated/stingers/linzhou_heartbeat_soft.wav",
+  "assets/audio/generated/stingers/xuzhiwan_cold_exhale.wav",
+  "assets/audio/generated/stingers/xuzhiwan_sleeve_drip.wav",
+  "assets/audio/generated/stingers/zhouyu_phone_silence.wav",
+  "assets/audio/generated/stingers/zhouyu_tiny_smile.wav",
+  "assets/audio/generated/stingers/xuzhixia_weak_static_exhale.wav",
+  "assets/audio/generated/stingers/xuzhixia_memory_fade.wav",
 ];
 generatedAudioFiles.forEach((assetPath) => {
   assert(exists(assetPath), `generated procedural audio file is missing: ${assetPath}`);
@@ -303,6 +350,14 @@ for (const key of requiredP0SfxKeys) {
 for (const key of requiredP0StingerKeys) {
   assert(AUDIO.stingers?.[key], `P0 stinger key missing from audio-assets.js: ${key}`);
   if (AUDIO.stingers?.[key]) assertAudioFile(AUDIO.stingers[key], `P0 stinger ${key}`, 2048);
+}
+for (const key of requiredP1SfxKeys) {
+  assert(AUDIO.sfx?.[key], `P1 SFX key missing from audio-assets.js: ${key}`);
+  if (AUDIO.sfx?.[key]) assertAudioFile(AUDIO.sfx[key], `P1 SFX ${key}`, 2048);
+}
+for (const key of requiredP1StingerKeys) {
+  assert(AUDIO.stingers?.[key], `P1 stinger key missing from audio-assets.js: ${key}`);
+  if (AUDIO.stingers?.[key]) assertAudioFile(AUDIO.stingers[key], `P1 stinger ${key}`, 2048);
 }
 for (const key of requiredP0VoiceKeys) {
   assert(AUDIO.voice?.[key], `P0 voice key missing from audio-assets.js: ${key}`);
@@ -421,16 +476,16 @@ for (const chapter of DATA.chapters || []) {
 }
 
 const requiredVisualStateNodes = {
-  ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_vibrate", "phone_ring_dead_call"] },
+  ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_screen_wake", "phone_vibrate", "phone_ring_dead_call"] },
   ch01_004: { voiceStinger: "linzhou_gasp_short" },
-  ch01_005: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "impact", characterFraming: "halfbody", characterFocus: "face", headSafe: true, voiceStinger: "xuzhixia_static_breath", sfxOnEnter: ["recording_static_short"] },
+  ch01_005: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "impact", characterFraming: "halfbody", characterFocus: "face", headSafe: true, voiceStinger: "xuzhixia_weak_static_exhale", sfxOnEnter: ["recording_static_short"] },
   ch01_007: { visualMood: true, visualCharacter: "许知晚", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterFocus: "upperBody", headSafe: true, voiceStinger: "xuzhiwan_low_breath", sfxOnEnter: ["doorbell_rain_night", "footstep_corridor_wet"] },
   ch01_009: { sfxOnEnter: ["message_pop_cold"] },
   ch01_008: { visualMood: true, visualCharacter: "许知晚", characterVariant: "fullbody", characterScale: "large", characterPosition: "center", characterFraming: "fullbody", characterFocus: "fullBody", headSafe: true },
   ch02_003: { visualMood: true, visualCharacter: "许知晚", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterFocus: "face", headSafe: true, voiceStinger: "xuzhiwan_low_breath", sfxOnEnter: ["corridor_light_flicker"] },
-  ch04_020: { voiceStinger: "zhouyu_pressure_breath", sfxOnEnter: ["message_pop_cold"] },
-  ch05_011: { visualMood: true, visualCharacter: "许知夏", characterVariant: "fear", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_static_breath" },
-  ch05_015: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["old_phone_start", "recording_static_short"] },
+  ch04_020: { voiceStinger: "zhouyu_tiny_smile", sfxOnEnter: ["message_pop_cold"] },
+  ch05_011: { visualMood: true, visualCharacter: "许知夏", characterVariant: "fear", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_weak_static_exhale" },
+  ch05_015: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_memory_fade" },
   ch05_016: { visualMood: true, visualCharacter: "周屿", characterVariant: "horror", characterScale: "fullscreen", characterFraming: "face", characterFocus: "face", headSafe: true },
   ch06_020: { visualMood: true, bgm: "ending_archive" },
 };
@@ -552,7 +607,7 @@ const dialogueAudioNodes = Object.values(DATA.nodes || {}).filter((node) => node
 const narrationNodes = Object.values(DATA.nodes || {}).filter((node) => node.narrationAudio);
 const voiceAudioNodes = Object.values(DATA.nodes || {}).filter((node) => node.voiceAudio);
 assert(voiceAudioNodes.length === 0, `story nodes must not trigger voiceAudio readings, got ${voiceAudioNodes.length}`);
-assert(dialogueAudioNodes.length <= 12, `key voice/stinger nodes must stay sparse, got ${dialogueAudioNodes.length}`);
+assert(dialogueAudioNodes.length <= 24, `key voice/stinger nodes must stay sparse and non-verbal, got ${dialogueAudioNodes.length}`);
 assert(narrationNodes.length === 0, `story nodes must not trigger narrationAudio readings, got ${narrationNodes.length}`);
 
 const reachable = new Set();
@@ -646,4 +701,6 @@ console.log("Story data validation passed.");
 console.log(`chapters=${DATA.chapters.length}, clues=${clueIds.size}, nodes=${nodeIds.size}, coreClues=${coreClueIds.length}`);
 console.log(`P0 SFX checked=${requiredP0SfxKeys.length}`);
 console.log(`P0 stingers checked=${requiredP0StingerKeys.length}`);
+console.log(`P1 SFX checked=${requiredP1SfxKeys.length}`);
+console.log(`P1 stingers checked=${requiredP1StingerKeys.length}`);
 console.log(`generated procedural audio checked=${generatedAudioFiles.length}`);

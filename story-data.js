@@ -218,16 +218,18 @@ window.MIST_DATA = (() => {
   }
 
   // 第 1 章：雨夜来电
-  add(1, 1, { speaker: "旁白", text: "暴雨把窗户拍得发白。林舟盯着电脑里还没写完的周报，泡面汤已经凉透，杯沿留着半圈咖啡渍。\n\n她把许知夏的名字从联系人里删过一次，又在备份里看见过一次。三年了，那个名字一直像一枚没拔出来的刺。" });
+  add(1, 1, { speaker: "旁白", text: "暴雨把窗户拍得发白。林舟盯着电脑里还没写完的周报，泡面汤已经凉透，杯沿留着半圈咖啡渍。\n\n她把许知夏的名字从联系人里删过一次，又在备份里看见过一次。三年了，那个名字一直像一枚没拔出来的刺。", bgm: "rain_night_loop", ambience: "room_night_loop", sfxOnEnter: ["rain_window_soft"] });
   add(1, 2, { speaker: "林舟", text: "再改一版……就睡。", scene: "rental_room_table" });
-  add(1, 3, { speaker: "旁白", text: "手机突然震动。屏幕在桌面水渍里亮起来，来电显示跳出一个三年前就不该再出现的名字。\n\n许知夏。\n\n林舟没有立刻接。雨声像贴在窗外的手，手机却一下一下震得更急。", scene: "phone_call_ui", type: "clue", gainClues: ["clue_dead_call"], visualMood: "tense", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["phone_vibrate", "phone_ring_dead_call"], audioMood: "tense" });
-  add(1, 4, { speaker: "林舟", text: "不可能。", scene: "phone_call_ui", voiceStinger: "linzhou_gasp_short", audioMood: "tense" });
-  add(1, 5, { speaker: "许知夏的声音", text: "别开门……她不是我。\n\n最后一个字被电流撕碎。林舟听见自己的呼吸撞在听筒上，像另一个人正贴着她耳边发抖。", scene: "phone_call_ui", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "recording", characterScale: "impact", characterPosition: "center", characterFraming: "halfbody", characterHeadSafe: true, characterFocus: "face", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["recording_static_short"], voiceStinger: "xuzhixia_static_breath", audioMood: "horror" });
+  add(1, 3, { speaker: "旁白", text: "手机突然震动。屏幕在桌面水渍里亮起来，来电显示跳出一个三年前就不该再出现的名字。\n\n许知夏。\n\n林舟没有立刻接。雨声像贴在窗外的手，手机却一下一下震得更急。", scene: "phone_call_ui", type: "clue", gainClues: ["clue_dead_call"], visualMood: "tense", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["phone_vibrate", "phone_ring_dead_call", "phone_screen_wake"], audioMood: "tense" });
+  add(1, 4, { speaker: "林舟", text: "不可能。", scene: "phone_call_ui", voiceStinger: "linzhou_gasp_short", audioMood: "tense", sfxOnEnter: ["room_silence_drop"] });
+  add(1, 5, { speaker: "许知夏的声音", text: "别开门……她不是我。\n\n最后一个字被电流撕碎。林舟听见自己的呼吸撞在听筒上，像另一个人正贴着她耳边发抖。", scene: "phone_call_ui", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "recording", characterScale: "impact", characterPosition: "center", characterFraming: "halfbody", characterHeadSafe: true, characterFocus: "face", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["recording_static_short"], voiceStinger: "xuzhixia_weak_static_exhale", audioMood: "horror" });
   add(1, 6, {
     type: "choice",
     scene: "phone_call_ui",
     speaker: "旁白",
     text: "电话断了。林舟还握着手机，屏幕上的通话时长停在 7 秒。\n\n下一秒，门铃响起。走廊里有水滴落在地上的声音，一滴，一滴，像有人站在门外很久了。",
+    sfxOnEnter: ["phone_call_end"],
+    sfxOnChoice: ["choice_confirm_soft"],
     choices: [
       choice("a", "你没靠近门，只隔着客厅问：外面是谁？", "ch01_007", {
         setFlags: ["kept_door_closed"],
@@ -253,6 +255,7 @@ window.MIST_DATA = (() => {
     scene: "corridor_door",
     speaker: "林舟",
     text: "门外的女人没有催。她把手掌贴在门上，像是在确认屋里的人还活着。\n\n雨水顺着她袖口往下滴，门缝下的地垫很快湿了一小片。林舟忽然意识到，自己必须问一个只有许知夏知道答案的问题。",
+    sfxOnChoice: ["choice_confirm_soft"],
     choices: [
       choice("a", "你问她：许知夏大学时最怕什么？", "ch01_011", {
         setFlags: ["verified_zhuwan_identity"],
@@ -270,13 +273,14 @@ window.MIST_DATA = (() => {
     ],
   });
   add(1, 11, { speaker: "许知晚", text: "她怕黑。不是夜灯那种黑，是楼梯间突然停电的黑。\n\n她说你会笑她，可还是会陪她走完那段楼梯。许知晚说完这句，声音轻了一点：她还说，你其实比她更怕一个人留下。", scene: "corridor_door" });
-  add(1, 12, { speaker: "旁白", text: "回拨没有接通。运营商提示音平稳得像一盆冷水，把那个名字重新按回三年前。\n\n可林舟看见通话记录还在。那不是梦。许知夏的号码，确实在这个雨夜打进来过。", scene: "phone_call_ui" });
-  add(1, 13, { speaker: "旁白", text: "录音里，门铃之后有一声很轻的吸气。像门外的人在忍着哭，也像有人站在更远处听。\n\n林舟把音量调高。那一瞬间，门外忽然安静，仿佛走廊也在听她回放。", scene: "corridor_door" });
+  add(1, 12, { speaker: "旁白", text: "回拨没有接通。运营商提示音平稳得像一盆冷水，把那个名字重新按回三年前。\n\n可林舟看见通话记录还在。那不是梦。许知夏的号码，确实在这个雨夜打进来过。", scene: "phone_call_ui", sfxOnEnter: ["phone_call_end"] });
+  add(1, 13, { speaker: "旁白", text: "录音里，门铃之后有一声很轻的吸气。像门外的人在忍着哭，也像有人站在更远处听。\n\n林舟把音量调高。那一瞬间，门外忽然安静，仿佛走廊也在听她回放。", scene: "corridor_door", sfxOnEnter: ["recording_static_short"] });
   add(1, 14, {
     type: "choice",
     scene: "corridor_door",
     speaker: "许知晚",
     text: "许知晚压低声音：我不是来吓你的。我姐三年前不是意外。\n\n她说这句话时没有哭，甚至没有抬高声音。可林舟听出来，那不是请求，是她已经在心里重复过无数次的判决。",
+    sfxOnChoice: ["choice_confirm_soft"],
     choices: [
       choice("a", "你让她把证件从门缝递进来，先别靠近门锁", "ch01_015", {
         setFlags: ["verified_zhuwan_identity"],
@@ -296,12 +300,12 @@ window.MIST_DATA = (() => {
   add(1, 15, { speaker: "旁白", text: "门缝里滑进来一张塑封证件。名字是许知晚。\n\n照片上的她笑得很浅，和门外湿透的狼狈判若两人。林舟没有立刻捡，只盯着那张证件边缘的水迹，看它慢慢渗进地毯。", scene: "corridor_door" });
   add(1, 16, { speaker: "许知晚", text: "你可以报警。但在他们来之前，你先看一眼我发给你的东西。\n\n许知晚顿了顿，像终于把最危险的名字放到门缝里：别让周屿知道。", scene: "corridor_door" });
   add(1, 17, { speaker: "许知晚", text: "因为今晚，我姐的旧手机亮了。\n\n它先拨给你，然后才把记录同步给我。像她等了三年，终于等到你还愿意接电话。", scene: "corridor_door" });
-  add(1, 18, { speaker: "旁白", text: "手机又震了一下。这一次不是旧号码，是周屿。\n\n【这么晚了，别随便给陌生女人开门。】\n\n林舟盯着那行字，胃里忽然沉下去。她没有告诉任何人，门外站着一个女人。", scene: "phone_call_ui" });
+  add(1, 18, { speaker: "旁白", text: "手机又震了一下。这一次不是旧号码，是周屿。\n\n【这么晚了，别随便给陌生女人开门。】\n\n林舟盯着那行字，胃里忽然沉下去。她没有告诉任何人，门外站着一个女人。", scene: "phone_call_ui", sfxOnEnter: ["message_pop_cold"], voiceStinger: "zhouyu_phone_silence" });
   add(1, 19, { speaker: "林舟", text: "周屿怎么会知道门外有人？\n\n这句话出口后，屋里连雨声都像被压低了。林舟第一次觉得，那通来自死者的电话也许不是最可怕的事。", scene: "rental_room_rain_night" });
-  add(1, 20, { speaker: "旁白", text: "门外的许知晚也看见了那条消息。她没有解释，只把手从门上慢慢放下。\n\n楼道灯闪了一下，把猫眼里的她切成一张潮湿的旧照片。\n\n她隔着门低声说：他已经开始了。", scene: "corridor_door", nextNodeId: "ch02_001" });
+  add(1, 20, { speaker: "旁白", text: "门外的许知晚也看见了那条消息。她没有解释，只把手从门上慢慢放下。\n\n楼道灯闪了一下，把猫眼里的她切成一张潮湿的旧照片。\n\n她隔着门低声说：他已经开始了。", scene: "corridor_door", nextNodeId: "ch02_001", sfxOnEnter: ["corridor_light_flicker"], voiceStinger: "xuzhiwan_cold_exhale" });
 
   // 第 2 章：门外的许知晚
-  add(2, 1, { speaker: "许知晚", text: "他给你发消息了，对不对？\n\n许知晚没有问是谁。她的眼睛越过猫眼，像能看见林舟握着手机的手。那种确定，比她刚才说自己是许知夏妹妹更让人不安。", scene: "corridor_door" });
+  add(2, 1, { speaker: "许知晚", text: "他给你发消息了，对不对？\n\n许知晚没有问是谁。她的眼睛越过猫眼，像能看见林舟握着手机的手。那种确定，比她刚才说自己是许知夏妹妹更让人不安。", scene: "corridor_door", voiceStinger: "xuzhiwan_cold_exhale" });
   add(2, 2, { speaker: "林舟", text: "你怎么知道？\n\n林舟没有把手机贴近猫眼。她忽然害怕门外的女人不是在猜，而是在等这条消息出现。", scene: "corridor_door" });
   add(2, 3, { speaker: "许知晚", text: "因为三年前，他也是这样先让所有人闭嘴。\n\n他说“别让事情变难看”。他说“知夏只是太累了”。他说到最后，所有人都开始替他重复那句话。", scene: "corridor_door", visualCharacter: "许知晚", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "rain_heavy_loop", sfxOnEnter: ["corridor_light_flicker"], voiceStinger: "xuzhiwan_low_breath", audioMood: "tense" });
   add(2, 4, {
@@ -328,7 +332,7 @@ window.MIST_DATA = (() => {
   });
   add(2, 5, { speaker: "许知晚", text: "她高三那年离家出走，躲在图书馆天台。那天家里人找疯了，她却只给我发了一句：别让他们等我。\n\n后来她跟你说过吧？她最怕让别人等。", scene: "corridor_door", type: "clue", gainClues: ["clue_sister_mark"] });
   add(2, 6, { speaker: "旁白", text: "许知晚进门后没有坐。她站在玄关最靠近门的位置，像随时准备离开，也像不想让林舟离开。\n\n水从袖口滴到地垫上，她的眼睛一直盯着林舟的手机。", scene: "rental_room_rain_night", type: "clue", gainClues: ["clue_sister_mark"] });
-  add(2, 7, { speaker: "陈妍", text: "截图收到了。周屿？你大学那个老好人？\n\n陈妍停了两秒，语气冷下来：林舟，他为什么半夜知道你家门口站着谁？你先别信任何人，包括门口那个。", scene: "old_chat_memory" });
+  add(2, 7, { speaker: "陈妍", text: "截图收到了。周屿？你大学那个老好人？\n\n陈妍停了两秒，语气冷下来：林舟，他为什么半夜知道你家门口站着谁？你先别信任何人，包括门口那个。", scene: "old_chat_memory", sfxOnEnter: ["message_pop_cold"] });
   add(2, 8, {
     type: "choice",
     scene: "rental_room_rain_night",
@@ -377,7 +381,7 @@ window.MIST_DATA = (() => {
       }),
     ],
   });
-  add(2, 15, { speaker: "周屿", text: "我只是担心你。你以前就容易心软，知夏出事那晚也是。\n\n他把“心软”两个字说得很轻，像不是责备，而是一把已经放在林舟手腕上的手。", scene: "phone_call_ui", visualCharacter: "周屿", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "corridor_hum", sfxOnEnter: ["message_pop_cold"], audioMood: "tense" });
+  add(2, 15, { speaker: "周屿", text: "我只是担心你。你以前就容易心软，知夏出事那晚也是。\n\n他把“心软”两个字说得很轻，像不是责备，而是一把已经放在林舟手腕上的手。", scene: "phone_call_ui", visualCharacter: "周屿", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "corridor_hum", sfxOnEnter: ["message_pop_cold"], audioMood: "tense", voiceStinger: "zhouyu_phone_silence" });
   add(2, 16, { speaker: "许知晚", text: "他说你心软？他最会用这个词了。说得像所有犹豫都是别人的错。", scene: "rental_room_rain_night" });
   add(2, 17, { speaker: "陈妍", text: "查到了，他号码换过，但社交账号还在。三年前以后，他几乎删掉了所有和许知夏同框的照片。", scene: "old_chat_memory" });
   add(2, 18, { speaker: "旁白", text: "许知晚擦了擦手，终于坐下。她没有靠近沙发，只坐在门边，像随时准备被赶出去。", scene: "rental_room_rain_night" });
@@ -435,8 +439,8 @@ window.MIST_DATA = (() => {
       }),
     ],
   });
-  add(3, 10, { speaker: "陈妍", text: "有了。\n\n不是正规借款，是套身份的灰色平台。截图里，借款人一栏写着许知夏的名字。证件号是真的，签名却不像她。\n\n更怪的是，借款时间就在她准备报警前两天。", scene: "old_chat_memory", type: "clue", gainClues: ["clue_gray_loan"], setFlags: ["found_gray_loan"] });
-  add(3, 11, { speaker: "周屿", text: "知夏那时候压力很大，你现在翻这些，只会让所有人更难堪。\n\n林舟，你一直是最会替别人着想的人。别到最后，连你自己都下不了台。", scene: "phone_call_ui", visualCharacter: "周屿", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", sfxOnEnter: ["message_pop_cold"], audioMood: "tense" });
+  add(3, 10, { speaker: "陈妍", text: "有了。\n\n不是正规借款，是套身份的灰色平台。截图里，借款人一栏写着许知夏的名字。证件号是真的，签名却不像她。\n\n更怪的是，借款时间就在她准备报警前两天。", scene: "old_chat_memory", type: "clue", gainClues: ["clue_gray_loan"], setFlags: ["found_gray_loan"], sfxOnEnter: ["evidence_reveal"] });
+  add(3, 11, { speaker: "周屿", text: "知夏那时候压力很大，你现在翻这些，只会让所有人更难堪。\n\n林舟，你一直是最会替别人着想的人。别到最后，连你自己都下不了台。", scene: "phone_call_ui", visualCharacter: "周屿", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", sfxOnEnter: ["message_pop_cold"], audioMood: "tense", voiceStinger: "zhouyu_phone_silence" });
   add(3, 12, { speaker: "许知晚", text: "我有平台截图，但不完整。\n\n完整的东西，可能在你那张合照里。不是因为照片能证明借贷，是因为它能证明那晚谁在撒谎。", scene: "rental_room_rain_night", type: "clue", gainClues: ["clue_gray_loan"], setFlags: ["found_gray_loan"] });
   add(3, 13, { speaker: "林舟", text: "合照为什么能证明借贷？", scene: "rental_room_rain_night" });
   add(3, 14, { speaker: "许知晚", text: "不能证明借贷。\n\n但能证明周屿那晚不在他说的位置。一个人说谎，总不是只为了一件事。", scene: "rental_room_rain_night" });
@@ -462,13 +466,13 @@ window.MIST_DATA = (() => {
       }),
     ],
   });
-  add(3, 17, { speaker: "陈妍", text: "他不是案发后走的。\n\n是新闻出来前一天。他递了离职，买了最早离开本市的票。理由写的是回老家处理急事，可那天，他根本没有请假记录。", scene: "old_chat_memory", type: "clue", gainClues: ["clue_zhou_left"], setFlags: ["suspected_zhou"] });
-  add(3, 18, { speaker: "周屿", text: "我离开是因为受不了。\n\n林舟，不是每个人都能像你一样假装三年没事。你现在把自己演成正义的人，是不是太晚了？", scene: "phone_call_ui", type: "clue", gainClues: ["clue_zhou_left"], setFlags: ["suspected_zhou"], visualCharacter: "周屿", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", sfxOnEnter: ["message_pop_cold"], audioMood: "tense" });
-  add(3, 19, { speaker: "旁白", text: "录音里，周屿停顿了两秒。\n\n那两秒没有雨声，只有他压住呼吸的声音。像一个人差点说漏了什么，又立刻把门关上。", scene: "phone_call_ui", type: "clue", gainClues: ["clue_zhou_left"], setFlags: ["suspected_zhou"] });
+  add(3, 17, { speaker: "陈妍", text: "他不是案发后走的。\n\n是新闻出来前一天。他递了离职，买了最早离开本市的票。理由写的是回老家处理急事，可那天，他根本没有请假记录。", scene: "old_chat_memory", type: "clue", gainClues: ["clue_zhou_left"], setFlags: ["suspected_zhou"], sfxOnEnter: ["evidence_reveal"] });
+  add(3, 18, { speaker: "周屿", text: "我离开是因为受不了。\n\n林舟，不是每个人都能像你一样假装三年没事。你现在把自己演成正义的人，是不是太晚了？", scene: "phone_call_ui", type: "clue", gainClues: ["clue_zhou_left"], setFlags: ["suspected_zhou"], visualCharacter: "周屿", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", sfxOnEnter: ["message_pop_cold"], audioMood: "tense", voiceStinger: "zhouyu_tiny_smile" });
+  add(3, 19, { speaker: "旁白", text: "录音里，周屿停顿了两秒。\n\n那两秒没有雨声，只有他压住呼吸的声音。像一个人差点说漏了什么，又立刻把门关上。", scene: "phone_call_ui", type: "clue", gainClues: ["clue_zhou_left"], setFlags: ["suspected_zhou"], voiceStinger: "zhouyu_phone_silence" });
   add(3, 20, { speaker: "陈妍", text: "林舟，新闻出来前一天，他为什么要跑？\n\n还有一件事。许知夏那晚的报警记录，被撤回过一次。", scene: "old_chat_memory", nextNodeId: "ch04_001" });
 
   // 第 4 章：最后一张合照
-  add(4, 1, { speaker: "旁白", text: "纸箱被拖出来时，胶带粘着地板发出刺耳的声音。\n\n林舟手指停在箱盖上，像停在三年前那通没接的电话前。她忽然不确定，自己到底是在找证据，还是在找一个可以原谅自己的理由。", scene: "rental_room_table" });
+  add(4, 1, { speaker: "旁白", text: "纸箱被拖出来时，胶带粘着地板发出刺耳的声音。\n\n林舟手指停在箱盖上，像停在三年前那通没接的电话前。她忽然不确定，自己到底是在找证据，还是在找一个可以原谅自己的理由。", scene: "rental_room_table", sfxOnEnter: ["old_photo_pickup"] });
   add(4, 2, { speaker: "许知晚", text: "如果你不想找，我不会逼你。\n\n但我姐姐可能就只剩这一张东西，还能让他说不出话。", scene: "rental_room_table" });
   add(4, 3, { speaker: "林舟", text: "你已经来了。电话也已经打了。\n\n现在说不逼，太晚了。", scene: "rental_room_table" });
   add(4, 4, {
@@ -494,7 +498,7 @@ window.MIST_DATA = (() => {
     ],
   });
   add(4, 5, { speaker: "陈妍", text: "收到。你终于有点证据意识了。\n\n别笑，我现在真想给你发面锦旗：三年后终于知道截图不是备份。", scene: "old_chat_memory" });
-  add(4, 6, { speaker: "旁白", text: "照片被夹在一本旧笔记里。\n\n四个人站在校门口，许知夏笑得最大声，周屿站得离她最近。林舟看着自己那张年轻得有些陌生的脸，忽然想不起拍照后，他们去了哪里。", scene: "photo_zoom_view", setFlags: ["found_last_photo"] });
+  add(4, 6, { speaker: "旁白", text: "照片被夹在一本旧笔记里。\n\n四个人站在校门口，许知夏笑得最大声，周屿站得离她最近。林舟看着自己那张年轻得有些陌生的脸，忽然想不起拍照后，他们去了哪里。", scene: "photo_zoom_view", setFlags: ["found_last_photo"], sfxOnEnter: ["old_photo_pickup"] });
   add(4, 7, { speaker: "许知晚", text: "别看他们的脸。\n\n看背景。右后方那栋楼的入口。你们每个人都在笑，只有那里没有。", scene: "photo_zoom_view" });
   add(4, 8, { speaker: "旁白", text: "照片背面有一行很淡的字：别相信他说的那晚。\n\n字迹被潮气晕开，像有人写完后又后悔，又像有人写得太急，来不及把纸吹干。", scene: "photo_zoom_view" });
   add(4, 9, { speaker: "林舟", text: "这句话不是证据。\n\n但如果她写下它，就说明那晚她已经开始怕了。", scene: "photo_zoom_view" });
@@ -503,6 +507,8 @@ window.MIST_DATA = (() => {
     scene: "photo_zoom_view",
     speaker: "旁白",
     text: "屏幕上的照片被放大。\n\n雨声像一层噪点压在耳边，照片里的笑脸开始变形。林舟第一次觉得，合照不是为了记住快乐，也可能是为了把谎言留下。",
+    sfxOnEnter: ["photo_zoom"],
+    sfxOnChoice: ["choice_confirm_soft"],
     choices: [
       choice("a", "你先看玻璃反光，确认拍照时楼道里还有谁", "ch04_011", {
         relationshipEffects: [rel("courage_linzou", 4, "你检查照片里的反光细节")],
@@ -518,11 +524,11 @@ window.MIST_DATA = (() => {
       }),
     ],
   });
-  add(4, 11, { speaker: "旁白", text: "玻璃反光里有一截蓝色伞柄。\n\n颜色和周屿大学时常用的那把很像，但还不够。林舟记得他总说蓝色显得干净，像什么都没发生过。", scene: "photo_zoom_view" });
+  add(4, 11, { speaker: "旁白", text: "玻璃反光里有一截蓝色伞柄。\n\n颜色和周屿大学时常用的那把很像，但还不够。林舟记得他总说蓝色显得干净，像什么都没发生过。", scene: "photo_zoom_view", sfxOnEnter: ["photo_reflection_find"] });
   add(4, 12, { speaker: "旁白", text: "门牌号模糊，却能看出那不是宿舍正门，而是旧楼后侧楼梯。\n\n许知夏坠楼的地方，就在那栋楼后。", scene: "photo_zoom_view" });
-  add(4, 13, { speaker: "旁白", text: "右下角阴影里，有半个人影。\n\n深色外套，左肩一道浅色反光。林舟记得周屿那件外套，也记得他说那晚他不在学校。", scene: "photo_zoom_view" });
+  add(4, 13, { speaker: "旁白", text: "右下角阴影里，有半个人影。\n\n深色外套，左肩一道浅色反光。林舟记得周屿那件外套，也记得他说那晚他不在学校。", scene: "photo_zoom_view", sfxOnEnter: ["photo_reflection_find"] });
   add(4, 14, { speaker: "许知晚", text: "他说那晚他在外地。\n\n可这张照片拍摄时间，是出事前两个小时。一个在外地的人，不该站在旧楼后门。", scene: "photo_zoom_view" });
-  add(4, 15, { speaker: "旁白", text: "林舟把照片再放大一格。\n\n人影不再像影子，像一个终于被雨水冲出来的人。那一刻，照片安静得可怕。", scene: "photo_zoom_view", type: "clue", gainClues: ["clue_photo_background"], setFlags: ["found_photo_background"] });
+  add(4, 15, { speaker: "旁白", text: "林舟把照片再放大一格。\n\n人影不再像影子，像一个终于被雨水冲出来的人。那一刻，照片安静得可怕。", scene: "photo_zoom_view", type: "clue", gainClues: ["clue_photo_background"], setFlags: ["found_photo_background"], sfxOnEnter: ["evidence_reveal", "marker_circle"] });
   add(4, 16, { speaker: "房东老太", text: "你门口那个姑娘？来过。\n\n还有个男的也来问过你住几楼，戴口罩，声音挺客气。越客气的人，越不像只是问路。", scene: "corridor_door" });
   add(4, 17, {
     type: "choice",
@@ -549,10 +555,10 @@ window.MIST_DATA = (() => {
   });
   add(4, 18, { speaker: "周屿", text: "你没找到就好。\n\n我的意思是，别再翻那些东西了。它们只会害你，也会害那个站在你门外的人。", scene: "phone_call_ui", visualCharacter: "周屿", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", sfxOnEnter: ["message_pop_cold"], audioMood: "tense" });
   add(4, 19, { speaker: "陈妍", text: "照片收到了。我也看见右下角了。\n\n林舟，这不是你一个人能扛的事。还有，别把原件交给任何人，包括门外那个姑娘。", scene: "old_chat_memory" });
-  add(4, 20, { speaker: "周屿", text: "林舟。\n\n你刚刚找到那张合照，对吗？\n\n电话那头没有雨声。可林舟却听见门外的楼道灯又闪了一下，像有人正抬头看她的门牌。", scene: "phone_call_ui", nextNodeId: "ch05_001", visualCharacter: "周屿", visualMood: "horror", characterVariant: "horror", characterScale: "fullscreen", characterPosition: "center", characterFraming: "face", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", sfxOnEnter: ["message_pop_cold"], voiceStinger: "zhouyu_pressure_breath", audioMood: "horror" });
+  add(4, 20, { speaker: "周屿", text: "林舟。\n\n你刚刚找到那张合照，对吗？\n\n电话那头没有雨声。可林舟却听见门外的楼道灯又闪了一下，像有人正抬头看她的门牌。", scene: "phone_call_ui", nextNodeId: "ch05_001", visualCharacter: "周屿", visualMood: "horror", characterVariant: "horror", characterScale: "fullscreen", characterPosition: "center", characterFraming: "face", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", sfxOnEnter: ["message_pop_cold"], voiceStinger: "zhouyu_tiny_smile", audioMood: "horror" });
 
   // 第 5 章：旧手机的声音
-  add(5, 1, { speaker: "旁白", text: "房间里所有人都没说话。\n\n周屿那句话还停在听筒里，像他不是打来电话，而是把耳朵贴在门上。", scene: "phone_call_ui" });
+  add(5, 1, { speaker: "旁白", text: "房间里所有人都没说话。\n\n周屿那句话还停在听筒里，像他不是打来电话，而是把耳朵贴在门上。", scene: "phone_call_ui", sfxOnEnter: ["room_silence_drop"] });
   add(5, 2, { speaker: "许知晚", text: "他知道。\n\n不是猜的。有人告诉他，或者他一直在看着这间屋子。", scene: "rental_room_rain_night" });
   add(5, 3, { speaker: "陈妍", text: "我建议你现在别单独出门。\n\n还有，手机别关机。你要是突然没声，我真的会报警，别嫌我烦。", scene: "old_chat_memory" });
   add(5, 4, {
@@ -560,6 +566,8 @@ window.MIST_DATA = (() => {
     scene: "old_phone_view",
     speaker: "许知晚",
     text: "许知晚发来旧手机录屏。\n\n屏幕上，语音备忘列表正在一点点恢复。每跳出一个文件名，林舟都觉得那部旧手机像在重新呼吸。",
+    sfxOnEnter: ["old_phone_start"],
+    sfxOnChoice: ["choice_confirm_soft"],
     choices: [
       choice("a", "你让许知晚继续播放录屏，不再暂停", "ch05_005", {
         relationshipEffects: [rel("trust_zhuwan", 8, "你愿意继续接收许知晚提供的旧手机记录")],
@@ -577,11 +585,11 @@ window.MIST_DATA = (() => {
       }),
     ],
   });
-  add(5, 5, { speaker: "许知夏的声音", text: "如果这段被恢复，说明我没来得及见到林舟。\n\n她的声音很轻，像隔着一层潮湿的棉布。最后一个字被电流噪声吞掉，林舟却听得比任何时候都清楚。", scene: "old_phone_view", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "recording", characterScale: "impact", characterPosition: "center", characterFraming: "halfbody", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "room_night_loop", sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_static_breath", audioMood: "horror" });
+  add(5, 5, { speaker: "许知夏的声音", text: "如果这段被恢复，说明我没来得及见到林舟。\n\n她的声音很轻，像隔着一层潮湿的棉布。最后一个字被电流噪声吞掉，林舟却听得比任何时候都清楚。", scene: "old_phone_view", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "recording", characterScale: "impact", characterPosition: "center", characterFraming: "halfbody", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "room_night_loop", sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_weak_static_exhale", audioMood: "horror" });
   add(5, 6, { speaker: "陈妍", text: "可能。\n\n旧手机开机，云端恢复，语音备忘提醒被重新触发。它会像一次主动来电。吓人，但不是鬼。\n\n真正吓人的是，有人知道它什么时候响。", scene: "old_chat_memory" });
   add(5, 7, { speaker: "周屿", text: "旧手机？\n\n她妹妹连这个都告诉你了？林舟，你知道她这些年怎么查你的吗？你就这么容易把门开给一个陌生人？", scene: "phone_call_ui", visualCharacter: "周屿", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", sfxOnEnter: ["message_pop_cold"], audioMood: "tense" });
   add(5, 8, { speaker: "林舟", text: "所以你知道那部手机。\n\n你刚刚没有问是哪部。", scene: "phone_call_ui" });
-  add(5, 9, { speaker: "旁白", text: "周屿没有立刻回答。\n\n沉默里，楼道灯忽然灭了。门缝下那条冷白色的光，也跟着断掉。", scene: "corridor_door" });
+  add(5, 9, { speaker: "旁白", text: "周屿没有立刻回答。\n\n沉默里，楼道灯忽然灭了。门缝下那条冷白色的光，也跟着断掉。", scene: "corridor_door", sfxOnEnter: ["corridor_light_flicker"] });
   add(5, 10, {
     type: "choice",
     scene: "old_phone_view",
@@ -603,17 +611,18 @@ window.MIST_DATA = (() => {
       }),
     ],
   });
-  add(5, 11, { speaker: "许知夏的声音", text: "周屿他……如果我出事，不要相信他说那晚不在。照片——\n\n录音在“照片”两个字后突然断掉，像有人从她手里夺走了手机。", scene: "old_phone_view", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "fear", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "room_night_loop", sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_static_breath", audioMood: "horror" });
-  add(5, 12, { speaker: "陈妍", text: "备份到了。\n\n林舟，这段足够说明她生前在防一个熟人。别再让任何人单独拿走原件。", scene: "old_chat_memory" });
-  add(5, 13, { speaker: "旁白", text: "猫眼外一片黑。\n\n只有楼梯间传来第二个人的脚步声，慢，不急，像故意让屋里的人听见。林舟忽然明白，恐惧不是不知道外面有什么，是知道它正在靠近。", scene: "corridor_door" });
+  add(5, 11, { speaker: "许知夏的声音", text: "周屿他……如果我出事，不要相信他说那晚不在。照片——\n\n录音在“照片”两个字后突然断掉，像有人从她手里夺走了手机。", scene: "old_phone_view", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "fear", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "room_night_loop", sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_weak_static_exhale", audioMood: "horror" });
+  add(5, 12, { speaker: "陈妍", text: "备份到了。\n\n林舟，这段足够说明她生前在防一个熟人。别再让任何人单独拿走原件。", scene: "old_chat_memory", sfxOnEnter: ["backup_success"] });
+  add(5, 13, { speaker: "旁白", text: "猫眼外一片黑。\n\n只有楼梯间传来第二个人的脚步声，慢，不急，像故意让屋里的人听见。林舟忽然明白，恐惧不是不知道外面有什么，是知道它正在靠近。", scene: "corridor_door", sfxOnEnter: ["footstep_corridor_wet"] });
   add(5, 14, { speaker: "许知晚", text: "他来了。\n\n别开门。哪怕他说自己是来帮你的。", scene: "corridor_door" });
-  add(5, 15, { speaker: "旁白", text: "录屏最后弹出恢复记录。\n\n旧手机重新开机后，三年前的语音备忘被云端提醒触发。死者来电终于有了现实解释。\n\n它不是鬼魂回拨，是许知夏迟到三年的求救。", scene: "old_phone_view", type: "clue", gainClues: ["clue_timed_voice"], setFlags: ["understood_dead_call"], visualMood: "horror", visualCharacter: "许知夏", characterVariant: "recording", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "room_night_loop", sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_recording_cut", audioMood: "horror" });
+  add(5, 15, { speaker: "旁白", text: "录屏最后弹出恢复记录。\n\n旧手机重新开机后，三年前的语音备忘被云端提醒触发。死者来电终于有了现实解释。\n\n它不是鬼魂回拨，是许知夏迟到三年的求救。", scene: "old_phone_view", type: "clue", gainClues: ["clue_timed_voice"], setFlags: ["understood_dead_call"], visualMood: "horror", visualCharacter: "许知夏", characterVariant: "recording", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "room_night_loop", sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_memory_fade", audioMood: "horror" });
   add(5, 16, { speaker: "周屿", text: "林舟。\n\n你听到录音了？", scene: "phone_call_ui", visualCharacter: "周屿", visualMood: "horror", characterVariant: "horror", characterScale: "fullscreen", characterPosition: "center", characterFraming: "face", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "corridor_hum", sfxOnEnter: ["message_pop_cold"], voiceStinger: "zhouyu_pressure_breath", audioMood: "horror" });
   add(5, 17, {
     type: "choice",
     scene: "phone_call_ui",
     speaker: "旁白",
     text: "周屿的声音很轻。\n\n他不是在问。他在确认你手里还有多少东西，也在确认你敢不敢继续拿着它们。",
+    sfxOnChoice: ["choice_confirm_soft"],
     choices: [
       choice("a", "你假装录音损坏，诱导他说漏嘴", "ch05_018", {
         setFlags: ["answered_zhou_call"],
@@ -633,7 +642,7 @@ window.MIST_DATA = (() => {
   });
   add(5, 18, { speaker: "周屿", text: "损坏就别修了。\n\n知夏已经死了，别再让她把活人也拖下去。你看，连她妹妹都只会把你拖到门边。", scene: "phone_call_ui", visualCharacter: "周屿", visualMood: "horror", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", sfxOnEnter: ["message_pop_cold"], audioMood: "horror" });
   add(5, 19, { speaker: "周屿", text: "你以为你在救她？\n\n你当年要是接她电话，她也许根本不会死。现在装成不怕，是不是太迟了？", scene: "phone_call_ui", visualCharacter: "周屿", visualMood: "horror", characterVariant: "horror", characterScale: "fullscreen", characterPosition: "center", characterFraming: "face", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", sfxOnEnter: ["message_pop_cold"], voiceStinger: "zhouyu_low_laugh", audioMood: "horror" });
-  add(5, 20, { speaker: "旁白", text: "门锁孔里传来轻轻一声响。\n\n像有人把钥匙插了进去。\n\n许知晚猛地抬头，林舟第一次在她脸上看见真正的恐惧。", scene: "corridor_door", nextNodeId: "ch06_001" });
+  add(5, 20, { speaker: "旁白", text: "门锁孔里传来轻轻一声响。\n\n像有人把钥匙插了进去。\n\n许知晚猛地抬头，林舟第一次在她脸上看见真正的恐惧。", scene: "corridor_door", nextNodeId: "ch06_001", sfxOnEnter: ["door_lock_turn"] });
 
   // 第 6 章：无人接听
   add(6, 1, { speaker: "旁白", text: "林舟把桌上的东西摊开：照片、聊天记录、旧手机录屏、陈妍发来的新闻截图。\n\n它们终于不再是散落的雨声。每一件都指向同一个人，也指向林舟这三年一直绕开的那个夜晚。\n\n门外的钥匙声还没有消失。", scene: "rental_room_table" });
@@ -644,6 +653,7 @@ window.MIST_DATA = (() => {
     scene: "rental_room_table",
     speaker: "陈妍",
     text: "陈妍发来最后一条提醒：先决定证据怎么保住，再决定要不要相信谁。\n\n屏幕另一边，她没有催林舟勇敢，只催她别犯蠢。",
+    sfxOnChoice: ["choice_confirm_soft"],
     choices: [
       choice("a", "你把照片、录音和截图都备份到陈妍那里", "ch06_005", {
         setFlags: ["backed_up_photo"],
@@ -662,16 +672,18 @@ window.MIST_DATA = (() => {
       }),
     ],
   });
-  add(6, 5, { speaker: "陈妍", text: "收到。别逞强，我这边也会留一份。\n\n你现在可以开始拼答案了。记住，不是猜谁可怜，是看谁留下了痕迹。", scene: "old_chat_memory" });
-  add(6, 6, { speaker: "许知晚", text: "我会保管好。\n\n但如果只有我拿着，他一定会说这是我伪造的。林舟，信任不是把证据交出去。", scene: "rental_room_table" });
-  add(6, 7, { speaker: "旁白", text: "删除提示弹出时，林舟的指尖悬在屏幕上。\n\n雨声忽然变轻，像整个夜晚都在等她犯错。", scene: "rental_room_table" });
-  add(6, 8, { speaker: "旁白", text: "门外钥匙声停了。\n\n周屿没有敲门，只发来一条消息：你还来得及。\n\n这一次，林舟没有立刻颤抖。", scene: "phone_call_ui" });
+  add(6, 5, { speaker: "陈妍", text: "收到。别逞强，我这边也会留一份。\n\n你现在可以开始拼答案了。记住，不是猜谁可怜，是看谁留下了痕迹。", scene: "old_chat_memory", sfxOnEnter: ["backup_success"] });
+  add(6, 6, { speaker: "许知晚", text: "我会保管好。\n\n但如果只有我拿着，他一定会说这是我伪造的。林舟，信任不是把证据交出去。", scene: "rental_room_table", sfxOnEnter: ["backup_start"] });
+  add(6, 7, { speaker: "旁白", text: "删除提示弹出时，林舟的指尖悬在屏幕上。\n\n雨声忽然变轻，像整个夜晚都在等她犯错。", scene: "rental_room_table", sfxOnEnter: ["delete_warning"] });
+  add(6, 8, { speaker: "旁白", text: "门外钥匙声停了。\n\n周屿没有敲门，只发来一条消息：你还来得及。\n\n这一次，林舟没有立刻颤抖。", scene: "phone_call_ui", sfxOnEnter: ["door_lock_turn", "message_pop_cold"] });
   add(6, 9, { speaker: "林舟", text: "不。\n\n是他来不及了。", scene: "rental_room_table" });
   add(6, 10, {
     type: "choice",
     scene: "rental_room_table",
     speaker: "旁白",
     text: "林舟把所有声音调低，只留下自己的呼吸和屏幕上的五个问题。\n\n门外有人，电话里有人，三年前也有人。推理开始前，她必须先决定从哪条线把所有东西串起来。",
+    sfxOnEnter: ["room_silence_drop"],
+    sfxOnChoice: ["choice_confirm_soft"],
     choices: [
       choice("a", "你先把死者来电和旧手机录音放在一起", "ch06_011", {
         relationshipEffects: [rel("courage_linzou", 4, "你从最恐惧的声音开始整理真相")],
@@ -746,7 +758,7 @@ window.MIST_DATA = (() => {
       choice("c", "阻止许知晚离开这栋楼", "ch06_017"),
     ],
   });
-  add(6, 17, { speaker: "旁白", text: "答案提交后，屏幕暗了一瞬。\n\n门外的呼吸、电话里的沉默、照片里的影子，同时收紧。林舟忽然发现，最难的不是知道真相，而是决定让真相去哪里。", scene: "ending_screen" });
+  add(6, 17, { speaker: "旁白", text: "答案提交后，屏幕暗了一瞬。\n\n门外的呼吸、电话里的沉默、照片里的影子，同时收紧。林舟忽然发现，最难的不是知道真相，而是决定让真相去哪里。", scene: "ending_screen", sfxOnEnter: ["evidence_reveal"] });
   add(6, 18, {
     type: "choice",
     scene: "ending_screen",
@@ -774,8 +786,8 @@ window.MIST_DATA = (() => {
       }),
     ],
   });
-  add(6, 19, { speaker: "旁白", text: "林舟按下确认。\n\n门外安静了半秒。半秒之后，手机屏幕里的光照亮她的手。\n\n这一次，没有系统替她逃避。", scene: "ending_screen" });
-  add(6, 20, { speaker: "旁白", text: "雨声退到窗外。\n\n所有被挂断、删除、备份、保留下来的选择，都开始结算。", scene: "ending_screen", visualMood: "ending", bgm: "ending_archive", ambience: "room_night_loop", resolveEnding: true, nextNodeId: null });
+  add(6, 19, { speaker: "旁白", text: "林舟按下确认。\n\n门外安静了半秒。半秒之后，手机屏幕里的光照亮她的手。\n\n这一次，没有系统替她逃避。", scene: "ending_screen", sfxOnEnter: ["archive_stamp"] });
+  add(6, 20, { speaker: "旁白", text: "雨声退到窗外。\n\n所有被挂断、删除、备份、保留下来的选择，都开始结算。", scene: "ending_screen", visualMood: "ending", bgm: "ending_archive", ambience: "room_night_loop", resolveEnding: true, nextNodeId: null, sfxOnEnter: ["archive_stamp"] });
   nodes.ch06_019.nextNodeId = "ch06_020";
 
   return {
