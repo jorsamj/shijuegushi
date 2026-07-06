@@ -179,6 +179,7 @@ assert(countMilestones(scriptText) <= 4, "MILESTONES must be at most 4");
 assert(VISUALS && typeof VISUALS === "object", "visual assets config is missing");
 assert(exists("assets/audio/audio-assets.js"), "audio assets config file is missing");
 assert(exists("scripts/generate-voice-assets.mjs"), "voice generation script is missing");
+assert(exists("scripts/generate-procedural-audio.mjs"), "procedural audio generation script is missing");
 assert(exists(".env.example"), ".env.example is missing");
 assert(AUDIO && typeof AUDIO === "object", "window.SECOND_LIFE_AUDIO is missing");
 assert(indexText.includes("assets/audio/audio-assets.js"), "index.html must load assets/audio/audio-assets.js");
@@ -217,6 +218,8 @@ assert(voiceGeneratorText.includes("Edge TTS is only allowed"), "voice generator
     assert(typeof key === "string" && key.length > 0, `audio ${category} has invalid key`);
     assert(typeof path === "string" && path.length > 0, `audio ${category}.${key} must provide a path`);
     assert(!/^https?:\/\//i.test(path), `audio ${category}.${key} must not use external URL: ${path}`);
+    if (category === "bgm") assertAudioFile(path, `audio ${category}.${key}`, 2048);
+    if (category === "ambience") assertAudioFile(path, `audio ${category}.${key}`, 2048);
     if (category === "sfx") assertAudioFile(path, `audio ${category}.${key}`, 2048);
     if (category === "stingers") assertAudioFile(path, `audio ${category}.${key}`, 2048);
     if (category === "voice") assertAudioFile(path, `audio ${category}.${key}`, 5120);
@@ -259,6 +262,40 @@ const requiredP0VoiceKeys = [
   "voice_chenyan_ch01_009",
   "voice_linzhou_ch01_004",
 ];
+const generatedAudioFiles = [
+  "assets/audio/generated/bgm/bgm_rain_night_loop.wav",
+  "assets/audio/generated/bgm/bgm_horror_corridor.wav",
+  "assets/audio/generated/bgm/bgm_ending_archive.wav",
+  "assets/audio/generated/ambience/amb_rain_heavy_loop.wav",
+  "assets/audio/generated/ambience/amb_room_night_loop.wav",
+  "assets/audio/generated/ambience/amb_corridor_hum.wav",
+  "assets/audio/generated/sfx/sfx_phone_vibrate.wav",
+  "assets/audio/generated/sfx/sfx_phone_ring_dead_call.wav",
+  "assets/audio/generated/sfx/sfx_message_pop_cold.wav",
+  "assets/audio/generated/sfx/sfx_doorbell_rain_night.wav",
+  "assets/audio/generated/sfx/sfx_knock_soft.wav",
+  "assets/audio/generated/sfx/sfx_door_chain_close.wav",
+  "assets/audio/generated/sfx/sfx_door_lock_turn.wav",
+  "assets/audio/generated/sfx/sfx_door_open_slow.wav",
+  "assets/audio/generated/sfx/sfx_footstep_corridor_wet.wav",
+  "assets/audio/generated/sfx/sfx_corridor_light_flicker.wav",
+  "assets/audio/generated/sfx/sfx_old_phone_start.wav",
+  "assets/audio/generated/sfx/sfx_recording_static_short.wav",
+  "assets/audio/generated/sfx/sfx_photo_zoom.wav",
+  "assets/audio/generated/sfx/sfx_marker_circle.wav",
+  "assets/audio/generated/sfx/sfx_choice_confirm_soft.wav",
+  "assets/audio/generated/stingers/linzhou_gasp_short.wav",
+  "assets/audio/generated/stingers/linzhou_breath_tense.wav",
+  "assets/audio/generated/stingers/xuzhiwan_low_breath.wav",
+  "assets/audio/generated/stingers/xuzhiwan_step_wet.wav",
+  "assets/audio/generated/stingers/zhouyu_low_laugh.wav",
+  "assets/audio/generated/stingers/zhouyu_pressure_breath.wav",
+  "assets/audio/generated/stingers/xuzhixia_static_breath.wav",
+  "assets/audio/generated/stingers/xuzhixia_recording_cut.wav",
+];
+generatedAudioFiles.forEach((assetPath) => {
+  assert(exists(assetPath), `generated procedural audio file is missing: ${assetPath}`);
+});
 for (const key of requiredP0SfxKeys) {
   assert(AUDIO.sfx?.[key], `P0 SFX key missing from audio-assets.js: ${key}`);
   if (AUDIO.sfx?.[key]) assertAudioFile(AUDIO.sfx[key], `P0 SFX ${key}`, 2048);
@@ -385,13 +422,13 @@ for (const chapter of DATA.chapters || []) {
 
 const requiredVisualStateNodes = {
   ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_vibrate", "phone_ring_dead_call"] },
-  ch01_004: { voiceAudio: "voice_linzhou_ch01_004" },
-  ch01_005: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "impact", characterFraming: "halfbody", characterFocus: "face", headSafe: true, voiceAudio: "voice_xuzhixia_ch01_005", sfxOnEnter: ["recording_static_short"] },
-  ch01_007: { visualMood: true, visualCharacter: "许知晚", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterFocus: "upperBody", headSafe: true, voiceAudio: "voice_xuzhiwan_ch01_007_short", sfxOnEnter: ["doorbell_rain_night"] },
-  ch01_009: { voiceAudio: "voice_chenyan_ch01_009_short" },
+  ch01_004: { voiceStinger: "linzhou_gasp_short" },
+  ch01_005: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "impact", characterFraming: "halfbody", characterFocus: "face", headSafe: true, voiceStinger: "xuzhixia_static_breath", sfxOnEnter: ["recording_static_short"] },
+  ch01_007: { visualMood: true, visualCharacter: "许知晚", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterFocus: "upperBody", headSafe: true, voiceStinger: "xuzhiwan_low_breath", sfxOnEnter: ["doorbell_rain_night", "footstep_corridor_wet"] },
+  ch01_009: { sfxOnEnter: ["message_pop_cold"] },
   ch01_008: { visualMood: true, visualCharacter: "许知晚", characterVariant: "fullbody", characterScale: "large", characterPosition: "center", characterFraming: "fullbody", characterFocus: "fullBody", headSafe: true },
-  ch02_003: { visualMood: true, visualCharacter: "许知晚", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterFocus: "face", headSafe: true, voiceAudio: "voice_xuzhiwan_ch02_003_short", sfxOnEnter: ["corridor_light_flicker"] },
-  ch04_020: { voiceAudio: "voice_zhouyu_ch04_020_short", sfxOnEnter: ["message_pop_cold"] },
+  ch02_003: { visualMood: true, visualCharacter: "许知晚", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterFocus: "face", headSafe: true, voiceStinger: "xuzhiwan_low_breath", sfxOnEnter: ["corridor_light_flicker"] },
+  ch04_020: { voiceStinger: "zhouyu_pressure_breath", sfxOnEnter: ["message_pop_cold"] },
   ch05_011: { visualMood: true, visualCharacter: "许知夏", characterVariant: "fear", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_static_breath" },
   ch05_015: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "closeup", characterFraming: "bust", characterFocus: "face", headSafe: true, sfxOnEnter: ["old_phone_start", "recording_static_short"] },
   ch05_016: { visualMood: true, visualCharacter: "周屿", characterVariant: "horror", characterScale: "fullscreen", characterFraming: "face", characterFocus: "face", headSafe: true },
@@ -513,8 +550,10 @@ for (const node of Object.values(DATA.nodes || {})) {
 
 const dialogueAudioNodes = Object.values(DATA.nodes || {}).filter((node) => node.voiceAudio || node.narrationAudio || node.voiceStinger);
 const narrationNodes = Object.values(DATA.nodes || {}).filter((node) => node.narrationAudio);
+const voiceAudioNodes = Object.values(DATA.nodes || {}).filter((node) => node.voiceAudio);
+assert(voiceAudioNodes.length === 0, `story nodes must not trigger voiceAudio readings, got ${voiceAudioNodes.length}`);
 assert(dialogueAudioNodes.length <= 12, `key voice/stinger nodes must stay sparse, got ${dialogueAudioNodes.length}`);
-assert(narrationNodes.length <= 2, `narrationAudio should be rare, got ${narrationNodes.length}`);
+assert(narrationNodes.length === 0, `story nodes must not trigger narrationAudio readings, got ${narrationNodes.length}`);
 
 const reachable = new Set();
 const stack = ["ch01_001"];
@@ -605,3 +644,6 @@ if (warnings.length) {
 
 console.log("Story data validation passed.");
 console.log(`chapters=${DATA.chapters.length}, clues=${clueIds.size}, nodes=${nodeIds.size}, coreClues=${coreClueIds.length}`);
+console.log(`P0 SFX checked=${requiredP0SfxKeys.length}`);
+console.log(`P0 stingers checked=${requiredP0StingerKeys.length}`);
+console.log(`generated procedural audio checked=${generatedAudioFiles.length}`);

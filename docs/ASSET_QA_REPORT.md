@@ -83,3 +83,13 @@
 | P0 stingers | Lin Zhou, Xu Zhiwan, Zhou Yu, Xu Zhixia, Chen Yan short sounds | All required P0 stinger files now exist under `assets/audio/stingers/`. | Filled | Added short playable MP3 files and tightened validation so missing mapped stingers fail. | Retake with high-quality voice/SFX production. |
 | P0 key voices | Dead call, first door voice, pressure lines, warning, reaction | Required P0 voice files exist and were refreshed as short clips. | Placeholder | Files remain `placeholder / need-retake / not-final`; they are suitable for integration QA only. | Replace with fixed-character high-quality TTS or real actor takes. |
 | Validation | Audio asset completeness | Missing SFX/stinger/voice files were previously easy to miss. | Fixed | `scripts/validate-story-data.mjs` now checks mapped SFX, stingers, voice, narration, P0 required keys, external URLs, and small-file warnings. | Keep this gate before each push. |
+
+## 2026-07-06 Procedural Audio QA
+
+| Category | Scope | Current State | Status | Treatment | Next Step |
+|---|---|---|---|---|---|
+| Sound source | BGM, ambience, SFX, stingers | External free asset sourcing is paused. | Fixed | Added local procedural WAV generation with no network and no third-party audio files. | Replace only if a later licensed professional pack is curated. |
+| Voice strategy | Ordinary narration/dialogue | Spoken TTS was distracting and inconsistent. | Fixed | Removed story-node `voiceAudio` and `narrationAudio` triggers; ordinary text stays silent. | Keep sparse sound design. |
+| Key moments | Character emotion beats | Spoken lines are no longer used as the default. | Fixed | Converted key moments to non-verbal stingers: breath, gasp, low laugh, recording cut. | Human listen pass on mobile. |
+| Background audio | BGM/ambience | Prior fallback could sound like white noise. | Fixed | Generated low-volume pads/rain/hum as WAV and mapped them in `audio-assets.js`. | Adjust gain after in-browser listening. |
+| Validation | Generated audio | The repo needed a repeatable local build path. | Fixed | `node scripts/generate-procedural-audio.mjs` regenerates all current demo audio; validation checks generated files. | Run generation before major audio edits. |

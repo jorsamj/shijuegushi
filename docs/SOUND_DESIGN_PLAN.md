@@ -82,3 +82,12 @@
 - No new BGM or ambience loops were added in this pass. Silence is still preferred over noisy ambience.
 - `scripts/validate-story-data.mjs` now fails when mapped SFX, stingers, voice, or narration files are missing.
 
+## 2026-07-06 Procedural Sound Direction
+
+- The demo no longer pursues full narration or full character voice acting.
+- Ordinary narration and ordinary dialogue must stay silent.
+- `voiceAudio` and `narrationAudio` are disabled at story-node level.
+- Key emotional moments use non-verbal `voiceStinger` only.
+- BGM, ambience, SFX, and stingers are generated locally by `scripts/generate-procedural-audio.mjs`.
+- The generated WAV assets do not use external downloads, unknown licenses, Edge TTS, or browser speech synthesis.
+- BGM and ambience should remain low-volume and restrained; silence is preferred over harsh noise.

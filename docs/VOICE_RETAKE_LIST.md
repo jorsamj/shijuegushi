@@ -104,3 +104,19 @@
 - Retake priority remains: Xu Zhixia dead-call line, Xu Zhiwan first door line, Xu Zhiwan pressure line, Zhou Yu pressure line, Chen Yan warning, Lin Zhou reaction.
 - Formal retakes must keep each character on a fixed voice identity; emotion should change through delivery, not by swapping voices.
 - Recommended final pipeline: ElevenLabs, Azure Neural TTS, MiniMax, Volcano Engine, Tencent/Alibaba emotional TTS, or real voice actors.
+
+## 2026-07-06 Voice Retake Scope Change
+
+- Full narration is no longer part of the demo target.
+- Ordinary character dialogue is no longer part of the demo target.
+- Existing spoken-line MP3 files remain archived placeholders but should not be triggered by story nodes.
+- Current demo playback should use generated non-verbal stingers instead:
+  - `linzhou_gasp_short`
+  - `linzhou_breath_tense`
+  - `xuzhiwan_low_breath`
+  - `xuzhiwan_step_wet`
+  - `zhouyu_low_laugh`
+  - `zhouyu_pressure_breath`
+  - `xuzhixia_static_breath`
+  - `xuzhixia_recording_cut`
+- If real voice production resumes later, it should be limited to very sparse signature lines, not full script reading.
