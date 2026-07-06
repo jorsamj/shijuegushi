@@ -65,7 +65,7 @@ for (const [relativePath, duration, renderer] of manifest) {
   fade(buffer, 0.01, 0.025);
   const filePath = path.join(outRoot, relativePath);
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, encodeWav(buffer));
+  writeFileSafely(filePath, encodeWav(buffer));
   rendered.push({ path: path.relative(root, filePath).replace(/\\/g, "/"), duration: buffer.length / sampleRate });
 }
 
@@ -74,11 +74,25 @@ for (const item of rendered) {
 }
 console.log(`Generated ${rendered.length} procedural WAV assets.`);
 
+function writeFileSafely(filePath, data) {
+  const tmpPath = `${filePath}.tmp`;
+  fs.writeFileSync(tmpPath, data);
+  try {
+    fs.renameSync(tmpPath, filePath);
+  } catch (error) {
+    fs.copyFileSync(tmpPath, filePath);
+    fs.unlinkSync(tmpPath);
+  }
+}
+
 function targetPeak(relativePath) {
-  if (relativePath.startsWith("bgm/")) return 0.42;
-  if (relativePath.startsWith("ambience/")) return 0.32;
-  if (relativePath.startsWith("stingers/")) return 0.5;
-  return 0.62;
+  if (relativePath.startsWith("bgm/")) return 0.28;
+  if (relativePath.startsWith("ambience/")) return 0.22;
+  if (relativePath.startsWith("stingers/")) return 0.36;
+  if (relativePath.includes("choice_confirm")) return 0.24;
+  if (relativePath.includes("message_pop")) return 0.28;
+  if (relativePath.includes("evidence") || relativePath.includes("backup")) return 0.34;
+  return 0.42;
 }
 
 function createBuffer(durationSeconds) {
@@ -165,6 +179,72 @@ function addImpulse(buffer, time, gain = 0.3, frequency = 220, decay = 0.15, noi
   });
 }
 
+function addWoodHit(buffer, time, gain = 0.18, bodyHz = 118, decay = 0.18) {
+  addTone(buffer, {
+    start: time,
+    duration: decay,
+    frequency: (t) => bodyHz * Math.pow(0.62, t / decay),
+    type: "sine",
+    gain,
+    attack: 0.003,
+    release: decay * 0.9,
+  });
+  addNoise(buffer, {
+    start: time + 0.002,
+    duration: decay * 0.72,
+    gain: gain * 0.22,
+    lowpassHz: 520,
+    highpassHz: 65,
+    attack: 0.002,
+    release: decay * 0.62,
+    seed: Math.floor(time * 10000) + 880,
+  });
+}
+
+function addMetalTick(buffer, time, gain = 0.08, bodyHz = 360, decay = 0.12) {
+  addNoise(buffer, {
+    start: time,
+    duration: decay,
+    gain: gain,
+    lowpassHz: 1800,
+    highpassHz: 240,
+    attack: 0.001,
+    release: decay * 0.82,
+    seed: Math.floor(time * 10000) + 930,
+  });
+  addTone(buffer, {
+    start: time + 0.003,
+    duration: decay * 0.75,
+    frequency: (t) => bodyHz + Math.sin(t * 42) * 20,
+    type: "sine",
+    gain: gain * 0.42,
+    attack: 0.002,
+    release: decay * 0.65,
+  });
+}
+
+function addSoftLowHit(buffer, time, gain = 0.12, frequency = 76, duration = 0.42) {
+  addTone(buffer, {
+    start: time,
+    duration,
+    frequency: (t) => frequency * Math.pow(0.72, t / duration),
+    type: "sine",
+    gain,
+    attack: 0.015,
+    release: duration * 0.72,
+  });
+  addNoise(buffer, {
+    start: time,
+    duration: duration * 0.55,
+    gain: gain * 0.06,
+    lowpassHz: 260,
+    highpassHz: 25,
+    attack: 0.01,
+    release: duration * 0.45,
+    seed: Math.floor(time * 10000) + 970,
+  });
+}
+
 function addBreath(buffer, start, duration, gain, seed = 3, pitch = 190) {
   addNoise(buffer, {
     start,
@@ -226,39 +306,38 @@ function lowShelf(buffer, factor = 0.96) {
 }
 
 function renderRainNightBgm(buffer, duration) {
-  addTone(buffer, { duration, frequency: 44, type: "sine", gain: 0.052, attack: 5, release: 6, detune: 1.2 });
-  addTone(buffer, { duration, frequency: (t) => 86 + Math.sin(t * 0.08) * 1.8, type: "triangle", gain: 0.022, attack: 6, release: 8 });
-  addTone(buffer, { start: 8, duration: duration - 12, frequency: 128, type: "sine", gain: 0.01, attack: 8, release: 9 });
-  addNoise(buffer, { duration, gain: 0.006, lowpassHz: 520, highpassHz: 28, attack: 4, release: 5, seed: 21 });
-  lowShelf(buffer, 0.88);
+  addTone(buffer, { duration, frequency: 42, type: "sine", gain: 0.036, attack: 7, release: 8, detune: 0.6 });
+  addTone(buffer, { duration, frequency: (t) => 74 + Math.sin(t * 0.045) * 1.1, type: "sine", gain: 0.017, attack: 9, release: 9 });
+  addTone(buffer, { start: 11, duration: duration - 15, frequency: (t) => 112 + Math.sin(t * 0.03) * 1.5, type: "sine", gain: 0.006, attack: 11, release: 11 });
+  addNoise(buffer, { duration, gain: 0.0035, lowpassHz: 320, highpassHz: 22, attack: 6, release: 7, seed: 21 });
+  lowShelf(buffer, 0.92);
   return buffer;
 }
 
 function renderHorrorCorridorBgm(buffer, duration) {
-  addTone(buffer, { duration, frequency: 38, type: "sine", gain: 0.066, attack: 4, release: 6, detune: 1 });
-  addTone(buffer, { duration, frequency: (t) => 72 + Math.sin(t * 0.11) * 1.4, type: "triangle", gain: 0.03, attack: 5, release: 7 });
-  addTone(buffer, { start: 5, duration: duration - 8, frequency: (t) => 139 + Math.sin(t * 0.29) * 2.5, type: "sine", gain: 0.01, attack: 9, release: 7 });
-  addNoise(buffer, { duration, gain: 0.007, lowpassHz: 430, highpassHz: 40, attack: 4, release: 6, seed: 31 });
+  addTone(buffer, { duration, frequency: 36, type: "sine", gain: 0.045, attack: 6, release: 7, detune: 0.5 });
+  addTone(buffer, { duration, frequency: (t) => 66 + Math.sin(t * 0.075) * 1.2, type: "sine", gain: 0.022, attack: 7, release: 8 });
+  addTone(buffer, { start: 6, duration: duration - 10, frequency: (t) => 126 + Math.sin(t * 0.18) * 1.4, type: "sine", gain: 0.0065, attack: 10, release: 9 });
+  addNoise(buffer, { duration, gain: 0.0038, lowpassHz: 260, highpassHz: 36, attack: 6, release: 7, seed: 31 });
   return buffer;
 }
 
 function renderEndingArchiveBgm(buffer, duration) {
-  addTone(buffer, { duration, frequency: 50, type: "sine", gain: 0.046, attack: 6, release: 8 });
-  addTone(buffer, { duration, frequency: (t) => 100 + Math.sin(t * 0.05) * 1.1, type: "triangle", gain: 0.022, attack: 8, release: 9 });
-  addTone(buffer, { start: 10, duration: duration - 12, frequency: 150, type: "sine", gain: 0.008, attack: 10, release: 10 });
-  addNoise(buffer, { duration, gain: 0.004, lowpassHz: 360, highpassHz: 25, attack: 6, release: 7, seed: 45 });
+  addTone(buffer, { duration, frequency: 48, type: "sine", gain: 0.032, attack: 8, release: 10 });
+  addTone(buffer, { duration, frequency: (t) => 91 + Math.sin(t * 0.04) * 0.8, type: "sine", gain: 0.014, attack: 10, release: 11 });
+  addNoise(buffer, { duration, gain: 0.003, lowpassHz: 240, highpassHz: 20, attack: 8, release: 8, seed: 45 });
   return buffer;
 }
 
 function renderRainLoop(buffer, duration) {
-  addNoise(buffer, { duration, gain: 0.025, lowpassHz: 780, highpassHz: 95, attack: 1.4, release: 1.4, seed: 90 });
+  addNoise(buffer, { duration, gain: 0.013, lowpassHz: 430, highpassHz: 42, attack: 1.8, release: 1.8, seed: 90 });
   addNoise(buffer, {
     duration,
-    gain: 0.018,
-    lowpassHz: 650,
-    highpassHz: 60,
+    gain: 0.009,
+    lowpassHz: 520,
+    highpassHz: 55,
     seed: 91,
-    pulse: (t) => 0.35 + Math.pow(Math.max(0, Math.sin(t * 19.7) * Math.sin(t * 8.9)), 4) * 1.5,
+    pulse: (t) => 0.25 + Math.pow(Math.max(0, Math.sin(t * 12.7) * Math.sin(t * 5.3)), 5) * 0.85,
   });
   return buffer;
 }
@@ -270,60 +349,66 @@ function renderRoomNight(buffer, duration) {
 }
 
 function renderCorridorHum(buffer, duration) {
-  addTone(buffer, { duration, frequency: 49, type: "sine", gain: 0.018, attack: 3, release: 3 });
-  addTone(buffer, { duration, frequency: 98, type: "sine", gain: 0.006, attack: 3, release: 3 });
-  addTone(buffer, { duration, frequency: (t) => 132 + Math.sin(t * 0.38) * 1.2, type: "triangle", gain: 0.003, attack: 4, release: 4 });
-  addNoise(buffer, { duration, gain: 0.0025, lowpassHz: 300, highpassHz: 50, attack: 3, release: 3, seed: 130 });
+  addTone(buffer, { duration, frequency: 48, type: "sine", gain: 0.011, attack: 4, release: 4 });
+  addTone(buffer, { duration, frequency: 96, type: "sine", gain: 0.0035, attack: 4, release: 4 });
+  addNoise(buffer, { duration, gain: 0.0016, lowpassHz: 180, highpassHz: 35, attack: 4, release: 4, seed: 130 });
   return buffer;
 }
 
 function renderPhoneVibrate(buffer) {
-  [0, 0.18, 0.36].forEach((t) => addTone(buffer, { start: t, duration: 0.12, frequency: 118, type: "triangle", gain: 0.35, attack: 0.01, release: 0.05, panLfo: 24 }));
+  [0.02, 0.18, 0.36].forEach((t, i) => {
+    addTone(buffer, { start: t, duration: 0.12, frequency: 132 + i * 4, type: "sine", gain: 0.17, attack: 0.008, release: 0.045, panLfo: 32 });
+    addTone(buffer, { start: t, duration: 0.14, frequency: 74, type: "sine", gain: 0.07, attack: 0.01, release: 0.06 });
+    addNoise(buffer, { start: t, duration: 0.12, gain: 0.012, lowpassHz: 260, highpassHz: 45, attack: 0.004, release: 0.045, seed: 180 + i });
+  });
   return buffer;
 }
 
 function renderDeadCallRing(buffer) {
-  [0.05, 0.52, 0.95].forEach((t) => {
-    addTone(buffer, { start: t, duration: 0.28, frequency: 512, type: "sine", gain: 0.2, attack: 0.03, release: 0.08 });
-    addTone(buffer, { start: t, duration: 0.28, frequency: 768, type: "triangle", gain: 0.08, attack: 0.03, release: 0.08 });
+  [0.04, 0.55, 1.02].forEach((t) => {
+    addTone(buffer, { start: t, duration: 0.31, frequency: 286, type: "sine", gain: 0.105, attack: 0.035, release: 0.14 });
+    addTone(buffer, { start: t, duration: 0.31, frequency: 348, type: "sine", gain: 0.058, attack: 0.04, release: 0.15 });
+    addTone(buffer, { start: t, duration: 0.31, frequency: (lt) => 224 + Math.sin(lt * 26) * 3, type: "sine", gain: 0.022, attack: 0.04, release: 0.12 });
   });
-  addNoise(buffer, { duration: buffer.length / sampleRate, gain: 0.008, lowpassHz: 1000, highpassHz: 180, seed: 201 });
+  addNoise(buffer, { duration: buffer.length / sampleRate, gain: 0.0035, lowpassHz: 640, highpassHz: 90, seed: 201 });
   return buffer;
 }
 
 function renderMessagePop(buffer) {
-  addTone(buffer, { start: 0.02, duration: 0.12, frequency: 690, type: "triangle", gain: 0.18, attack: 0.006, release: 0.07 });
-  addTone(buffer, { start: 0.1, duration: 0.13, frequency: 980, type: "sine", gain: 0.08, attack: 0.006, release: 0.08 });
+  addMetalTick(buffer, 0.035, 0.028, 310, 0.08);
+  addTone(buffer, { start: 0.08, duration: 0.16, frequency: 155, type: "sine", gain: 0.025, attack: 0.012, release: 0.07 });
   return buffer;
 }
 
 function renderDoorbell(buffer) {
-  addTone(buffer, { start: 0.04, duration: 0.55, frequency: 392, type: "sine", gain: 0.19, attack: 0.02, release: 0.18 });
-  addTone(buffer, { start: 0.38, duration: 0.54, frequency: 330, type: "sine", gain: 0.15, attack: 0.02, release: 0.22 });
+  addTone(buffer, { start: 0.05, duration: 0.52, frequency: 246, type: "sine", gain: 0.1, attack: 0.035, release: 0.25 });
+  addTone(buffer, { start: 0.38, duration: 0.56, frequency: 206, type: "sine", gain: 0.085, attack: 0.035, release: 0.28 });
+  addNoise(buffer, { start: 0.04, duration: 0.92, gain: 0.0025, lowpassHz: 420, highpassHz: 80, seed: 218 });
   return buffer;
 }
 
 function renderKnockSoft(buffer) {
-  [0.08, 0.31, 0.56].forEach((t, i) => addImpulse(buffer, t, 0.22 - i * 0.03, 160, 0.12, 0.025));
+  [0.08, 0.32, 0.61].forEach((t, i) => addWoodHit(buffer, t, 0.17 - i * 0.022, 112 + i * 5, 0.18));
   return buffer;
 }
 
 function renderDoorChain(buffer) {
-  [0.05, 0.15, 0.28, 0.42].forEach((t, i) => addImpulse(buffer, t, 0.19 - i * 0.025, 520 + i * 90, 0.11, 0.018));
+  [0.05, 0.16, 0.3, 0.46].forEach((t, i) => addMetalTick(buffer, t, 0.075 - i * 0.008, 420 + i * 55, 0.1));
   return buffer;
 }
 
 function renderDoorLock(buffer) {
-  addImpulse(buffer, 0.08, 0.18, 260, 0.18, 0.02);
-  addTone(buffer, { start: 0.22, duration: 0.28, frequency: (t) => 180 + t * 280, type: "triangle", gain: 0.09, attack: 0.02, release: 0.12 });
-  addImpulse(buffer, 0.55, 0.13, 340, 0.12, 0.014);
+  addMetalTick(buffer, 0.07, 0.06, 260, 0.12);
+  addNoise(buffer, { start: 0.18, duration: 0.3, gain: 0.035, lowpassHz: 760, highpassHz: 140, attack: 0.02, release: 0.12, seed: 244 });
+  addTone(buffer, { start: 0.2, duration: 0.28, frequency: (t) => 118 + Math.sin(t * 18) * 7, type: "sine", gain: 0.035, attack: 0.03, release: 0.12 });
+  addMetalTick(buffer, 0.55, 0.045, 330, 0.1);
   return buffer;
 }
 
 function renderDoorOpen(buffer) {
-  addNoise(buffer, { start: 0.08, duration: 1.35, gain: 0.055, lowpassHz: 620, highpassHz: 90, attack: 0.12, release: 0.45, seed: 255 });
-  addTone(buffer, { start: 0.16, duration: 1.2, frequency: (t) => 95 + Math.sin(t * 8) * 8, type: "triangle", gain: 0.035, attack: 0.08, release: 0.35 });
-  addImpulse(buffer, 1.48, 0.12, 180, 0.18, 0.012);
+  addNoise(buffer, { start: 0.08, duration: 1.35, gain: 0.04, lowpassHz: 480, highpassHz: 65, attack: 0.14, release: 0.48, seed: 255 });
+  addTone(buffer, { start: 0.14, duration: 1.15, frequency: (t) => 82 + Math.sin(t * 5) * 5, type: "sine", gain: 0.025, attack: 0.12, release: 0.38 });
+  addWoodHit(buffer, 1.48, 0.09, 96, 0.2);
   return buffer;
 }
 
@@ -337,53 +422,53 @@ function renderWetFootsteps(buffer) {
 
 function renderLightFlicker(buffer) {
   [0.05, 0.17, 0.31, 0.72].forEach((t, i) => {
-    addTone(buffer, { start: t, duration: 0.07, frequency: 118 + i * 18, type: "triangle", gain: 0.08, attack: 0.004, release: 0.04 });
-    addNoise(buffer, { start: t, duration: 0.05, gain: 0.018, lowpassHz: 1100, highpassHz: 160, attack: 0.002, release: 0.035, seed: 340 + i });
+    addTone(buffer, { start: t, duration: 0.06, frequency: 98 + i * 10, type: "sine", gain: 0.035, attack: 0.004, release: 0.035 });
+    addNoise(buffer, { start: t, duration: 0.045, gain: 0.008, lowpassHz: 850, highpassHz: 170, attack: 0.002, release: 0.03, seed: 340 + i });
   });
-  addTone(buffer, { duration: buffer.length / sampleRate, frequency: 60, type: "sine", gain: 0.018, attack: 0.02, release: 0.08 });
+  addTone(buffer, { duration: buffer.length / sampleRate, frequency: 58, type: "sine", gain: 0.009, attack: 0.02, release: 0.08 });
   return buffer;
 }
 
 function renderOldPhoneStart(buffer) {
-  addTone(buffer, { start: 0.04, duration: 0.18, frequency: 240, type: "square", gain: 0.07, attack: 0.006, release: 0.08 });
-  addTone(buffer, { start: 0.2, duration: 0.4, frequency: (t) => 420 + Math.sin(t * 24) * 20, type: "triangle", gain: 0.08, attack: 0.03, release: 0.18 });
-  addNoise(buffer, { start: 0.12, duration: 0.68, gain: 0.015, lowpassHz: 1800, highpassHz: 220, attack: 0.02, release: 0.25, seed: 410 });
+  addMetalTick(buffer, 0.04, 0.04, 260, 0.09);
+  addTone(buffer, { start: 0.14, duration: 0.48, frequency: (t) => 118 + Math.sin(t * 10) * 4, type: "sine", gain: 0.03, attack: 0.04, release: 0.22 });
+  addNoise(buffer, { start: 0.1, duration: 0.72, gain: 0.011, lowpassHz: 620, highpassHz: 90, attack: 0.03, release: 0.28, seed: 410 });
   return buffer;
 }
 
 function renderRecordingStatic(buffer) {
-  addNoise(buffer, { start: 0.03, duration: 0.42, gain: 0.04, lowpassHz: 1400, highpassHz: 180, attack: 0.01, release: 0.18, seed: 420 });
-  addTone(buffer, { start: 0.06, duration: 0.32, frequency: 185, type: "sine", gain: 0.025, attack: 0.02, release: 0.12 });
+  addNoise(buffer, { start: 0.03, duration: 0.4, gain: 0.018, lowpassHz: 760, highpassHz: 130, attack: 0.012, release: 0.18, seed: 420 });
+  addTone(buffer, { start: 0.08, duration: 0.28, frequency: 166, type: "sine", gain: 0.014, attack: 0.03, release: 0.14 });
   return buffer;
 }
 
 function renderPhotoZoom(buffer) {
-  addTone(buffer, { start: 0.02, duration: 0.22, frequency: (t) => 360 + t * 620, type: "sine", gain: 0.11, attack: 0.01, release: 0.08 });
-  addTone(buffer, { start: 0.13, duration: 0.18, frequency: 680, type: "triangle", gain: 0.04, attack: 0.01, release: 0.09 });
+  addNoise(buffer, { start: 0.03, duration: 0.22, gain: 0.015, lowpassHz: 540, highpassHz: 95, attack: 0.015, release: 0.09, seed: 421 });
+  addTone(buffer, { start: 0.05, duration: 0.25, frequency: (t) => 142 + t * 80, type: "sine", gain: 0.024, attack: 0.025, release: 0.11 });
   return buffer;
 }
 
 function renderMarkerCircle(buffer) {
-  addNoise(buffer, { start: 0.02, duration: 0.28, gain: 0.042, lowpassHz: 1200, highpassHz: 160, attack: 0.02, release: 0.08, seed: 430 });
-  addTone(buffer, { start: 0.05, duration: 0.24, frequency: 260, type: "triangle", gain: 0.045, attack: 0.02, release: 0.08 });
+  addNoise(buffer, { start: 0.02, duration: 0.28, gain: 0.03, lowpassHz: 680, highpassHz: 100, attack: 0.02, release: 0.08, seed: 430 });
+  addTone(buffer, { start: 0.05, duration: 0.23, frequency: 128, type: "sine", gain: 0.018, attack: 0.03, release: 0.09 });
   return buffer;
 }
 
 function renderChoiceConfirm(buffer) {
-  addTone(buffer, { start: 0.01, duration: 0.1, frequency: 520, type: "triangle", gain: 0.08, attack: 0.004, release: 0.06 });
-  addTone(buffer, { start: 0.08, duration: 0.1, frequency: 720, type: "sine", gain: 0.035, attack: 0.004, release: 0.06 });
+  addMetalTick(buffer, 0.018, 0.018, 240, 0.06);
+  addTone(buffer, { start: 0.045, duration: 0.12, frequency: 92, type: "sine", gain: 0.012, attack: 0.012, release: 0.06 });
   return buffer;
 }
 
 function renderPhoneCallEnd(buffer) {
-  addTone(buffer, { start: 0.02, duration: 0.12, frequency: (t) => 520 - t * 900, type: "triangle", gain: 0.11, attack: 0.004, release: 0.07 });
-  addImpulse(buffer, 0.18, 0.08, 180, 0.1, 0.008);
+  addNoise(buffer, { start: 0.02, duration: 0.12, gain: 0.018, lowpassHz: 620, highpassHz: 90, attack: 0.003, release: 0.055, seed: 500 });
+  addSoftLowHit(buffer, 0.16, 0.055, 90, 0.16);
   return buffer;
 }
 
 function renderPhoneScreenWake(buffer) {
-  addTone(buffer, { start: 0.02, duration: 0.16, frequency: 840, type: "sine", gain: 0.07, attack: 0.006, release: 0.08 });
-  addTone(buffer, { start: 0.11, duration: 0.16, frequency: 1240, type: "triangle", gain: 0.035, attack: 0.006, release: 0.08 });
+  addNoise(buffer, { start: 0.02, duration: 0.12, gain: 0.008, lowpassHz: 540, highpassHz: 100, attack: 0.01, release: 0.055, seed: 502 });
+  addTone(buffer, { start: 0.04, duration: 0.17, frequency: 210, type: "sine", gain: 0.022, attack: 0.02, release: 0.08 });
   return buffer;
 }
 
@@ -396,9 +481,9 @@ function renderChatTypingShort(buffer) {
 }
 
 function renderEvidenceReveal(buffer) {
-  addTone(buffer, { start: 0.02, duration: 0.38, frequency: (t) => 92 + t * 50, type: "sine", gain: 0.09, attack: 0.04, release: 0.16 });
-  addTone(buffer, { start: 0.18, duration: 0.32, frequency: 330, type: "triangle", gain: 0.035, attack: 0.04, release: 0.18 });
-  addImpulse(buffer, 0.5, 0.055, 210, 0.1, 0.006);
+  addSoftLowHit(buffer, 0.03, 0.082, 76, 0.46);
+  addNoise(buffer, { start: 0.13, duration: 0.38, gain: 0.012, lowpassHz: 420, highpassHz: 65, attack: 0.05, release: 0.16, seed: 600 });
+  addTone(buffer, { start: 0.22, duration: 0.3, frequency: 132, type: "sine", gain: 0.016, attack: 0.06, release: 0.18 });
   return buffer;
 }
 
@@ -409,20 +494,22 @@ function renderOldPhotoPickup(buffer) {
 }
 
 function renderPhotoReflectionFind(buffer) {
-  addTone(buffer, { start: 0.02, duration: 0.22, frequency: (t) => 420 + t * 460, type: "sine", gain: 0.06, attack: 0.02, release: 0.1 });
-  addTone(buffer, { start: 0.24, duration: 0.26, frequency: 188, type: "triangle", gain: 0.07, attack: 0.03, release: 0.14 });
+  addNoise(buffer, { start: 0.03, duration: 0.22, gain: 0.012, lowpassHz: 480, highpassHz: 70, attack: 0.02, release: 0.09, seed: 612 });
+  addSoftLowHit(buffer, 0.25, 0.06, 82, 0.28);
   return buffer;
 }
 
 function renderBackupStart(buffer) {
-  [0.04, 0.2, 0.36].forEach((t, i) => addTone(buffer, { start: t, duration: 0.08, frequency: 420 + i * 70, type: "sine", gain: 0.055, attack: 0.006, release: 0.04 }));
+  [0.04, 0.22, 0.4].forEach((t, i) => {
+    addMetalTick(buffer, t, 0.022, 230 + i * 20, 0.07);
+    addTone(buffer, { start: t + 0.025, duration: 0.09, frequency: 118 + i * 9, type: "sine", gain: 0.015, attack: 0.012, release: 0.05 });
+  });
   return buffer;
 }
 
 function renderBackupSuccess(buffer) {
-  addTone(buffer, { start: 0.03, duration: 0.12, frequency: 420, type: "triangle", gain: 0.055, attack: 0.006, release: 0.07 });
-  addTone(buffer, { start: 0.16, duration: 0.2, frequency: 610, type: "sine", gain: 0.06, attack: 0.01, release: 0.12 });
-  addTone(buffer, { start: 0.34, duration: 0.18, frequency: 760, type: "sine", gain: 0.03, attack: 0.01, release: 0.1 });
+  addSoftLowHit(buffer, 0.04, 0.055, 92, 0.32);
+  addMetalTick(buffer, 0.31, 0.018, 260, 0.07);
   return buffer;
 }
 
@@ -442,15 +529,15 @@ function renderArchiveStamp(buffer) {
 
 function renderRainWindowSoft(buffer) {
   [0.04, 0.16, 0.27, 0.45, 0.63].forEach((t, i) => {
-    addNoise(buffer, { start: t, duration: 0.09, gain: 0.025, lowpassHz: 850, highpassHz: 140, attack: 0.004, release: 0.05, seed: 640 + i });
+    addNoise(buffer, { start: t, duration: 0.09, gain: 0.014, lowpassHz: 520, highpassHz: 75, attack: 0.004, release: 0.05, seed: 640 + i });
   });
-  addNoise(buffer, { duration: buffer.length / sampleRate, gain: 0.006, lowpassHz: 500, highpassHz: 90, seed: 649 });
+  addNoise(buffer, { duration: buffer.length / sampleRate, gain: 0.003, lowpassHz: 320, highpassHz: 55, seed: 649 });
   return buffer;
 }
 
 function renderRoomSilenceDrop(buffer) {
-  addTone(buffer, { start: 0.02, duration: 0.35, frequency: (t) => 105 - t * 80, type: "sine", gain: 0.085, attack: 0.02, release: 0.18 });
-  addNoise(buffer, { start: 0.05, duration: 0.22, gain: 0.006, lowpassHz: 240, highpassHz: 30, seed: 650 });
+  addSoftLowHit(buffer, 0.02, 0.082, 72, 0.52);
+  addNoise(buffer, { start: 0.05, duration: 0.25, gain: 0.0035, lowpassHz: 190, highpassHz: 26, seed: 650 });
   return buffer;
 }
 

@@ -1,0 +1,51 @@
+(function () {
+  "use strict";
+
+  window.RAIN_CALL_ASSET_MAP = {
+    audioAliases: {
+      rain_night_loop: "bgm_dark_rain_room_loop",
+      horror_corridor: "bgm_tension_corridor_loop",
+      ending_archive: "bgm_archive_low_loop",
+      rain_heavy_loop: "amb_rain_heavy_loop",
+      room_night_loop: "amb_room_night_low_loop",
+      corridor_hum: "amb_corridor_old_hum_loop",
+      phone_vibrate: "phone_vibrate_table_short",
+      phone_ring_dead_call: "phone_ring_dark_call",
+      message_pop_cold: "message_notification_cold_soft",
+      doorbell_rain_night: "doorbell_apartment_dark",
+      knock_soft: "door_knock_wood_soft",
+      door_chain_close: "door_chain_metal_close",
+      door_lock_turn: "door_lock_metal_turn",
+      door_open_slow: "door_open_wood_slow",
+      footstep_corridor_wet: "footstep_wet_corridor_short",
+      corridor_light_flicker: "light_flicker_corridor_short",
+      old_phone_start: "old_device_power_on_soft",
+      recording_static_short: "recording_static_soft_cut",
+      photo_zoom: "photo_zoom_inspect_soft",
+      marker_circle: "marker_circle_paper_soft",
+      choice_confirm_soft: "ui_choice_confirm_soft",
+      evidence_reveal: "evidence_reveal_dark",
+      archive_stamp: "archive_stamp_low",
+      room_silence_drop: "room_silence_drop_low",
+      linzhou_gasp_short: "male_gasp_short_tense",
+      xuzhiwan_low_breath: "female_low_breath_cold",
+      zhouyu_phone_silence: "male_phone_silence_pressure",
+      xuzhixia_weak_static_exhale: "female_weak_static_exhale",
+    },
+    backgroundAliases: {
+      rental_room_rain_night: "bg_rental_room_rain_night",
+      corridor_door: "bg_apartment_corridor_night_tense",
+      phone_call_ui: "bg_phone_call_dark_ui",
+      old_chat_memory: "bg_old_chat_memory",
+      rental_room_table: "bg_rental_room_table_archive",
+      photo_zoom_view: "bg_photo_zoom_evidence",
+      old_phone_view: "bg_old_phone_closeup",
+      ending_screen: "bg_archive_ending_dark",
+    },
+    characterAliases: {
+      xuzhiwan_wet: "char_xuzhiwan_wet_story",
+      zhouyu_pressure: "char_zhouyu_pressure_story",
+      xuzhixia_recording: "char_xuzhixia_recording_story",
+    },
+  };
+})();

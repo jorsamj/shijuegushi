@@ -71,9 +71,33 @@ The second procedural pass adds more action-focused cues:
 
 The generator also lowers BGM and ambience peaks so the project stays restrained:
 
-- BGM is generated with lower peak targets and should play around 0.16 in the frontend.
-- Ambience is generated softer and should play around 0.10 in the frontend.
+- BGM is generated with lower peak targets and should play around 0.14 in the frontend.
+- Ambience is generated softer and should play around 0.08 in the frontend.
 - SFX and stingers remain clearer than ambience but should never become jump-scare loud.
 
 Validation now checks the generated second-pass files, the audio asset mappings,
 and the playtest checklist.
+
+## 2026-07-06 Realistic Suspense Style Pass
+
+The third procedural pass moves away from playful synthesized prompts and toward restrained foley:
+
+- wooden-door knocks use low body resonance and filtered impact noise
+- door chain and lock cues use short muted metal ticks, not bright reward-like metal
+- phone vibration uses low tabletop pulses instead of electronic beeps
+- the dead-call ring uses lower cold tones and a tremor texture
+- message and choice cues are intentionally very soft
+- evidence and backup cues are low, restrained, and non-celebratory
+- rain and ambience are darker and less noisy
+
+The generator still produces demo-grade procedural audio, not final cinematic sound. Any cue that feels playful, bright, toy-like, or reward-like should be retuned or replaced.
+
+## Reusable Asset Position
+
+Generated audio is now also indexed through:
+
+- `assets/asset-manifest.js`
+- `assets/stories/rain-call/story-asset-map.js`
+- `docs/REUSABLE_ASSET_INDEX.md`
+
+New stories should reuse library IDs first, then add story-specific aliases only when needed.

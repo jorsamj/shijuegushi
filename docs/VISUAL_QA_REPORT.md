@@ -45,3 +45,7 @@ Use `node scripts/check-ui-flow.mjs` before UI commits. For the next visual pass
 ## Full Flow QA Addendum
 
 The next QA layer is full story-flow playability. This pass does not change the audio system, does not restore TTS, and does not restore the story-detail hero image or chapter list. Use `node scripts/check-story-flow.mjs` together with the UI and data validators to confirm that the visual-novel shell still supports a complete start-to-ending playthrough.
+
+## Reusable Asset Library
+
+Visual assets now have a reusable-library index in `assets/asset-manifest.js`. Generic backgrounds and props are marked reusable, while named character portraits and story covers stay story-specific. `assets/visual-assets.js` keeps the existing scene keys and also exposes generic background keys so future stories can reuse location-style assets without binding to Rain Call node IDs.

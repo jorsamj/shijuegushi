@@ -108,3 +108,11 @@
 ## 2026-07-06 Full Playability QA Addendum
 
 This pass moves into story-flow, ending-path, and save/load QA. The audio system remains frozen: no TTS was restored, no generated audio mappings were removed, and ordinary narration/dialogue should remain silent unless a specific SFX or stinger is configured. The story detail page remains a clean LIFE FILE view and should not regain a large hero image, chapter list, or marketing-page layout.
+
+## Reusable Asset Library
+
+This pass establishes a reusable asset library layer without moving the existing runtime files. The current audio, background, and prop assets are indexed in `assets/asset-manifest.js`; Rain Call story keys are mapped to library IDs in `assets/stories/rain-call/story-asset-map.js`.
+
+Audio assets such as rain loops, phone vibration, dark phone ring, wooden knock, old corridor hum, evidence reveal, and archive stamp are marked reusable. Backgrounds for rainy rental rooms, old apartment corridors, phone-call UI, photo inspection, old-phone closeup, and archive endings are also marked reusable. Named character portraits remain story-specific and should not be reused as other characters in future stories.
+
+Future stories should first check `docs/REUSABLE_ASSET_INDEX.md` before generating new media. Manual QA is still required before any demo asset is promoted to `final-candidate`.

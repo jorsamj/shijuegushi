@@ -546,7 +546,7 @@
       audioState.currentBgm = name;
       audioState.realBgm = playRealAudio(src, {
         loop: true,
-        volume: 0.16,
+        volume: 0.14,
         onFallback: () => {
           if (audioState.currentBgm === name) {
             audioState.currentBgm = "";
@@ -577,7 +577,7 @@
       audioState.currentAmbience = name;
       audioState.realAmbience = playRealAudio(src, {
         loop: true,
-        volume: 0.1,
+        volume: 0.08,
         onFallback: () => {
           if (audioState.currentAmbience === name) {
             audioState.currentAmbience = "";
@@ -620,7 +620,7 @@
     if (src) {
       playRealAudio(src, {
         loop: false,
-        volume: 0.5,
+        volume: 0.46,
         onFallback: () => playSyntheticSfx(name),
       });
       return;
@@ -656,7 +656,7 @@
       audioState.currentDialogueAbortController = controller;
       const audio = playRealAudio(realVoiceSrc, {
         loop: false,
-        volume: realVoiceCategory === "stingers" ? 0.58 : 0.82,
+        volume: realVoiceCategory === "stingers" ? 0.52 : 0.82,
         onFallback: () => {
           if (sessionId === audioState.dialogueSessionId && token === audioState.dialogueToken) handleMissingRealVoice(node, settings);
         },
