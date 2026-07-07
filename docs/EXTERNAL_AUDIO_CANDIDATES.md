@@ -1,38 +1,40 @@
 # External Audio Candidates
 
-This project currently has no downloaded external audio committed. The current environment could not reliably download from the allowed sources:
+Current status: `selectedExternalAudio=8`.
 
-- Pixabay pages returned a Cloudflare challenge during scripted access.
-- Freesound direct download/search requires account/API access for reliable retrieval.
+The first real external-audio pass selected only traceable Wikimedia Commons assets with commercial use and redistribution allowed. Generated procedural audio remains the fallback for every selected story key.
 
-Do not fabricate downloads. Do not add an asset without a source URL, author, license, and generated fallback.
-
-Allowed sources for this pass:
-
-- Freesound: CC0 preferred, CC BY allowed with attribution.
-- Pixabay: Pixabay Content License, `redistributionAllowed: false`.
-
-Forbidden sources:
+Forbidden sources remain:
 
 - YouTube, Bilibili, Douyin/TikTok, Xiaohongshu, NetEase Cloud Music, QQ Music.
 - Pirated commercial SFX packs.
-- CC BY-NC, NC, Sampling+, unknown, unclear, or untraceable licenses.
+- CC BY-NC, NC, Sampling+, unknown, unclear, untraceable, or NoDerivatives licenses.
 
-| Usage | Candidate Name | Source | URL | Author | License | Commercial | Attribution | Result | Notes |
+## Selected Assets
+
+| Usage | Asset ID | Source | URL | Author | License | Commercial | Attribution | Result | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| rain_heavy_loop | rain window loop | Pixabay/Freesound | pending-download | pending | pending | pending | pending | pending-download | Search: `rain window loop`, `heavy rain window`. Must be soft, loopable, not white noise. |
-| rain_window_soft | rain drops on window | Pixabay/Freesound | pending-download | pending | pending | pending | pending | pending-download | Search: `rain window soft`, `rain drops glass`. |
-| phone_vibrate | phone vibration on table | Freesound | pending-download | pending | pending | pending | pending | pending-download | Search: `phone vibration table`, `mobile phone buzz`. |
-| phone_ring_dead_call | dark phone ring | Pixabay/Freesound | pending-download | pending | pending | pending | pending | pending-download | Must not be branded iPhone/WeChat/system ringtone. |
-| doorbell_rain_night | apartment doorbell | Freesound | pending-download | pending | pending | pending | pending | pending-download | Search: `apartment doorbell`, `doorbell dark`. |
-| knock_soft | wooden door knock | Freesound | pending-download | pending | pending | pending | pending | pending-download | Priority P0. Must sound like real wood: low, muted, physical. |
-| door_chain_close | metal door chain | Freesound | pending-download | pending | pending | pending | pending | pending-download | Search: `door chain metal`, `chain lock door`. |
-| door_lock_turn | door lock turn | Freesound | pending-download | pending | pending | pending | pending | pending-download | Search: `door lock turn`, `key in lock`. |
-| door_open_slow | slow apartment door open | Freesound | pending-download | pending | pending | pending | pending | pending-download | Must not sound like cheap haunted-house creak. |
-| footstep_corridor_wet | wet corridor footsteps | Freesound | pending-download | pending | pending | pending | pending | pending-download | Short wet shoe steps with corridor space. |
-| recording_static_short | old recording static | Freesound | pending-download | pending | pending | pending | pending | pending-download | Must be light and short, not harsh white noise. |
-| horror_corridor | low corridor ambience | Pixabay | pending-download | pending | pending | pending | pending | pending-download | Search: `dark drone ambient`, `horror ambience low`. No melody, no game BGM. |
+| `rain_heavy_loop` | `rain_heavy_loop_real_01` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Rain_drops_(Gravity_Sound).wav | Gravity Sound | CC BY 4.0 | Yes | Yes | selected | Real rain layer. Large WAV; later pass should trim or transcode. |
+| `phone_vibrate` | `phone_vibrate_real_01` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Elektrorasur-01.ogg | Priwo | Public domain | Yes | No | selected | Physical low buzzing source repurposed for phone-on-table vibration. |
+| `phone_ring_dead_call` | `phone_ring_dead_call_real_01` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:WWS_AutomatictelephoneIskraEta80ringing.ogg | Work With Sounds / Technical Museum of Slovenia | CC BY 4.0 | Yes | Yes | selected | Real old telephone ringing; colder than generated fallback. |
+| `doorbell_rain_night` | `doorbell_rain_night_real_01` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Doorbell-old-tring.ogg | Unknown Wikimedia Commons contributor | Public domain | Yes | No | selected | Old doorbell tone for rainy corridor entry. |
+| `knock_soft` | `knock_soft_real_01` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Knocking_on_wood_or_door.ogg | stephan | Public domain | Yes | No | selected | Real wood/door knock. |
+| `door_chain_close` | `door_chain_close_real_01` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Door_knocker_audio.ogg | Mx. Granger | CC0 | Yes | No | selected | Real metal door sound used as chain/metal layer. |
+| `door_lock_turn` | `door_lock_turn_real_01` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Tight_door_lock_(Gravity_Sound).wav | Gravity Sound | CC BY 4.0 | Yes | Yes | selected | Real lock mechanism. |
+| `recording_static_short` | `recording_static_short_real_01` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Dial_up_connection_failed.ogg | ezwa | Public domain | Yes | No | selected | Old-device failure/glitch layer for recording static beats. |
 
-## Selection Results
+## Rejected / Deferred Assets
 
-No candidate is selected yet. All current runtime audio still uses generated procedural fallback.
+| Candidate | Source | License / Issue | Result |
+|---|---|---|---|
+| `Sound of rain.ogg` | Wikimedia Commons | CC BY-SA 3.0 | rejected, share-alike outside this pass |
+| `Shave and a Haircut Door Knock.ogg` | Wikimedia Commons | CC BY-SA 4.0 and comedic rhythm | rejected |
+| `FREE real VHS static.webm` | Wikimedia Commons | CC0 but over 100 MB original | deferred, too large for current demo |
+| `Automatic telephone Siemens & Halske - ringing.webm` | Wikimedia Commons | CC BY 3.0 | rejected in favor of CC BY 4.0 WWS file |
+
+## Remaining Future Search Targets
+
+- A shorter, loop-ready rain ambience under 5 MB.
+- A true smartphone vibration recording with CC0 or CC BY 4.0.
+- A more exact door-chain latch recording.
+- A shorter old recording static click that does not require post-trimming.

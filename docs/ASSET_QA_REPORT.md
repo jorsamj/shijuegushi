@@ -132,11 +132,13 @@ Manual QA should confirm the first chapter phone/door sequence, Chapter 4 photo 
 
 ## External Audio Integration Readiness
 
-External audio is not yet committed because the current environment could not reliably download allowed assets from Pixabay/Freesound with traceable metadata. The project now includes:
+External audio first pass is now committed with 8 real, traceable Wikimedia Commons assets. The project now includes:
 
 - `assets/external-audio-manifest.js`
+- `assets/library/audio/external/original/`
+- `assets/library/audio/external/processed/`
 - `docs/EXTERNAL_AUDIO_CANDIDATES.md`
 - `docs/AUDIO_CREDITS.md`
 - `scripts/check-external-audio-assets.mjs`
 
-All external audio must keep generated fallback paths. No external file may be used without source URL, author, license, commercial-use status, and attribution rules.
+All external audio keeps generated fallback paths. No external file may be used without source URL, author, license, commercial-use status, and attribution rules. Current selected count is `selectedExternalAudio=8`; manual listening and final trimming/transcoding are still required before final release.

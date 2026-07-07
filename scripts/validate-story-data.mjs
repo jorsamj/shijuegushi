@@ -201,12 +201,20 @@ if (EXTERNAL_AUDIO) {
   assert(indexText.includes("assets/external-audio-manifest.js"), "index.html must load assets/external-audio-manifest.js when it exists");
   assert(scriptText.includes("SECOND_LIFE_EXTERNAL_AUDIO"), "script.js must read SECOND_LIFE_EXTERNAL_AUDIO");
   assert(scriptText.includes("fallbackSrc"), "script.js must support generated fallback for external audio");
+  const selectedExternalAudio = [];
   for (const category of ["bgm", "ambience", "sfx", "stingers"]) {
     for (const asset of Object.values(EXTERNAL_AUDIO[category] || {})) {
+      selectedExternalAudio.push(asset);
       assert(asset.path && asset.fallbackPath, `external ${category}.${asset.id || asset.storyKey} must include path and fallbackPath`);
+      assert(exists(asset.path), `external ${category}.${asset.id || asset.storyKey} path is missing: ${asset.path}`);
       assert(exists(asset.fallbackPath), `external ${category}.${asset.id || asset.storyKey} fallbackPath is missing: ${asset.fallbackPath}`);
-      assert(!/NC|NonCommercial|Sampling\+|unknown|unclear/i.test(asset.license || ""), `external ${category}.${asset.id || asset.storyKey} has forbidden license`);
+      assert(!/NC|NonCommercial|Sampling\+|unknown|unclear|NoDerivatives/i.test(asset.license || ""), `external ${category}.${asset.id || asset.storyKey} has forbidden license`);
+      assert(asset.commercialAllowed === true, `external ${category}.${asset.id || asset.storyKey} must be commercialAllowed=true`);
+      assert(asset.redistributionAllowed === true, `external ${category}.${asset.id || asset.storyKey} must be redistributionAllowed=true`);
     }
+  }
+  if (EXTERNAL_AUDIO.meta?.status === "active") {
+    assert(selectedExternalAudio.length >= 8, `active external audio manifest must contain at least 8 selected assets, got ${selectedExternalAudio.length}`);
   }
 }
 assert(AUDIO.voiceProfiles && typeof AUDIO.voiceProfiles === "object", "audio-assets.js must define voiceProfiles");

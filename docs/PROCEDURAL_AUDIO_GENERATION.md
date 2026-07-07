@@ -136,4 +136,4 @@ External licensed audio can now be layered on top of generated audio through:
 
 The generated WAV files in `assets/audio/generated/` must remain in the project as fallback. If an external Freesound/Pixabay file fails to load, runtime audio should fall back to the generated file instead of crashing or restoring synthetic white noise.
 
-Current status: no external audio has been downloaded or committed. The manifest is marked `pending-download`.
+Current status: 8 real external audio assets have been downloaded and committed for P0 runtime keys. Procedural audio remains the fallback layer for every selected asset.
