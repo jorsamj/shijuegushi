@@ -16,3 +16,12 @@
 ## Static Coverage
 
 `scripts/check-story-flow.mjs` checks that normalized progress includes node, ending, clues, unread clues, relationships, relationship events, ending path tags, and history. It also checks the runtime history cap.
+
+## 2026-07-07 First Story Focus
+
+No new story state was added in this pass. Manual QA should focus on `雨夜来电` only:
+
+- Start a new game and verify old endings are cleared.
+- Save and load during Chapter 1, Chapter 4, and before Chapter 6 resolution.
+- Confirm audio settings do not restore TTS or ordinary text reading.
+- Confirm history remains capped and does not duplicate after reload.

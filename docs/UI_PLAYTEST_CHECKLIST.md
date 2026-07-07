@@ -1,6 +1,6 @@
 # UI Playtest Checklist
 
-This checklist is for the current playable visual novel prototype. Audio is frozen for this pass.
+This checklist is for the current playable visual novel prototype. New story expansion is paused for this pass; checks focus on `第二人生：雨夜来电`.
 
 | Page / Flow | Check Item | Pass Standard | Status |
 |---|---|---|---|
@@ -35,6 +35,8 @@ node scripts/validate-story-data.mjs
 ## Full Flow QA Addendum
 
 This project is now in full playability QA. Audio remains frozen, ordinary story text still does not auto-read, and the story detail page must stay in the clean LIFE FILE style without a large hero image or chapter directory.
+
+2026-07-07 note: audio architecture remains frozen, but generated audio parameters were retuned to reduce game-like sounds. UI QA should verify this did not change layout, story detail purity, or visual-novel readability.
 
 Additional command:
 

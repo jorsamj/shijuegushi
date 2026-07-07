@@ -116,3 +116,16 @@ This pass establishes a reusable asset library layer without moving the existing
 Audio assets such as rain loops, phone vibration, dark phone ring, wooden knock, old corridor hum, evidence reveal, and archive stamp are marked reusable. Backgrounds for rainy rental rooms, old apartment corridors, phone-call UI, photo inspection, old-phone closeup, and archive endings are also marked reusable. Named character portraits remain story-specific and should not be reused as other characters in future stories.
 
 Future stories should first check `docs/REUSABLE_ASSET_INDEX.md` before generating new media. Manual QA is still required before any demo asset is promoted to `final-candidate`.
+
+## 2026-07-07 Rain Call First Story Polish
+
+New story expansion, story scaffolds, and second-story work are paused. This pass keeps the reusable asset library in place but focuses QA on the first playable story: `第二人生：雨夜来电`.
+
+Audio asset direction was tightened again:
+
+- Procedural sounds must support realistic suspense, not pixel-game or small-game UI feeling.
+- Knock, doorbell, phone vibration, dead-call ring, rain, evidence reveal, photo inspection, archive stamp, and choice confirm were retuned toward lower, more physical, less melodic cues.
+- Ordinary narration and ordinary character dialogue remain silent.
+- Generated audio still requires manual listening before any `demo-usable` cue can become a `final-candidate`.
+
+Manual QA should confirm the first chapter phone/door sequence, Chapter 4 photo sequence, Chapter 5 old-phone sequence, and Chapter 6 ending archive do not sound like Mario-like reward cues, coin sounds, chiptune, arcade prompts, or victory jingles.

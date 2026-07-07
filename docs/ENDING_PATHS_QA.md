@@ -21,3 +21,14 @@ This document records the expected route shape for the four current endings. It 
 ## Manual Confirmation
 
 Manual playtesting should confirm that the final report text remains understandable and does not feel like a raw system log.
+
+## 2026-07-07 First Story Check
+
+This pass does not change ending logic. The required result is stability: all four existing endings must remain playable while the audio and first-story experience are polished.
+
+Manual playthrough should still confirm:
+
+- A feels like a complete evidence-chain route.
+- B clearly reads as evidence transfer losing control.
+- C clearly follows deletion without backup.
+- D remains the incomplete or avoidant truth route.

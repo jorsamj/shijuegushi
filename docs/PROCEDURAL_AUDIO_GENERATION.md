@@ -92,6 +92,29 @@ The third procedural pass moves away from playful synthesized prompts and toward
 
 The generator still produces demo-grade procedural audio, not final cinematic sound. Any cue that feels playful, bright, toy-like, or reward-like should be retuned or replaced.
 
+## 2026-07-07 Rain Call First Story Polish
+
+New story expansion is paused for this pass. The generator is tuned for the first complete demo story: `第二人生：雨夜来电`.
+
+The priority is no longer "more sounds"; the priority is that existing sounds do not break the urban suspense mood.
+
+Adjustments:
+
+- BGM peaks lowered again so rain-night, corridor, and ending beds stay under the scene.
+- Ambience peaks lowered to avoid white-noise and TV-static feeling.
+- Knock, doorbell, phone vibration, and phone ring were rebalanced around lower physical resonance.
+- Evidence, photo, backup, marker, archive, and choice cues were made less bright and less reward-like.
+- UI-style tones were reduced in favor of low hits, filtered friction, and physical-object noise.
+
+Manual QA phrases that must remain true:
+
+- 不能像游戏。
+- 不能像超级马里奥。
+- 真实敲门要像木门的咚、咚。
+- 手机铃声要像真实来电，但偏冷、异常、压迫。
+- 下雨声要柔和，不是白噪音。
+- 阴森背景音乐要低频、克制、无明显旋律。
+
 ## Reusable Asset Position
 
 Generated audio is now also indexed through:

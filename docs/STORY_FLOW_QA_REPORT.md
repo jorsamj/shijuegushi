@@ -80,6 +80,18 @@ History is capped at 240 entries in runtime code.
 
 No story rewrite was performed in this QA pass. The new checker is designed to catch regressions before manual playthrough.
 
+## 2026-07-07 Rain Call First Story Focus
+
+New story expansion, story scaffolds, and second-story work are paused. This pass focuses only on making `第二人生：雨夜来电` a complete first playable demo.
+
+Automated QA must continue to prove:
+
+- Chapter 1 through Chapter 6 can be played in order.
+- ending_a, ending_b, ending_c, and ending_d remain reachable.
+- Six formal clues remain obtainable.
+- Relationship values, flags, history, and save/load state stay normalized.
+- Ordinary narration and ordinary dialogue do not auto-read.
+
 ## Remaining Manual QA
 
 | Area | Manual Check |

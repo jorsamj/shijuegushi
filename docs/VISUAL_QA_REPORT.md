@@ -49,3 +49,15 @@ The next QA layer is full story-flow playability. This pass does not change the 
 ## Reusable Asset Library
 
 Visual assets now have a reusable-library index in `assets/asset-manifest.js`. Generic backgrounds and props are marked reusable, while named character portraits and story covers stay story-specific. `assets/visual-assets.js` keeps the existing scene keys and also exposes generic background keys so future stories can reuse location-style assets without binding to Rain Call node IDs.
+
+## 2026-07-07 Rain Call First Story Focus
+
+New story expansion is paused. This pass keeps the existing reusable asset library structure intact and focuses manual visual QA on `雨夜来电` only.
+
+Priority visual checks:
+
+- ch01_005, ch01_007, ch01_008, ch02_003, ch03_011, ch04_020, ch05_011, ch05_016, and ch06_020 must remain head-safe.
+- Xu Zhiwan entrance and pressure shots should feel mature, cold, and visually forceful.
+- Zhou Yu pressure nodes should not look like ordinary avatar cards.
+- Xu Zhixia recording nodes should feel like old-case residue, not a normal standing portrait.
+- Mobile 375px, 390px, and 430px widths still need human screenshot confirmation.

@@ -86,6 +86,9 @@ const scriptText = read("script.js");
 const indexText = read("index.html");
 const voiceGeneratorText = read("scripts/generate-voice-assets.mjs");
 const envExampleText = read(".env.example");
+const audioStyleQaText = read("docs/AUDIO_STYLE_QA_REPORT.md");
+const audioPlaytestText = read("docs/AUDIO_PLAYTEST_CHECKLIST.md");
+const proceduralAudioText = read("docs/PROCEDURAL_AUDIO_GENERATION.md");
 const runtimeTextPaths = [
   "README.md",
   "story-data.js",
@@ -182,6 +185,7 @@ assert(exists("scripts/generate-voice-assets.mjs"), "voice generation script is 
 assert(exists("scripts/generate-procedural-audio.mjs"), "procedural audio generation script is missing");
 assert(exists("docs/PROCEDURAL_AUDIO_GENERATION.md"), "procedural audio generation doc is missing");
 assert(exists("docs/AUDIO_PLAYTEST_CHECKLIST.md"), "audio playtest checklist doc is missing");
+assert(exists("docs/AUDIO_STYLE_QA_REPORT.md"), "audio style QA report is missing");
 assert(exists(".env.example"), ".env.example is missing");
 assert(AUDIO && typeof AUDIO === "object", "window.SECOND_LIFE_AUDIO is missing");
 assert(indexText.includes("assets/audio/audio-assets.js"), "index.html must load assets/audio/audio-assets.js");
@@ -214,6 +218,27 @@ assert(envExampleText.includes("VOICE_STRICT_CHARACTER_LOCK=true"), ".env.exampl
 assert(voiceGeneratorText.includes("VOICE_STRICT_CHARACTER_LOCK"), "voice generator must enforce strict character voice locking");
 assert(voiceGeneratorText.includes("placeholderMode"), "voice generator must support explicit placeholder mode");
 assert(voiceGeneratorText.includes("Edge TTS is only allowed"), "voice generator must forbid silent Edge TTS formal fallback");
+[
+  "不能像游戏",
+  "不能像超级马里奥",
+  "真实敲门",
+  "手机铃声",
+  "阴森背景音乐",
+  "下雨声",
+].forEach((phrase) => {
+  assert(audioPlaytestText.includes(phrase), `audio playtest checklist must include style phrase: ${phrase}`);
+});
+[
+  "Mario-like",
+  "chiptune",
+  "arcade",
+  "coin",
+  "victory jingle",
+  "game reward",
+].forEach((phrase) => {
+  assert(audioStyleQaText.includes(phrase), `audio style QA report must forbid: ${phrase}`);
+});
+assert(proceduralAudioText.includes("2026-07-07 Rain Call First Story Polish"), "procedural audio doc must record the Rain Call first-story polish pass");
 ["bgm", "ambience", "sfx", "stingers", "narration", "voice"].forEach((category) => {
   assert(AUDIO[category] && typeof AUDIO[category] === "object", `audio category missing: ${category}`);
   for (const [key, path] of Object.entries(AUDIO[category] || {})) {
