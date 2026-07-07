@@ -33,6 +33,13 @@ function loadAudio() {
   return context.window.SECOND_LIFE_AUDIO;
 }
 
+function loadExternalAudio() {
+  if (!exists("assets/external-audio-manifest.js")) return null;
+  const context = { window: {} };
+  vm.runInNewContext(read("assets/external-audio-manifest.js"), context, { filename: "assets/external-audio-manifest.js" });
+  return context.window.SECOND_LIFE_EXTERNAL_AUDIO;
+}
+
 function parseCoreClues(scriptText) {
   const match = scriptText.match(/const CORE_CLUE_IDS = \[([\s\S]*?)\];/);
   if (!match) return [];
@@ -82,6 +89,7 @@ function resolveEnding(snapshot) {
 const DATA = loadData();
 const VISUALS = loadVisuals();
 const AUDIO = loadAudio();
+const EXTERNAL_AUDIO = loadExternalAudio();
 const scriptText = read("script.js");
 const indexText = read("index.html");
 const voiceGeneratorText = read("scripts/generate-voice-assets.mjs");
@@ -189,6 +197,18 @@ assert(exists("docs/AUDIO_STYLE_QA_REPORT.md"), "audio style QA report is missin
 assert(exists(".env.example"), ".env.example is missing");
 assert(AUDIO && typeof AUDIO === "object", "window.SECOND_LIFE_AUDIO is missing");
 assert(indexText.includes("assets/audio/audio-assets.js"), "index.html must load assets/audio/audio-assets.js");
+if (EXTERNAL_AUDIO) {
+  assert(indexText.includes("assets/external-audio-manifest.js"), "index.html must load assets/external-audio-manifest.js when it exists");
+  assert(scriptText.includes("SECOND_LIFE_EXTERNAL_AUDIO"), "script.js must read SECOND_LIFE_EXTERNAL_AUDIO");
+  assert(scriptText.includes("fallbackSrc"), "script.js must support generated fallback for external audio");
+  for (const category of ["bgm", "ambience", "sfx", "stingers"]) {
+    for (const asset of Object.values(EXTERNAL_AUDIO[category] || {})) {
+      assert(asset.path && asset.fallbackPath, `external ${category}.${asset.id || asset.storyKey} must include path and fallbackPath`);
+      assert(exists(asset.fallbackPath), `external ${category}.${asset.id || asset.storyKey} fallbackPath is missing: ${asset.fallbackPath}`);
+      assert(!/NC|NonCommercial|Sampling\+|unknown|unclear/i.test(asset.license || ""), `external ${category}.${asset.id || asset.storyKey} has forbidden license`);
+    }
+  }
+}
 assert(AUDIO.voiceProfiles && typeof AUDIO.voiceProfiles === "object", "audio-assets.js must define voiceProfiles");
 ["narrator", "linzhou", "xuzhiwan", "zhouyu", "chenyan", "xuzhixia"].forEach((profileId) => {
   assert(AUDIO.voiceProfiles?.[profileId], `missing voice profile: ${profileId}`);
@@ -225,6 +245,8 @@ assert(voiceGeneratorText.includes("Edge TTS is only allowed"), "voice generator
   "手机铃声",
   "阴森背景音乐",
   "下雨声",
+  "External asset",
+  "Fallback",
 ].forEach((phrase) => {
   assert(audioPlaytestText.includes(phrase), `audio playtest checklist must include style phrase: ${phrase}`);
 });

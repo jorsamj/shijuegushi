@@ -129,3 +129,14 @@ Audio asset direction was tightened again:
 - Generated audio still requires manual listening before any `demo-usable` cue can become a `final-candidate`.
 
 Manual QA should confirm the first chapter phone/door sequence, Chapter 4 photo sequence, Chapter 5 old-phone sequence, and Chapter 6 ending archive do not sound like Mario-like reward cues, coin sounds, chiptune, arcade prompts, or victory jingles.
+
+## External Audio Integration Readiness
+
+External audio is not yet committed because the current environment could not reliably download allowed assets from Pixabay/Freesound with traceable metadata. The project now includes:
+
+- `assets/external-audio-manifest.js`
+- `docs/EXTERNAL_AUDIO_CANDIDATES.md`
+- `docs/AUDIO_CREDITS.md`
+- `scripts/check-external-audio-assets.mjs`
+
+All external audio must keep generated fallback paths. No external file may be used without source URL, author, license, commercial-use status, and attribution rules.

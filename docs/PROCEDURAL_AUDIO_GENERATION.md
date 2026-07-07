@@ -124,3 +124,16 @@ Generated audio is now also indexed through:
 - `docs/REUSABLE_ASSET_INDEX.md`
 
 New stories should reuse library IDs first, then add story-specific aliases only when needed.
+
+## External Audio Fallback Policy
+
+External licensed audio can now be layered on top of generated audio through:
+
+- `assets/external-audio-manifest.js`
+- `docs/EXTERNAL_AUDIO_CANDIDATES.md`
+- `docs/AUDIO_CREDITS.md`
+- `scripts/check-external-audio-assets.mjs`
+
+The generated WAV files in `assets/audio/generated/` must remain in the project as fallback. If an external Freesound/Pixabay file fails to load, runtime audio should fall back to the generated file instead of crashing or restoring synthetic white noise.
+
+Current status: no external audio has been downloaded or committed. The manifest is marked `pending-download`.

@@ -4,6 +4,8 @@ Status values are intentionally set to "pending manual listen". The project now 
 
 Global style rule: every listed sound must support urban suspense. It must not sound like a game, Super Mario, pixel game, arcade cue, coin sound, victory jingle, or cute UI beep. The Chinese QA shorthand is: 不能像游戏、不能像超级马里奥、要像真实敲门、手机铃声要像真实来电、阴森背景音乐要低频克制、下雨声要柔和。
 
+External audio rule: if `assets/external-audio-manifest.js` maps a real external file for a story key, the external file should play first. If it fails, the generated fallback must still play. Current external status is `pending-download`, so all rows currently use generated fallback.
+
 | Node | Expected sound | Must not happen | Style status |
 |---|---|---|---|
 | ch01_001 | Low rain-night BGM, quiet room ambience, soft rain on window | No narration reading, no harsh white noise; 阴森背景音乐不能像游戏 BGM | pending manual listen |
@@ -42,3 +44,20 @@ Global style rule: every listed sound must support urban suspense. It must not s
 | ending_b | Ending report should stay restrained | No extra voice reading | pending manual listen |
 | ending_c | Ending report should not add jump scare | No extra voice reading | pending manual listen |
 | ending_d | Ending report should stay rain-night restrained | No extra voice reading | pending manual listen |
+
+## External Audio Trial Columns
+
+| Node / Key | External asset | Source | Fallback | Manual result |
+|---|---|---|---|---|
+| rain_heavy_loop | pending-download | Pixabay/Freesound candidate only | `assets/audio/generated/ambience/amb_rain_heavy_loop.wav` | pending manual listen |
+| rain_window_soft | pending-download | Pixabay/Freesound candidate only | `assets/audio/generated/sfx/sfx_rain_window_soft.wav` | pending manual listen |
+| phone_vibrate | pending-download | Freesound candidate only | `assets/audio/generated/sfx/sfx_phone_vibrate.wav` | pending manual listen |
+| phone_ring_dead_call | pending-download | Pixabay/Freesound candidate only | `assets/audio/generated/sfx/sfx_phone_ring_dead_call.wav` | pending manual listen |
+| doorbell_rain_night | pending-download | Freesound candidate only | `assets/audio/generated/sfx/sfx_doorbell_rain_night.wav` | pending manual listen |
+| knock_soft | pending-download | Freesound candidate only | `assets/audio/generated/sfx/sfx_knock_soft.wav` | pending manual listen |
+| door_chain_close | pending-download | Freesound candidate only | `assets/audio/generated/sfx/sfx_door_chain_close.wav` | pending manual listen |
+| door_lock_turn | pending-download | Freesound candidate only | `assets/audio/generated/sfx/sfx_door_lock_turn.wav` | pending manual listen |
+| door_open_slow | pending-download | Freesound candidate only | `assets/audio/generated/sfx/sfx_door_open_slow.wav` | pending manual listen |
+| footstep_corridor_wet | pending-download | Freesound candidate only | `assets/audio/generated/sfx/sfx_footstep_corridor_wet.wav` | pending manual listen |
+| recording_static_short | pending-download | Freesound candidate only | `assets/audio/generated/sfx/sfx_recording_static_short.wav` | pending manual listen |
+| horror_corridor | pending-download | Pixabay candidate only | `assets/audio/generated/bgm/bgm_horror_corridor.wav` | pending manual listen |

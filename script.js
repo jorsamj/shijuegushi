@@ -450,10 +450,22 @@
   }
 
   function getAudioSource(category, key) {
-    if (!key) return "";
-    const src = AUDIO?.[category]?.[key] || "";
-    if (!src) console.warn(`[Second Life Audio] Missing ${category}: ${key}`);
-    return src;
+    if (!key) return null;
+    const generatedSrc = AUDIO?.[category]?.[key] || "";
+    const external = window.SECOND_LIFE_EXTERNAL_AUDIO;
+    const externalAsset = external?.[category]?.[key] ||
+      Object.values(external?.[category] || {}).find((asset) => asset?.storyKey === key);
+
+    if (externalAsset?.path) {
+      return {
+        src: externalAsset.path,
+        fallbackSrc: externalAsset.fallbackPath || generatedSrc,
+        externalId: externalAsset.id || key,
+      };
+    }
+
+    if (!generatedSrc) console.warn(`[Second Life Audio] Missing ${category}: ${key}`);
+    return generatedSrc ? { src: generatedSrc, fallbackSrc: "" } : null;
   }
 
   function isPlaceholderDialogueAsset(node) {
@@ -462,20 +474,33 @@
     return profile?.productionStatus === "need-retake" || profile?.productionStatus === "placeholder";
   }
 
-  function playRealAudio(src, options = {}) {
-    if (!src || typeof Audio !== "function") return null;
-    const audio = new Audio(src);
+  function playRealAudio(source, options = {}) {
+    if (!source || typeof Audio !== "function") return null;
+    const descriptor = typeof source === "string" ? { src: source, fallbackSrc: "" } : source;
+    if (!descriptor?.src) return null;
+    let fallbackStarted = false;
+    const startFallback = () => {
+      if (fallbackStarted) return;
+      fallbackStarted = true;
+      if (descriptor.fallbackSrc) {
+        const fallbackAudio = playRealAudio({ src: descriptor.fallbackSrc, fallbackSrc: "" }, { ...options, onFallback: null, onFallbackAudio: null });
+        options.onFallbackAudio?.(fallbackAudio);
+        return;
+      }
+      options.onFallback?.();
+    };
+    const audio = new Audio(descriptor.src);
     audio.loop = options.loop === true;
     audio.volume = options.volume ?? 0.72;
     audio.addEventListener("error", () => {
-      console.warn(`[Second Life Audio] Unable to load ${src}`);
-      options.onFallback?.();
+      console.warn(`[Second Life Audio] Unable to load ${descriptor.src}`);
+      startFallback();
     }, { once: true });
     const playPromise = audio.play();
     if (playPromise?.catch) {
       playPromise.catch((error) => {
-        console.warn(`[Second Life Audio] Unable to play ${src}`, error);
-        options.onFallback?.();
+        console.warn(`[Second Life Audio] Unable to play ${descriptor.src}`, error);
+        startFallback();
       });
     }
     return audio;
@@ -547,6 +572,9 @@
       audioState.realBgm = playRealAudio(src, {
         loop: true,
         volume: 0.14,
+        onFallbackAudio: (fallbackAudio) => {
+          if (audioState.currentBgm === name) audioState.realBgm = fallbackAudio;
+        },
         onFallback: () => {
           if (audioState.currentBgm === name) {
             audioState.currentBgm = "";
@@ -578,6 +606,9 @@
       audioState.realAmbience = playRealAudio(src, {
         loop: true,
         volume: 0.08,
+        onFallbackAudio: (fallbackAudio) => {
+          if (audioState.currentAmbience === name) audioState.realAmbience = fallbackAudio;
+        },
         onFallback: () => {
           if (audioState.currentAmbience === name) {
             audioState.currentAmbience = "";
@@ -657,6 +688,14 @@
       const audio = playRealAudio(realVoiceSrc, {
         loop: false,
         volume: realVoiceCategory === "stingers" ? 0.52 : 0.82,
+        onFallbackAudio: (fallbackAudio) => {
+          if (sessionId !== audioState.dialogueSessionId || token !== audioState.dialogueToken) {
+            stopRealAudio(fallbackAudio);
+            return;
+          }
+          audioState.currentDialogueAudio = fallbackAudio;
+          audioState.realVoice = fallbackAudio;
+        },
         onFallback: () => {
           if (sessionId === audioState.dialogueSessionId && token === audioState.dialogueToken) handleMissingRealVoice(node, settings);
         },
