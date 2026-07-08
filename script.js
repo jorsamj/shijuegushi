@@ -128,6 +128,8 @@
     realBgm: null,
     realAmbience: null,
     realVoice: null,
+    activeSfx: [],
+    activeStingers: [],
     currentDialogueAudio: null,
     currentDialogueAbortController: null,
     currentBgm: "",
@@ -139,6 +141,7 @@
     placeholderVoiceNoticeShown: false,
     dialogueToken: 0,
     dialogueSessionId: 0,
+    currentNodeId: "",
     debugLog: [],
   };
 
@@ -451,11 +454,55 @@
     } catch (error) {}
   }
 
-  function logAudioEvent(category, key, sourceType, src, status, qualityStatus = "") {
+  function removeActiveAudio(listName, audio) {
+    const list = audioState[listName];
+    if (!Array.isArray(list) || !audio) return;
+    const index = list.indexOf(audio);
+    if (index >= 0) list.splice(index, 1);
+  }
+
+  function stopTrackedAudioList(listName, reason = "node-change") {
+    const list = Array.isArray(audioState[listName]) ? [...audioState[listName]] : [];
+    audioState[listName] = [];
+    list.forEach((audio) => {
+      logAudioEvent(audio.dataset?.audioCategory || listName, audio.dataset?.audioKey || "", audio.dataset?.sourceType || "external-approved", audio.currentSrc || audio.src || "", "stopped", "", "stopped", reason);
+      stopRealAudio(audio);
+    });
+  }
+
+  function stopNodeTransientAudio(reason = "node-change") {
+    stopTrackedAudioList("activeSfx", reason);
+    stopTrackedAudioList("activeStingers", reason);
+    stopAllDialogueAudio();
+  }
+
+  function fadeOutAudio(audio, fadeOutMs = 300, reason = "fadeout") {
+    if (!audio) return;
+    const startVolume = Number.isFinite(audio.volume) ? audio.volume : 0.5;
+    const startedAt = Date.now();
+    const tick = () => {
+      const progress = Math.min(1, (Date.now() - startedAt) / Math.max(1, fadeOutMs));
+      try {
+        audio.volume = Math.max(0, startVolume * (1 - progress));
+      } catch (error) {}
+      if (progress < 1) {
+        window.setTimeout(tick, 40);
+        return;
+      }
+      logAudioEvent(audio.dataset?.audioCategory || "audio", audio.dataset?.audioKey || "", audio.dataset?.sourceType || "external-approved", audio.currentSrc || audio.src || "", "fadeout", "", "fadeout", reason);
+      stopRealAudio(audio);
+    };
+    tick();
+  }
+
+  function logAudioEvent(category, key, sourceType, src, status, qualityStatus = "", eventType = "source", reason = "") {
     audioState.debugLog.push({
       time: new Date().toISOString(),
+      nodeId: state?.nodeId || audioState.currentNodeId || "",
       category,
       key,
+      eventType,
+      reason,
       sourceType,
       src,
       status,
@@ -532,9 +579,16 @@
     const audio = new Audio(descriptor.src);
     audio.loop = options.loop === true;
     audio.volume = options.volume ?? 0.72;
+    audio.dataset.audioCategory = options.category || "";
+    audio.dataset.audioKey = options.key || "";
+    audio.dataset.sourceType = descriptor.sourceType || options.sourceType || "external-approved";
+    logAudioEvent(options.category || "unknown", options.key || "", audio.dataset.sourceType, descriptor.src, "start", "", "start", options.reason || "node-enter");
     audio.addEventListener("error", () => {
       console.warn(`[Second Life Audio] Unable to load ${descriptor.src}`);
       startFallback();
+    }, { once: true });
+    audio.addEventListener("ended", () => {
+      logAudioEvent(options.category || "unknown", options.key || "", audio.dataset.sourceType, descriptor.src, "ended", "", "ended", options.reason || "natural-end");
     }, { once: true });
     const playPromise = audio.play();
     if (playPromise?.catch) {
@@ -665,6 +719,62 @@
     startSyntheticAmbience(name);
   }
 
+  function getNodeAudioPolicy(node = {}) {
+    return {
+      stopPreviousSfx: node.audioPolicy?.stopPreviousSfx !== false,
+      stopPreviousStingers: node.audioPolicy?.stopPreviousStingers !== false,
+      bgmMode: ["replace", "keep", "fadeout"].includes(node.audioPolicy?.bgmMode) ? node.audioPolicy.bgmMode : "keep",
+      ambienceMode: ["replace", "keep", "fadeout"].includes(node.audioPolicy?.ambienceMode) ? node.audioPolicy.ambienceMode : "keep",
+      fadeOutMs: Number.isFinite(Number(node.audioPolicy?.fadeOutMs)) ? Number(node.audioPolicy.fadeOutMs) : 300,
+    };
+  }
+
+  function stopBgm(reason = "policy") {
+    if (audioState.realBgm) fadeOutAudio(audioState.realBgm, 300, reason);
+    stopAudioHandle(audioState.bgm);
+    audioState.realBgm = null;
+    audioState.bgm = null;
+    audioState.currentBgm = "";
+  }
+
+  function stopAmbience(reason = "policy") {
+    if (audioState.realAmbience) fadeOutAudio(audioState.realAmbience, 300, reason);
+    stopAudioHandle(audioState.ambience);
+    audioState.realAmbience = null;
+    audioState.ambience = null;
+    audioState.currentAmbience = "";
+  }
+
+  function transitionAudioForNode(prevNode, nextNode, sceneCue = {}) {
+    const policy = getNodeAudioPolicy(nextNode);
+    if (policy.stopPreviousSfx) stopTrackedAudioList("activeSfx", "node-leave");
+    if (policy.stopPreviousStingers) {
+      stopTrackedAudioList("activeStingers", "node-leave");
+      stopAllDialogueAudio();
+    }
+
+    if (policy.bgmMode === "fadeout") {
+      stopBgm("policy-fadeout");
+    } else if (policy.bgmMode === "replace") {
+      if (sceneCue.bgm) startBgm(sceneCue.bgm);
+      else stopBgm("missing-next-bgm");
+    } else if (policy.bgmMode === "keep" && sceneCue.bgm && audioState.currentBgm !== sceneCue.bgm) {
+      startBgm(sceneCue.bgm);
+    }
+
+    if (policy.ambienceMode === "fadeout") {
+      stopAmbience("policy-fadeout");
+    } else if (policy.ambienceMode === "replace") {
+      if (sceneCue.ambience) startAmbience(sceneCue.ambience);
+      else stopAmbience("missing-next-ambience");
+    } else if (policy.ambienceMode === "keep" && sceneCue.ambience && audioState.currentAmbience !== sceneCue.ambience) {
+      startAmbience(sceneCue.ambience);
+    }
+
+    audioState.currentNodeId = nextNode?.nodeId || "";
+    logAudioEvent("node", nextNode?.nodeId || "", "lifecycle", "", "transitioned", "", "start", prevNode?.nodeId ? "node-change" : "node-enter");
+  }
+
   function playSyntheticSfx(name = "") {
     logAudioEvent("sfx", name, "synthetic-dev-only", "", "disabled", "not-runtime-default");
     console.warn(`[Second Life Audio] Synthetic SFX disabled in external-approved-only mode: ${name}`);
@@ -675,15 +785,21 @@
     if (!settings.audioEnabled || !settings.sfxEnabled || !audioState.unlocked || !name) return;
     const src = getAudioSource("sfx", name);
     if (src) {
-      playRealAudio(src, {
+      const audio = playRealAudio(src, {
         category: "sfx",
         key: name,
         loop: false,
         volume: 0.46,
+        reason: "node-enter",
         onFallback: () => {
           if (getAudioSettings().audioSourceMode === "generated-dev-only") playSyntheticSfx(name);
         },
       });
+      if (audio) {
+        audioState.activeSfx.push(audio);
+        audio.addEventListener("ended", () => removeActiveAudio("activeSfx", audio), { once: true });
+        audio.addEventListener("error", () => removeActiveAudio("activeSfx", audio), { once: true });
+      }
       return;
     }
     if (name === "static_noise") {
@@ -720,6 +836,7 @@
         key: realVoiceKey,
         loop: false,
         volume: realVoiceCategory === "stingers" ? 0.52 : 0.82,
+        reason: "node-enter",
         onFallbackAudio: (fallbackAudio) => {
           if (sessionId !== audioState.dialogueSessionId || token !== audioState.dialogueToken) {
             stopRealAudio(fallbackAudio);
@@ -743,9 +860,14 @@
         audioState.currentDialogueAudio = null;
         audioState.realVoice = null;
         audioState.currentDialogueAbortController = null;
+        if (realVoiceCategory === "stingers") removeActiveAudio("activeStingers", audio);
+      }, { once: true });
+      audio.addEventListener("error", () => {
+        if (realVoiceCategory === "stingers") removeActiveAudio("activeStingers", audio);
       }, { once: true });
       audioState.currentDialogueAudio = audio;
       audioState.realVoice = audio;
+      if (realVoiceCategory === "stingers") audioState.activeStingers.push(audio);
       audioState.lastVoiceNodeId = node.nodeId;
       return;
     }
@@ -897,8 +1019,8 @@
   function updateAudioForNode(node, sceneCue = {}) {
     const settings = getAudioSettings();
     if (!settings.audioEnabled || !audioState.unlocked) return;
-    startBgm(sceneCue.bgm);
-    startAmbience(sceneCue.ambience);
+    const prevNode = audioState.currentNodeId ? DATA.nodes?.[audioState.currentNodeId] : null;
+    transitionAudioForNode(prevNode, node, sceneCue);
     const sfxList = Array.isArray(sceneCue.sfx) ? sceneCue.sfx : sceneCue.sfx ? [sceneCue.sfx] : [];
     sfxList.forEach((name) => playSfx(name));
     if (node.type === "clue") playSfx("clue_reveal");
@@ -906,6 +1028,7 @@
   }
 
   function stopAllAudio() {
+    stopNodeTransientAudio("all-audio-stop");
     stopAllDialogueAudio();
     stopAudioHandle(audioState.bgm);
     stopAudioHandle(audioState.ambience);
@@ -1101,7 +1224,7 @@
   }
 
   function showHall() {
-    stopAllDialogueAudio();
+    stopNodeTransientAudio("leave-game");
     const cards = DATA.series
       .map((series) => {
         const isOpen = series.status === "open";
@@ -1218,7 +1341,7 @@
 
 
   function startNewGame() {
-    stopAllDialogueAudio();
+    stopNodeTransientAudio("restart");
     unlockAudio();
     state = createInitialState();
     autoSave();
@@ -1304,7 +1427,7 @@
     if (node.resolveEnding === true) {
       continueButton.textContent = "查看结局";
       continueButton.addEventListener("click", () => {
-        stopAllDialogueAudio();
+        stopNodeTransientAudio("continue");
         state.endingId = resolveEnding();
         autoSave();
         showEnding(state.endingId);
@@ -1337,7 +1460,7 @@
     }
 
     continueButton.addEventListener("click", () => {
-      stopAllDialogueAudio();
+      stopNodeTransientAudio("continue");
       if (node.nextNodeId) {
         goToNode(node.nextNodeId);
       } else {
@@ -1350,7 +1473,7 @@
   function handleChoice(node, choiceId) {
     const choice = (node.choices || []).find((item) => item.choiceId === choiceId);
     if (!choice) return;
-    stopAllDialogueAudio();
+    stopNodeTransientAudio("choice");
     recordChoice(node, choice);
     addHistory({
       type: "choice",
@@ -1417,7 +1540,7 @@
     });
   }
   function goToNode(nodeId) {
-    stopAllDialogueAudio();
+    stopNodeTransientAudio("node-change");
     if (DATA.endings[nodeId]) {
       showEnding(nodeId);
       return;
@@ -1600,7 +1723,7 @@
   }
 
   function showEnding(endingId) {
-    stopAllDialogueAudio();
+    stopNodeTransientAudio("ending");
     const ending = DATA.endings[endingId] || DATA.endings.ending_d;
     state.endingId = ending.endingId;
     state.nodeId = ending.endingId;
@@ -1779,7 +1902,7 @@
     bindTool("history", openHistoryModal);
     bindTool("hall", () => {
         openConfirm("返回人生档案", "返回前会自动保存当前进度。要离开当前故事吗？", () => {
-        stopAllDialogueAudio();
+        stopNodeTransientAudio("leave-game");
         autoSave();
         showHall();
       });
@@ -1947,7 +2070,7 @@
         const slot = slots[index];
         if (!slot) return;
         openConfirm("读取存档", "读取后会覆盖当前临时进度。确认继续吗？", () => {
-          stopAllDialogueAudio();
+          stopNodeTransientAudio("load-save");
           state = normalizeState(slot);
           closeModal();
           if (state.endingId && DATA.endings[state.endingId]) {

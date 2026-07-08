@@ -292,6 +292,7 @@ assert(proceduralAudioText.includes("2026-07-07 Rain Call First Story Polish"), 
 });
 
 const requiredP0SfxKeys = [
+  "phone_vibrate",
   "phone_ring_dead_call",
   "message_pop_cold",
   "doorbell_rain_night",
@@ -303,6 +304,7 @@ const requiredP0SfxKeys = [
   "corridor_light_flicker",
   "old_phone_start",
   "recording_static_short",
+  "phone_call_connect",
   "photo_zoom",
   "marker_circle",
   "choice_confirm_soft",
@@ -537,10 +539,10 @@ for (const chapter of DATA.chapters || []) {
 }
 
 const requiredVisualStateNodes = {
-  ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_screen_wake", "phone_ring_dead_call"] },
+  ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_screen_wake", "phone_vibrate", "phone_ring_dead_call"] },
   ch01_004: { voiceStinger: "linzhou_gasp_short" },
-  ch01_005: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "impact", characterFraming: "halfbody", characterFocus: "face", headSafe: true, voiceStinger: "xuzhixia_weak_static_exhale", sfxOnEnter: ["recording_static_short"] },
-  ch01_007: { visualMood: true, visualCharacter: "许知晚", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterFocus: "upperBody", headSafe: true, voiceStinger: "xuzhiwan_low_breath", sfxOnEnter: ["doorbell_rain_night", "footstep_corridor_wet"] },
+  ch01_005: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "impact", characterFraming: "halfbody", characterFocus: "face", headSafe: true, voiceStinger: "xuzhixia_weak_static_exhale", sfxOnEnter: ["phone_call_connect", "recording_static_short"] },
+  ch01_007: { visualMood: true, visualCharacter: "许知晚", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterFocus: "upperBody", headSafe: true, voiceStinger: "xuzhiwan_low_breath", sfxOnEnter: ["footstep_corridor_wet"] },
   ch01_009: { sfxOnEnter: ["message_pop_cold"] },
   ch01_008: { visualMood: true, visualCharacter: "许知晚", characterVariant: "fullbody", characterScale: "large", characterPosition: "center", characterFraming: "fullbody", characterFocus: "fullBody", headSafe: true },
   ch02_003: { visualMood: true, visualCharacter: "许知晚", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterFocus: "face", headSafe: true, voiceStinger: "xuzhiwan_low_breath", sfxOnEnter: ["corridor_light_flicker"] },
@@ -670,6 +672,13 @@ const voiceAudioNodes = Object.values(DATA.nodes || {}).filter((node) => node.vo
 assert(voiceAudioNodes.length === 0, `story nodes must not trigger voiceAudio readings, got ${voiceAudioNodes.length}`);
 assert(dialogueAudioNodes.length <= 24, `key voice/stinger nodes must stay sparse and non-verbal, got ${dialogueAudioNodes.length}`);
 assert(narrationNodes.length === 0, `story nodes must not trigger narrationAudio readings, got ${narrationNodes.length}`);
+
+for (const [sceneId, cue] of Object.entries(VISUALS.audio?.scenes || {})) {
+  if (cue.bgm) assert(audioKeySets.bgm.has(cue.bgm), `visual scene ${sceneId}.bgm references missing audio key: ${cue.bgm}`);
+  if (cue.ambience) assert(audioKeySets.ambience.has(cue.ambience), `visual scene ${sceneId}.ambience references missing audio key: ${cue.ambience}`);
+  const sceneSfx = Array.isArray(cue.sfx) ? cue.sfx : cue.sfx ? [cue.sfx] : [];
+  for (const sfx of sceneSfx) assert(audioKeySets.sfx.has(sfx), `visual scene ${sceneId}.sfx references missing audio key: ${sfx}`);
+}
 
 const reachable = new Set();
 const stack = ["ch01_001"];

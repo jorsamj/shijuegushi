@@ -212,24 +212,26 @@ window.MIST_DATA = (() => {
       voiceSpeed: data.voiceSpeed,
       voicePitch: data.voicePitch,
       audioMood: data.audioMood,
+      audioPolicy: data.audioPolicy,
       resolveEnding: data.resolveEnding || false,
     };
     if (data.nextNodeId === null) delete nodes[nodeId].nextNodeId;
   }
 
   // 第 1 章：雨夜来电
-  add(1, 1, { speaker: "旁白", text: "暴雨把窗户拍得发白。林舟盯着电脑里还没写完的周报，泡面汤已经凉透，杯沿留着半圈咖啡渍。\n\n她把许知夏的名字从联系人里删过一次，又在备份里看见过一次。三年了，那个名字一直像一枚没拔出来的刺。", bgm: "rain_night_loop", ambience: "room_night_loop", sfxOnEnter: ["rain_window_soft"] });
+  add(1, 1, { speaker: "旁白", text: "暴雨把窗户拍得发白。林舟盯着电脑里还没写完的周报，泡面汤已经凉透，杯沿留着半圈咖啡渍。\n\n她把许知夏的名字从联系人里删过一次，又在备份里看见过一次。三年了，那个名字一直像一枚没拔出来的刺。", bgm: "rain_night_loop", ambience: "room_night_loop", sfxOnEnter: ["rain_window_soft"], audioPolicy: { bgmMode: "replace", ambienceMode: "replace" } });
   add(1, 2, { speaker: "林舟", text: "再改一版……就睡。", scene: "rental_room_table" });
-  add(1, 3, { speaker: "旁白", text: "手机突然震动。屏幕在桌面水渍里亮起来，来电显示跳出一个三年前就不该再出现的名字。\n\n许知夏。\n\n林舟没有立刻接。雨声像贴在窗外的手，手机却一下一下震得更急。", scene: "phone_call_ui", type: "clue", gainClues: ["clue_dead_call"], visualMood: "tense", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["phone_ring_dead_call", "phone_screen_wake"], audioMood: "tense" });
-  add(1, 4, { speaker: "林舟", text: "不可能。", scene: "phone_call_ui", voiceStinger: "linzhou_gasp_short", audioMood: "tense", sfxOnEnter: ["room_silence_drop"] });
-  add(1, 5, { speaker: "许知夏的声音", text: "别开门……她不是我。\n\n最后一个字被电流撕碎。林舟听见自己的呼吸撞在听筒上，像另一个人正贴着她耳边发抖。", scene: "phone_call_ui", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "recording", characterScale: "impact", characterPosition: "center", characterFraming: "halfbody", characterHeadSafe: true, characterFocus: "face", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["recording_static_short"], voiceStinger: "xuzhixia_weak_static_exhale", audioMood: "horror" });
+  add(1, 3, { speaker: "旁白", text: "手机突然震动。屏幕在桌面水渍里亮起来，来电显示跳出一个三年前就不该再出现的名字。\n\n许知夏。\n\n林舟没有立刻接。雨声像贴在窗外的手，手机却一下一下震得更急。", scene: "phone_call_ui", type: "clue", gainClues: ["clue_dead_call"], visualMood: "tense", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["phone_screen_wake", "phone_vibrate", "phone_ring_dead_call"], audioMood: "tense", audioPolicy: { bgmMode: "keep", ambienceMode: "keep" } });
+  add(1, 4, { speaker: "林舟", text: "不可能。", scene: "phone_call_ui", voiceStinger: "linzhou_gasp_short", audioMood: "tense", sfxOnEnter: ["room_silence_drop"], audioPolicy: { bgmMode: "keep", ambienceMode: "keep" } });
+  add(1, 5, { speaker: "许知夏的声音", text: "别开门……她不是我。\n\n最后一个字被电流撕碎。林舟听见自己的呼吸撞在听筒上，像另一个人正贴着她耳边发抖。", scene: "phone_call_ui", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "recording", characterScale: "impact", characterPosition: "center", characterFraming: "halfbody", characterHeadSafe: true, characterFocus: "face", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["phone_call_connect", "recording_static_short"], voiceStinger: "xuzhixia_weak_static_exhale", audioMood: "horror", audioPolicy: { bgmMode: "keep", ambienceMode: "keep" } });
   add(1, 6, {
     type: "choice",
     scene: "phone_call_ui",
     speaker: "旁白",
     text: "电话断了。林舟还握着手机，屏幕上的通话时长停在 7 秒。\n\n下一秒，门铃响起。走廊里有水滴落在地上的声音，一滴，一滴，像有人站在门外很久了。",
-    sfxOnEnter: ["phone_call_end"],
+    sfxOnEnter: ["phone_call_end", "doorbell_rain_night"],
     sfxOnChoice: ["choice_confirm_soft"],
+    audioPolicy: { bgmMode: "keep", ambienceMode: "keep" },
     choices: [
       choice("a", "你没靠近门，只隔着客厅问：外面是谁？", "ch01_007", {
         setFlags: ["kept_door_closed"],
@@ -247,8 +249,8 @@ window.MIST_DATA = (() => {
       }),
     ],
   });
-  add(1, 7, { speaker: "女人", text: "林舟？我是许知晚。许知夏的妹妹。\n\n门外的女人声音很低，像怕惊动楼道里的什么东西。\n\n雨太大了，你先别怕。", scene: "corridor_door", visualCharacter: "许知晚", visualMood: "tense", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterHeadSafe: true, characterFocus: "upperBody", bgm: "horror_corridor", ambience: "corridor_hum", sfxOnEnter: ["doorbell_rain_night", "footstep_corridor_wet"], voiceStinger: "xuzhiwan_low_breath", audioMood: "tense" });
-  add(1, 8, { speaker: "旁白", text: "猫眼外站着一个浑身湿透的女人。楼道灯闪了一下，镜片里的脸被拉得微微变形。\n\n她抬头时，林舟差点后退。\n\n不是像。那一瞬间，林舟几乎以为三年前死去的人站回了门外。", scene: "corridor_door", visualMood: "tense", visualCharacter: "许知晚", characterVariant: "fullbody", characterScale: "large", characterPosition: "center", characterFraming: "fullbody", characterHeadSafe: true, characterFocus: "fullBody", bgm: "horror_corridor", ambience: "corridor_hum", sfxOnEnter: ["door_chain_close", "corridor_light_flicker"], audioMood: "tense" });
+  add(1, 7, { speaker: "女人", text: "林舟？我是许知晚。许知夏的妹妹。\n\n门外的女人声音很低，像怕惊动楼道里的什么东西。\n\n雨太大了，你先别怕。", scene: "corridor_door", visualCharacter: "许知晚", visualMood: "tense", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterHeadSafe: true, characterFocus: "upperBody", bgm: "horror_corridor", ambience: "corridor_hum", sfxOnEnter: ["footstep_corridor_wet"], voiceStinger: "xuzhiwan_low_breath", audioMood: "tense", audioPolicy: { bgmMode: "replace", ambienceMode: "replace" } });
+  add(1, 8, { speaker: "旁白", text: "猫眼外站着一个浑身湿透的女人。楼道灯闪了一下，镜片里的脸被拉得微微变形。\n\n她抬头时，林舟差点后退。\n\n不是像。那一瞬间，林舟几乎以为三年前死去的人站回了门外。", scene: "corridor_door", visualMood: "tense", visualCharacter: "许知晚", characterVariant: "fullbody", characterScale: "large", characterPosition: "center", characterFraming: "fullbody", characterHeadSafe: true, characterFocus: "fullBody", bgm: "horror_corridor", ambience: "corridor_hum", sfxOnEnter: ["door_chain_close", "corridor_light_flicker"], audioMood: "tense", audioPolicy: { bgmMode: "keep", ambienceMode: "keep" } });
   add(1, 9, { speaker: "陈妍", text: "你最好别开门。先把门链扣上，手机别离手。\n\n还有，别急着信任何人。死去三年的人给你打电话，这事要么是恶作剧，要么是有人知道你怕什么。", scene: "old_chat_memory", sfxOnEnter: ["message_pop_cold"] });
   add(1, 10, {
     type: "choice",

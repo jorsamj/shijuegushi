@@ -151,6 +151,7 @@ window.SECOND_LIFE_AUDIO = {
     marker_circle: "assets/audio/generated/sfx/sfx_marker_circle.wav",
     choice_confirm_soft: "assets/audio/generated/sfx/sfx_choice_confirm_soft.wav",
     phone_call_end: "assets/audio/generated/sfx/sfx_phone_call_end.wav",
+    phone_call_connect: "assets/audio/generated/sfx/sfx_phone_call_end.wav",
     phone_screen_wake: "assets/audio/generated/sfx/sfx_phone_screen_wake.wav",
     chat_typing_short: "assets/audio/generated/sfx/sfx_chat_typing_short.wav",
     evidence_reveal: "assets/audio/generated/sfx/sfx_evidence_reveal.wav",

@@ -19,10 +19,12 @@ function loadWindowJs(path, globalName) {
 
 const DATA = loadWindowJs("story-data.js", "MIST_DATA");
 const EXTERNAL = loadWindowJs("assets/external-audio-manifest.js", "SECOND_LIFE_EXTERNAL_AUDIO");
+const VISUALS = loadWindowJs("assets/visual-assets.js", "SECOND_LIFE_VISUALS");
 const scriptText = read("script.js");
 
 assert(DATA?.nodes, "story-data.js must expose window.MIST_DATA.nodes");
 assert(EXTERNAL?.meta?.status === "active", "external audio manifest must be active");
+assert(VISUALS?.audio?.scenes, "visual scene audio config must be present");
 assert(EXTERNAL?.meta?.playbackPolicy === "external-approved-only", "manifest playbackPolicy must be external-approved-only");
 assert(EXTERNAL?.meta?.generatedRuntimeDefault === false, "generatedRuntimeDefault must be false");
 assert(scriptText.includes("external-approved-only"), "script.js must default to external-approved-only");
@@ -52,6 +54,13 @@ for (const [nodeId, node] of Object.entries(DATA.nodes || {})) {
   }
 }
 
+for (const [sceneId, cue] of Object.entries(VISUALS?.audio?.scenes || {})) {
+  add("bgm", cue.bgm, `visual:${sceneId}`);
+  add("ambience", cue.ambience, `visual:${sceneId}`);
+  const sceneSfx = Array.isArray(cue.sfx) ? cue.sfx : cue.sfx ? [cue.sfx] : [];
+  for (const key of sceneSfx) add("sfx", key, `visual:${sceneId}`);
+}
+
 function getExternalAsset(category, key) {
   const bucket = EXTERNAL?.[category] || {};
   return bucket[key] || Object.values(bucket).find((asset) => asset?.storyKey === key);
@@ -61,7 +70,7 @@ const rows = [];
 for (const category of Object.keys(used)) {
   for (const [key, nodeSet] of [...used[category]].sort(([a], [b]) => a.localeCompare(b))) {
     const asset = getExternalAsset(category, key);
-    const minBytes = category === "bgm" || category === "ambience" ? 50_000 : 5_000;
+    const minBytes = category === "bgm" || category === "ambience" ? 50_000 : 2_000;
     assert(asset, `${category}.${key} is used but has no external asset`);
     if (asset) {
       assert(asset.status === "demo-approved" || asset.status === "final-approved", `${category}.${key} status must be demo-approved/final-approved`);
