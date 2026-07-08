@@ -139,6 +139,7 @@
     placeholderVoiceNoticeShown: false,
     dialogueToken: 0,
     dialogueSessionId: 0,
+    debugLog: [],
   };
 
   function createInitialState() {
@@ -394,6 +395,7 @@
       audioEnabled: saved.audioEnabled !== false,
       voiceEnabled: saved.voiceEnabled !== false,
       voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "real",
+      audioSourceMode: ["external-approved-only", "generated-dev-only"].includes(saved.audioSourceMode) ? saved.audioSourceMode : "external-approved-only",
       allowPlaceholderVoices: saved.allowPlaceholderVoices === true,
       bgmEnabled: saved.bgmEnabled !== false,
       sfxEnabled: saved.sfxEnabled !== false,
@@ -449,23 +451,60 @@
     } catch (error) {}
   }
 
+  function logAudioEvent(category, key, sourceType, src, status, qualityStatus = "") {
+    audioState.debugLog.push({
+      time: new Date().toISOString(),
+      category,
+      key,
+      sourceType,
+      src,
+      status,
+      qualityStatus,
+      fallbackUsed: sourceType === "generated-dev-only" || sourceType === "synthetic-dev-only",
+    });
+    if (audioState.debugLog.length > 50) audioState.debugLog.splice(0, audioState.debugLog.length - 50);
+    window.SECOND_LIFE_AUDIO_DEBUG = audioState.debugLog;
+  }
+
+  function isApprovedExternalAsset(asset) {
+    return Boolean(
+      asset?.path &&
+      ["demo-approved", "final-approved"].includes(asset.status) &&
+      asset.qualityStatus === "approved"
+    );
+  }
+
   function getAudioSource(category, key) {
     if (!key) return null;
+    const settings = getAudioSettings();
     const generatedSrc = AUDIO?.[category]?.[key] || "";
     const external = window.SECOND_LIFE_EXTERNAL_AUDIO;
     const externalAsset = external?.[category]?.[key] ||
       Object.values(external?.[category] || {}).find((asset) => asset?.storyKey === key);
 
-    if (externalAsset?.path) {
+    if (isApprovedExternalAsset(externalAsset)) {
+      logAudioEvent(category, key, "external-approved", externalAsset.path, externalAsset.status, externalAsset.qualityStatus);
       return {
         src: externalAsset.path,
-        fallbackSrc: externalAsset.fallbackPath || generatedSrc,
+        fallbackSrc: settings.audioSourceMode === "generated-dev-only" ? (externalAsset.fallbackPath || generatedSrc) : "",
         externalId: externalAsset.id || key,
+        sourceType: "external-approved",
       };
     }
 
-    if (!generatedSrc) console.warn(`[Second Life Audio] Missing ${category}: ${key}`);
-    return generatedSrc ? { src: generatedSrc, fallbackSrc: "" } : null;
+    if (externalAsset?.path) {
+      logAudioEvent(category, key, "external-rejected", externalAsset.path, externalAsset.status || "missing-status", externalAsset.qualityStatus || "missing-quality");
+      console.warn(`[Second Life Audio] External asset rejected for ${category}:${key}`);
+    }
+
+    if (settings.audioSourceMode === "generated-dev-only" && generatedSrc) {
+      logAudioEvent(category, key, "generated-dev-only", generatedSrc, "dev-only", "not-runtime-default");
+      return { src: generatedSrc, fallbackSrc: "", sourceType: "generated-dev-only" };
+    }
+
+    logAudioEvent(category, key, "silent-no-approved-external", "", "silent", "missing-approved-external");
+    if (!generatedSrc && !externalAsset) console.warn(`[Second Life Audio] Missing ${category}: ${key}`);
+    return null;
   }
 
   function isPlaceholderDialogueAsset(node) {
@@ -483,6 +522,7 @@
       if (fallbackStarted) return;
       fallbackStarted = true;
       if (descriptor.fallbackSrc) {
+        logAudioEvent(options.category || "unknown", options.key || "", "generated-dev-only", descriptor.fallbackSrc, "fallback", "dev-only");
         const fallbackAudio = playRealAudio({ src: descriptor.fallbackSrc, fallbackSrc: "" }, { ...options, onFallback: null, onFallbackAudio: null });
         options.onFallbackAudio?.(fallbackAudio);
         return;
@@ -570,6 +610,8 @@
     if (src) {
       audioState.currentBgm = name;
       audioState.realBgm = playRealAudio(src, {
+        category: "bgm",
+        key: name,
         loop: true,
         volume: 0.14,
         onFallbackAudio: (fallbackAudio) => {
@@ -604,6 +646,8 @@
     if (src) {
       audioState.currentAmbience = name;
       audioState.realAmbience = playRealAudio(src, {
+        category: "ambience",
+        key: name,
         loop: true,
         volume: 0.08,
         onFallbackAudio: (fallbackAudio) => {
@@ -622,26 +666,8 @@
   }
 
   function playSyntheticSfx(name = "") {
-    const settings = getAudioSettings();
-    if (!settings.audioEnabled || !settings.sfxEnabled || !audioState.unlocked) return;
-    const context = ensureAudioContext();
-    if (!context) return;
-    const now = context.currentTime;
-    const gain = context.createGain();
-    gain.gain.value = 0.0001;
-    gain.connect(audioState.master);
-    const osc = context.createOscillator();
-    const isDoor = /door|lock|chain|knock|footstep/.test(name);
-    const isPhone = /phone|call|vibrate/.test(name);
-    const isMessage = /message/.test(name);
-    osc.type = isDoor ? "sine" : "triangle";
-    osc.frequency.value = isPhone ? 172 : isMessage ? 620 : isDoor ? 118 : 330;
-    osc.connect(gain);
-    osc.start(now);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(isDoor ? 0.08 : 0.11, now + 0.018);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + (isPhone ? 0.26 : 0.16));
-    osc.stop(now + 0.32);
+    logAudioEvent("sfx", name, "synthetic-dev-only", "", "disabled", "not-runtime-default");
+    console.warn(`[Second Life Audio] Synthetic SFX disabled in external-approved-only mode: ${name}`);
   }
 
   function playSfx(name = "") {
@@ -650,9 +676,13 @@
     const src = getAudioSource("sfx", name);
     if (src) {
       playRealAudio(src, {
+        category: "sfx",
+        key: name,
         loop: false,
         volume: 0.46,
-        onFallback: () => playSyntheticSfx(name),
+        onFallback: () => {
+          if (getAudioSettings().audioSourceMode === "generated-dev-only") playSyntheticSfx(name);
+        },
       });
       return;
     }
@@ -660,7 +690,7 @@
       console.warn("[Second Life Audio] static_noise missing, skip synthetic noise fallback.");
       return;
     }
-    playSyntheticSfx(name);
+    if (getAudioSettings().audioSourceMode === "generated-dev-only") playSyntheticSfx(name);
   }
 
   function speakNode(node) {
@@ -686,6 +716,8 @@
       const controller = typeof AbortController === "function" ? new AbortController() : null;
       audioState.currentDialogueAbortController = controller;
       const audio = playRealAudio(realVoiceSrc, {
+        category: realVoiceCategory,
+        key: realVoiceKey,
         loop: false,
         volume: realVoiceCategory === "stingers" ? 0.52 : 0.82,
         onFallbackAudio: (fallbackAudio) => {

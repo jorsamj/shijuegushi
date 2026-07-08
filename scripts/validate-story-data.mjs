@@ -191,6 +191,7 @@ assert(VISUALS && typeof VISUALS === "object", "visual assets config is missing"
 assert(exists("assets/audio/audio-assets.js"), "audio assets config file is missing");
 assert(exists("scripts/generate-voice-assets.mjs"), "voice generation script is missing");
 assert(exists("scripts/generate-procedural-audio.mjs"), "procedural audio generation script is missing");
+assert(exists("scripts/check-audio-coverage.mjs"), "audio coverage check script is missing");
 assert(exists("docs/PROCEDURAL_AUDIO_GENERATION.md"), "procedural audio generation doc is missing");
 assert(exists("docs/AUDIO_PLAYTEST_CHECKLIST.md"), "audio playtest checklist doc is missing");
 assert(exists("docs/AUDIO_STYLE_QA_REPORT.md"), "audio style QA report is missing");
@@ -200,7 +201,11 @@ assert(indexText.includes("assets/audio/audio-assets.js"), "index.html must load
 if (EXTERNAL_AUDIO) {
   assert(indexText.includes("assets/external-audio-manifest.js"), "index.html must load assets/external-audio-manifest.js when it exists");
   assert(scriptText.includes("SECOND_LIFE_EXTERNAL_AUDIO"), "script.js must read SECOND_LIFE_EXTERNAL_AUDIO");
-  assert(scriptText.includes("fallbackSrc"), "script.js must support generated fallback for external audio");
+  assert(scriptText.includes("external-approved-only"), "script.js must default to external-approved-only audio source mode");
+  assert(scriptText.includes("silent-no-approved-external"), "script.js must skip missing approved external audio instead of generated fallback");
+  assert(EXTERNAL_AUDIO.meta?.status !== "pending-download", "external audio manifest must not be pending-download");
+  assert(EXTERNAL_AUDIO.meta?.playbackPolicy === "external-approved-only", "external audio manifest must declare external-approved-only playback");
+  assert(EXTERNAL_AUDIO.meta?.generatedRuntimeDefault === false, "external audio manifest must disable generated runtime default");
   const selectedExternalAudio = [];
   for (const category of ["bgm", "ambience", "sfx", "stingers"]) {
     for (const asset of Object.values(EXTERNAL_AUDIO[category] || {})) {
@@ -211,6 +216,8 @@ if (EXTERNAL_AUDIO) {
       assert(!/NC|NonCommercial|Sampling\+|unknown|unclear|NoDerivatives/i.test(asset.license || ""), `external ${category}.${asset.id || asset.storyKey} has forbidden license`);
       assert(asset.commercialAllowed === true, `external ${category}.${asset.id || asset.storyKey} must be commercialAllowed=true`);
       assert(asset.redistributionAllowed === true, `external ${category}.${asset.id || asset.storyKey} must be redistributionAllowed=true`);
+      assert(["demo-approved", "final-approved"].includes(asset.status), `external ${category}.${asset.id || asset.storyKey} must be approved`);
+      assert(asset.qualityStatus === "approved", `external ${category}.${asset.id || asset.storyKey} must have qualityStatus=approved`);
     }
   }
   if (EXTERNAL_AUDIO.meta?.status === "active") {
@@ -285,7 +292,6 @@ assert(proceduralAudioText.includes("2026-07-07 Rain Call First Story Polish"), 
 });
 
 const requiredP0SfxKeys = [
-  "phone_vibrate",
   "phone_ring_dead_call",
   "message_pop_cold",
   "doorbell_rain_night",
@@ -531,7 +537,7 @@ for (const chapter of DATA.chapters || []) {
 }
 
 const requiredVisualStateNodes = {
-  ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_screen_wake", "phone_vibrate", "phone_ring_dead_call"] },
+  ch01_003: { visualMood: true, bgm: "rain_night_loop", sfxOnEnter: ["phone_screen_wake", "phone_ring_dead_call"] },
   ch01_004: { voiceStinger: "linzhou_gasp_short" },
   ch01_005: { visualMood: true, visualCharacter: "许知夏", characterVariant: "recording", characterScale: "impact", characterFraming: "halfbody", characterFocus: "face", headSafe: true, voiceStinger: "xuzhixia_weak_static_exhale", sfxOnEnter: ["recording_static_short"] },
   ch01_007: { visualMood: true, visualCharacter: "许知晚", characterVariant: "wet", characterScale: "impact", characterPosition: "center", characterFraming: "three-quarter", characterFocus: "upperBody", headSafe: true, voiceStinger: "xuzhiwan_low_breath", sfxOnEnter: ["doorbell_rain_night", "footstep_corridor_wet"] },

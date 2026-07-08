@@ -1,63 +1,48 @@
 # Audio Playtest Checklist
 
-Status values are intentionally set to "pending manual listen". The project now uses procedural BGM, ambience, SFX, and non-verbal stingers only. Ordinary narration and ordinary dialogue must stay silent.
+Runtime rule: ordinary narration and dialogue are not read aloud. The formal playtest default is `external-approved-only`; generated and synthetic audio must not play unless a developer manually enables `generated-dev-only`.
 
-Global style rule: every listed sound must support urban suspense. It must not sound like a game, Super Mario, pixel game, arcade cue, coin sound, victory jingle, or cute UI beep. The Chinese QA shorthand is: 不能像游戏、不能像超级马里奥、要像真实敲门、手机铃声要像真实来电、阴森背景音乐要低频克制、下雨声要柔和。
+Global style rule: sounds must support urban suspense and rain-night realism. They must not sound like a game, Super Mario, pixel game, arcade cue, coin sound, victory jingle, cute UI beep, white noise, or TTS.
 
-External audio rule: if `assets/external-audio-manifest.js` maps a real external file for a story key, the external file should play first. If it fails, the generated fallback must still play. Current external status is `active` with 8 selected real external assets.
+Validation phrases: 不能像游戏；不能像超级马里奥；真实敲门；手机铃声；阴森背景音乐；下雨声；Fallback is allowed only in `generated-dev-only` mode and must stay silent in the formal runtime.
 
-| Node | Expected sound | Must not happen | Style status |
-|---|---|---|---|
-| ch01_001 | Low rain-night BGM, quiet room ambience, soft rain on window | No narration reading, no harsh white noise; 阴森背景音乐不能像游戏 BGM | pending manual listen |
-| ch01_003 | Phone screen wake, table vibration, dead-call ring, rain ambience | Phone call must not sound like a game ring, Super Mario, pixel game, or cheerful coin cue; 手机铃声要偏真实来电 | pending manual listen |
-| ch01_004 | Sudden silence drop and Linzhou short gasp | Shock cue must not sound like a game failure sound | pending manual listen |
-| ch01_005 | Short recording static and weak old-recording breath | Old recording must not sound like white-noise static | pending manual listen |
-| ch01_006 | Phone call ends; choices use soft confirm | No long audio tail overlap; choice confirm must stay very soft | pending manual listen |
-| ch01_007 | Doorbell, wet corridor step, Xuzhiwan low breath | Doorbell must not sound like a game prompt, arcade cue, or Mario-like item cue | pending manual listen |
-| ch01_008 | Door chain and corridor light flicker | Door chain must not sound like a coin or bright metal reward; 真实敲门/门链要有物理感 | pending manual listen |
-| ch01_009 | Cold message pop | Notification must not copy phone-system defaults or game buttons | pending manual listen |
-| ch01_018 | Cold message pop and Zhouyu phone-silence pressure | No full Zhouyu line reading; silence should feel close and tense | pending manual listen |
-| ch01_020 | Corridor light flicker and Xuzhiwan cold exhale | No jump-scare sting | pending manual listen |
-| ch02_003 | Corridor flicker and Xuzhiwan low breath | No full pressure line reading | pending manual listen |
-| ch03_010 | Evidence reveal for gray-loan clue | Evidence reveal must not sound like a reward fanfare | pending manual listen |
-| ch03_017 | Evidence reveal for Zhouyu leaving timeline | No bright success chime | pending manual listen |
-| ch03_018 | Cold message pop and Zhouyu tiny smile | No exaggerated monster or villain laugh | pending manual listen |
-| ch04_006 | Old photo pickup | No exaggerated paper tear | pending manual listen |
-| ch04_010 | Photo zoom and soft choice confirm | Photo zoom must not sound like a UI game button or reward cue | pending manual listen |
-| ch04_011 | Photo reflection find | No sharp glass sound; should be restrained discovery | pending manual listen |
-| ch04_015 | Evidence reveal and marker circle | No intrusive clue fanfare | pending manual listen |
-| ch04_020 | Cold message pop and Zhouyu tiny smile | Zhouyu pressure must not sound like a monster effect | pending manual listen |
-| ch05_004 | Old phone start and soft choice confirm | Old phone must not sound like sci-fi startup | pending manual listen |
-| ch05_005 | Old phone start, recording static, weak static exhale | No full voiceover | pending manual listen |
-| ch05_011 | Old phone start, recording static, weak static exhale | No long TTS reading | pending manual listen |
-| ch05_012 | Backup success | Backup success must not sound like a victory jingle | pending manual listen |
-| ch05_013 | Wet corridor footstep | No monster step | pending manual listen |
-| ch05_015 | Recording static and memory fade | No harsh cut noise | pending manual listen |
-| ch05_016 | Cold message pop and Zhouyu pressure breath | No spoken line reading | pending manual listen |
-| ch05_020 | Door lock turn | No cheap horror door creak | pending manual listen |
-| ch06_005 | Backup success | No victory sound | pending manual listen |
-| ch06_006 | Backup start | No loud electronic sweep | pending manual listen |
-| ch06_007 | Delete warning | No alarm siren | pending manual listen |
-| ch06_010 | Silence drop and soft choice confirm | No narration reading | pending manual listen |
-| ch06_020 | Ending archive BGM, room ambience, archive stamp | Ending must not sound like completion music, victory jingle, or game reward | pending manual listen |
-| ending_a | Ending report should keep archive BGM atmosphere | No extra voice reading | pending manual listen |
-| ending_b | Ending report should stay restrained | No extra voice reading | pending manual listen |
-| ending_c | Ending report should not add jump scare | No extra voice reading | pending manual listen |
-| ending_d | Ending report should stay rain-night restrained | No extra voice reading | pending manual listen |
-
-## External Audio Trial Columns
-
-| Node / Key | External asset | Source | Fallback | Manual result |
-|---|---|---|---|---|
-| rain_heavy_loop | `rain_heavy_loop_real_01` | Wikimedia Commons / Gravity Sound / CC BY 4.0 | `assets/audio/generated/ambience/amb_rain_heavy_loop.wav` | pending manual listen |
-| rain_window_soft | not selected yet | future search target | `assets/audio/generated/sfx/sfx_rain_window_soft.wav` | pending manual listen |
-| phone_vibrate | `phone_vibrate_real_01` | Wikimedia Commons / Public domain | `assets/audio/generated/sfx/sfx_phone_vibrate.wav` | pending manual listen |
-| phone_ring_dead_call | `phone_ring_dead_call_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/audio/generated/sfx/sfx_phone_ring_dead_call.wav` | pending manual listen |
-| doorbell_rain_night | `doorbell_rain_night_real_01` | Wikimedia Commons / Public domain | `assets/audio/generated/sfx/sfx_doorbell_rain_night.wav` | pending manual listen |
-| knock_soft | `knock_soft_real_01` | Wikimedia Commons / Public domain | `assets/audio/generated/sfx/sfx_knock_soft.wav` | pending manual listen |
-| door_chain_close | `door_chain_close_real_01` | Wikimedia Commons / CC0 | `assets/audio/generated/sfx/sfx_door_chain_close.wav` | pending manual listen |
-| door_lock_turn | `door_lock_turn_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/audio/generated/sfx/sfx_door_lock_turn.wav` | pending manual listen |
-| door_open_slow | not selected yet | future search target | `assets/audio/generated/sfx/sfx_door_open_slow.wav` | pending manual listen |
-| footstep_corridor_wet | not selected yet | future search target | `assets/audio/generated/sfx/sfx_footstep_corridor_wet.wav` | pending manual listen |
-| recording_static_short | `recording_static_short_real_01` | Wikimedia Commons / Public domain | `assets/audio/generated/sfx/sfx_recording_static_short.wav` | pending manual listen |
-| horror_corridor | not selected yet | future search target | `assets/audio/generated/bgm/bgm_horror_corridor.wav` | pending manual listen |
+| Category | Key | Used in nodes | External asset | Source | Local path | Quality status | Manual result |
+|---|---|---|---|---|---|---|---|
+| bgm | `ending_archive` | ch06_020 | `bgm_archive_ending_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_real_01.wav` | approved | pending human listen |
+| bgm | `horror_corridor` | ch01_007, ch01_008, ch02_003, ch02_015, ch03_011, ch03_018, ch04_018, ch04_020, ch05_005, ch05_007, ch05_011, ch05_015, ch05_016, ch05_018, ch05_019 | `bgm_corridor_tension_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_2_real_01.wav` | approved | pending human listen |
+| bgm | `rain_night_loop` | ch01_001, ch01_003, ch01_005 | `bgm_rain_night_dark_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_real_01.wav` | approved | pending human listen |
+| ambience | `corridor_hum` | ch01_007, ch01_008, ch02_015, ch05_016 | `amb_corridor_hum_clean_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_2_real_01.wav` | approved | pending human listen |
+| ambience | `rain_heavy_loop` | ch01_003, ch01_005, ch02_003 | `amb_rain_heavy_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_rain_drops_gravity_real_01.wav` | approved | pending human listen |
+| ambience | `room_night_loop` | ch01_001, ch05_005, ch05_011, ch05_015, ch06_020 | `amb_room_night_clean_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_real_01.wav` | approved | pending human listen |
+| sfx | `archive_stamp` | ch06_019, ch06_020 | `sfx_archive_stamp_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_door_lock_tight_real_01.wav` | approved | pending human listen |
+| sfx | `backup_start` | ch06_006 | `sfx_backup_start_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_computer_keyboard_real_01.ogg` | approved | pending human listen |
+| sfx | `backup_success` | ch05_012, ch06_005 | `sfx_backup_success_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_clicking_gravity_real_01.wav` | approved | pending human listen |
+| sfx | `choice_confirm_soft` | ch01_006, ch01_010, ch01_014, ch04_010, ch05_004, ch05_017, ch06_004, ch06_010 | `sfx_choice_confirm_soft_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_click_switch_real_01.ogg` | approved | pending human listen |
+| sfx | `corridor_light_flicker` | ch01_008, ch01_020, ch02_003, ch05_009 | `sfx_corridor_light_flicker_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_dipswitch_real_01.ogg` | approved | pending human listen |
+| sfx | `delete_warning` | ch06_007 | `sfx_delete_warning_real_01` | Wikimedia Commons / CC BY 3.0 | `assets/library/audio/external/processed/stinger_heartbeat_real_01.ogg` | approved | pending human listen |
+| sfx | `door_chain_close` | ch01_008 | `sfx_door_chain_close_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_door_lock_tight_real_01.wav` | approved | pending human listen |
+| sfx | `door_lock_turn` | ch05_020, ch06_008 | `sfx_door_lock_turn_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_door_lock_tight_real_01.wav` | approved | pending human listen |
+| sfx | `doorbell_rain_night` | ch01_007 | `sfx_doorbell_apartment_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_doorbell_old_tring_real_01.ogg` | approved | pending human listen |
+| sfx | `evidence_reveal` | ch03_010, ch03_017, ch04_015, ch06_017 | `sfx_evidence_reveal_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_clicking_gravity_real_01.wav` | approved | pending human listen |
+| sfx | `footstep_corridor_wet` | ch01_007, ch05_013 | `sfx_footstep_corridor_wet_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/amb_rain_window_real_01.ogg` | approved | pending human listen |
+| sfx | `marker_circle` | ch04_015 | `sfx_marker_circle_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_clicking_gravity_real_01.wav` | approved | pending human listen |
+| sfx | `message_pop_cold` | ch01_009, ch01_018, ch02_007, ch02_015, ch03_011, ch03_018, ch04_018, ch04_020, ch05_007, ch05_016, ch05_018, ch05_019, ch06_008 | `sfx_message_pop_cold_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_clicking_gravity_real_01.wav` | approved | pending human listen |
+| sfx | `old_phone_start` | ch05_004, ch05_005, ch05_011, ch05_015 | `sfx_old_phone_start_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_dipswitch_real_01.ogg` | approved | pending human listen |
+| sfx | `old_photo_pickup` | ch04_001, ch04_006 | `sfx_old_photo_pickup_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_computer_keyboard_real_01.ogg` | approved | pending human listen |
+| sfx | `phone_call_end` | ch01_006, ch01_012 | `sfx_phone_call_end_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_click_switch_real_01.ogg` | approved | pending human listen |
+| sfx | `phone_ring_dead_call` | ch01_003 | `sfx_phone_ring_dark_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_old_telephone_ring_real_01.ogg` | approved | pending human listen |
+| sfx | `phone_screen_wake` | ch01_003 | `sfx_phone_screen_wake_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_click_switch_real_01.ogg` | approved | pending human listen |
+| sfx | `photo_reflection_find` | ch04_011, ch04_013 | `sfx_photo_reflection_find_real_01` | Wikimedia Commons / CC0 | `assets/library/audio/external/processed/sfx_camera_canon_real_01.wav` | approved | pending human listen |
+| sfx | `photo_zoom` | ch04_010 | `sfx_photo_zoom_real_01` | Wikimedia Commons / CC0 | `assets/library/audio/external/processed/sfx_camera_canon_real_01.wav` | approved | pending human listen |
+| sfx | `rain_window_soft` | ch01_001 | `sfx_rain_window_soft_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/amb_rain_window_real_01.ogg` | approved | pending human listen |
+| sfx | `recording_static_short` | ch01_005, ch01_013, ch05_005, ch05_011, ch05_015 | `sfx_recording_tape_soft_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_metal_bristles_real_01.ogg` | approved | pending human listen |
+| sfx | `room_silence_drop` | ch01_004, ch05_001, ch06_010 | `sfx_room_silence_drop_real_01` | Wikimedia Commons / CC BY 3.0 | `assets/library/audio/external/processed/stinger_heartbeat_real_01.ogg` | approved | pending human listen |
+| stingers | `linzhou_gasp_short` | ch01_004 | `stinger_linzhou_gasp_short_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
+| stingers | `xuzhiwan_cold_exhale` | ch01_020, ch02_001 | `stinger_xuzhiwan_cold_exhale_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
+| stingers | `xuzhiwan_low_breath` | ch01_007, ch02_003 | `stinger_xuzhiwan_low_breath_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
+| stingers | `xuzhixia_memory_fade` | ch05_015 | `stinger_xuzhixia_memory_fade_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_metal_bristles_real_01.ogg` | approved | pending human listen |
+| stingers | `xuzhixia_weak_static_exhale` | ch01_005, ch05_005, ch05_011 | `stinger_xuzhixia_weak_static_exhale_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
+| stingers | `zhouyu_low_laugh` | ch05_019 | `stinger_zhouyu_low_laugh_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
+| stingers | `zhouyu_phone_silence` | ch01_018, ch02_015, ch03_011, ch03_019 | `stinger_zhouyu_phone_silence_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_2_real_01.wav` | approved | pending human listen |
+| stingers | `zhouyu_pressure_breath` | ch05_016 | `stinger_zhouyu_pressure_breath_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
+| stingers | `zhouyu_tiny_smile` | ch03_018, ch04_020 | `stinger_zhouyu_tiny_smile_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |

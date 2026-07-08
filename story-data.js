@@ -220,7 +220,7 @@ window.MIST_DATA = (() => {
   // 第 1 章：雨夜来电
   add(1, 1, { speaker: "旁白", text: "暴雨把窗户拍得发白。林舟盯着电脑里还没写完的周报，泡面汤已经凉透，杯沿留着半圈咖啡渍。\n\n她把许知夏的名字从联系人里删过一次，又在备份里看见过一次。三年了，那个名字一直像一枚没拔出来的刺。", bgm: "rain_night_loop", ambience: "room_night_loop", sfxOnEnter: ["rain_window_soft"] });
   add(1, 2, { speaker: "林舟", text: "再改一版……就睡。", scene: "rental_room_table" });
-  add(1, 3, { speaker: "旁白", text: "手机突然震动。屏幕在桌面水渍里亮起来，来电显示跳出一个三年前就不该再出现的名字。\n\n许知夏。\n\n林舟没有立刻接。雨声像贴在窗外的手，手机却一下一下震得更急。", scene: "phone_call_ui", type: "clue", gainClues: ["clue_dead_call"], visualMood: "tense", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["phone_vibrate", "phone_ring_dead_call", "phone_screen_wake"], audioMood: "tense" });
+  add(1, 3, { speaker: "旁白", text: "手机突然震动。屏幕在桌面水渍里亮起来，来电显示跳出一个三年前就不该再出现的名字。\n\n许知夏。\n\n林舟没有立刻接。雨声像贴在窗外的手，手机却一下一下震得更急。", scene: "phone_call_ui", type: "clue", gainClues: ["clue_dead_call"], visualMood: "tense", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["phone_ring_dead_call", "phone_screen_wake"], audioMood: "tense" });
   add(1, 4, { speaker: "林舟", text: "不可能。", scene: "phone_call_ui", voiceStinger: "linzhou_gasp_short", audioMood: "tense", sfxOnEnter: ["room_silence_drop"] });
   add(1, 5, { speaker: "许知夏的声音", text: "别开门……她不是我。\n\n最后一个字被电流撕碎。林舟听见自己的呼吸撞在听筒上，像另一个人正贴着她耳边发抖。", scene: "phone_call_ui", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "recording", characterScale: "impact", characterPosition: "center", characterFraming: "halfbody", characterHeadSafe: true, characterFocus: "face", bgm: "rain_night_loop", ambience: "rain_heavy_loop", sfxOnEnter: ["recording_static_short"], voiceStinger: "xuzhixia_weak_static_exhale", audioMood: "horror" });
   add(1, 6, {

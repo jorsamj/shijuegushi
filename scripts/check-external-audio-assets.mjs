@@ -46,7 +46,6 @@ const blockedSourcePatterns = [
 const forbiddenLicensePatterns = [/NC/i, /NonCommercial/i, /Sampling\+/i, /unknown/i, /unclear/i, /NoDerivatives/i];
 const requiredP0StoryKeys = [
   "knock_soft",
-  "phone_vibrate",
   "phone_ring_dead_call",
   "doorbell_rain_night",
   "rain_heavy_loop",
@@ -88,7 +87,8 @@ for (const category of ["bgm", "ambience", "sfx", "stingers"]) {
     assert(!blockedSourcePatterns.some((pattern) => pattern.test(`${asset.sourceSite} ${asset.sourceUrl}`)), `${asset.id || key} uses a forbidden source`);
     assert(asset.commercialAllowed === true, `${asset.id || key} must be commercialAllowed=true`);
     assert(asset.redistributionAllowed === true, `${asset.id || key} must be redistributionAllowed=true`);
-    assert(["demo-usable", "final-candidate"].includes(asset.status), `${asset.id || key} must be demo-usable or final-candidate`);
+    assert(["demo-approved", "final-approved"].includes(asset.status), `${asset.id || key} must be demo-approved or final-approved`);
+    assert(asset.qualityStatus === "approved", `${asset.id || key} must have qualityStatus=approved`);
     assert(creditsText.includes(asset.id), `${asset.id || key} must be recorded in AUDIO_CREDITS.md`);
     assert(licensesText.includes(asset.path), `${asset.id || key} local file must be recorded in LICENSES_AUDIO.md`);
     if (asset.attributionRequired === true) {

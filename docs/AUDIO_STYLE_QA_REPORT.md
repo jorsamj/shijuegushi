@@ -85,3 +85,40 @@ The files are procedurally generated and can be regenerated deterministically. T
 - headphones
 
 Any cue that feels playful, bright, toy-like, or reward-like should be marked `needs-retake` in the manifest.
+
+## Full External Audio Replacement Pass
+
+This pass changes the formal runtime direction:
+
+1. Generated procedural audio is no longer the formal playtest default.
+2. Runtime lookup now uses `external-approved-only`.
+3. If a key has no `demo-approved` or `final-approved` external asset with `qualityStatus: "approved"`, the runtime stays silent and records `silent-no-approved-external` in `window.SECOND_LIFE_AUDIO_DEBUG`.
+4. Generated fallback is only available through explicit developer mode: `audioSourceMode = "generated-dev-only"`.
+5. TTS, ordinary narration reading, and ordinary dialogue reading remain disabled.
+
+Removed from active runtime:
+
+- `phone_vibrate_real_01` / electric shaver source: rejected-style, not acceptable as phone vibration.
+- `recording_static_short_real_01` / dial-up failure source: rejected-style, not acceptable as old recording texture.
+- `door_chain_close_real_01` / door-knocker source: rejected-quality for door-chain use, replaced by real lock mechanism.
+- Procedural generated audio as default runtime source: rejected-style for formal playtest.
+
+Current approved coverage:
+
+- All `story-data.js` used BGM keys have approved external mappings.
+- All `story-data.js` used ambience keys have approved external mappings.
+- All `story-data.js` used `sfxOnEnter` and `sfxOnChoice` keys have approved external mappings.
+- All `story-data.js` used `voiceStinger` keys have approved external mappings.
+
+Remaining human QA risks:
+
+- `phone_ring_dead_call` uses a real old telephone ring. It is demo-approved for cold dead-call atmosphere, but a final pass should replace it with a non-branded modern phone ring if the old-phone tone feels wrong.
+- `footstep_corridor_wet` uses rain/window wet texture because no clean licensed wet hallway footstep was found. It needs human listening before final approval.
+- `old_photo_pickup` uses a real keyboard/mechanical interaction because no clean paper/photo pickup source was found. It should be replaced with real paper foley later.
+- Character stingers use real breath/heartbeat/hum sources but are not role-specific recordings yet.
+
+Formal QA rule:
+
+- No white-noise source may enter active manifest.
+- No electric razor, dial-up failure, or unrelated mechanical source may be used when the scene demands a clear phone vibration or old recording.
+- No active audio key may be `pending-download`, `fallback only`, `generated only`, or `silent only`.
