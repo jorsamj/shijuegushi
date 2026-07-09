@@ -51,6 +51,10 @@ function requireAny(asset, terms, message) {
   assert(includesAny(text, terms), `${asset.category}.${asset.storyKey}: ${message}`);
 }
 
+function cueKey(cue) {
+  return typeof cue === "string" ? cue : cue?.key || "";
+}
+
 for (const { category, key, asset } of allAssets) {
   assert(asset.status === "demo-approved" || asset.status === "final-approved", `${category}.${key} must be approved`);
   assert(asset.qualityStatus === "approved", `${category}.${key} must have approved quality`);
@@ -112,8 +116,8 @@ for (const [path, keys] of pathUse.entries()) {
 
 const used = new Set();
 for (const node of Object.values(story.nodes || {})) {
-  for (const key of node.sfxOnEnter || []) used.add(`sfx.${key}`);
-  for (const key of node.sfxOnChoice || []) used.add(`sfx.${key}`);
+  for (const cue of node.sfxOnEnter || []) used.add(`sfx.${cueKey(cue)}`);
+  for (const cue of node.sfxOnChoice || []) used.add(`sfx.${cueKey(cue)}`);
   if (node.voiceStinger) used.add(`stingers.${node.voiceStinger}`);
   if (node.bgm) used.add(`bgm.${node.bgm}`);
   if (node.ambience) used.add(`ambience.${node.ambience}`);

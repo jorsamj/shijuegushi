@@ -168,6 +168,23 @@ function assertOptionalStringList(value, label) {
   items.forEach((item) => assert(typeof item === "string", `${label} must contain strings`));
 }
 
+function cueKey(cue) {
+  return typeof cue === "string" ? cue : cue?.key || "";
+}
+
+function assertOptionalCueList(value, label) {
+  if (value === undefined) return;
+  const items = Array.isArray(value) ? value : [value];
+  items.forEach((item, index) => {
+    if (typeof item === "string") return;
+    assert(item && typeof item === "object", `${label}[${index}] must be a string or cue object`);
+    assert(typeof item?.key === "string" && item.key.length > 0, `${label}[${index}].key must be a non-empty string`);
+    ["delayMs", "volume", "fadeInMs", "duckBgmMs", "suppressMs"].forEach((field) => {
+      if (item?.[field] !== undefined) assert(Number.isFinite(Number(item[field])), `${label}[${index}].${field} must be numeric`);
+    });
+  });
+}
+
 function assertAudioFile(path, label, minWarnBytes) {
   assert(typeof path === "string" && path.length > 0, `${label} must provide an audio path`);
   if (typeof path !== "string" || !path.length) return;
@@ -570,7 +587,7 @@ for (const [nodeId, requirement] of Object.entries(requiredVisualStateNodes)) {
   if (requirement.voiceAudio) assert(node.voiceAudio === requirement.voiceAudio, `${nodeId} must define voiceAudio=${requirement.voiceAudio}`);
   if (requirement.voiceStinger) assert(node.voiceStinger === requirement.voiceStinger, `${nodeId} must define voiceStinger=${requirement.voiceStinger}`);
   for (const sfx of requirement.sfxOnEnter || []) {
-    assert((node.sfxOnEnter || []).includes(sfx), `${nodeId} must include sfxOnEnter=${sfx}`);
+    assert((node.sfxOnEnter || []).map(cueKey).includes(sfx), `${nodeId} must include sfxOnEnter=${sfx}`);
   }
 }
 
@@ -592,6 +609,9 @@ for (const node of Object.values(DATA.nodes || {})) {
   if (node.characterHeadSafe !== undefined) assert(typeof node.characterHeadSafe === "boolean", `${node.nodeId}.characterHeadSafe must be boolean`);
   assertOptionalString(node.characterFocus, `${node.nodeId}.characterFocus`);
   assertOptionalString(node.overlayPreset, `${node.nodeId}.overlayPreset`);
+  assertOptionalString(node.visualFocus, `${node.nodeId}.visualFocus`);
+  assertOptionalString(node.shotTone, `${node.nodeId}.shotTone`);
+  assertOptionalStringList(node.highlightProps, `${node.nodeId}.highlightProps`);
   assertOptionalString(node.bgm, `${node.nodeId}.bgm`);
   assertOptionalString(node.ambience, `${node.nodeId}.ambience`);
   assertOptionalString(node.narrationAudio, `${node.nodeId}.narrationAudio`);
@@ -604,8 +624,8 @@ for (const node of Object.values(DATA.nodes || {})) {
   if (node.voiceSpeed !== undefined) assert(typeof node.voiceSpeed === "number", `${node.nodeId}.voiceSpeed must be a number`);
   if (node.voicePitch !== undefined) assert(typeof node.voicePitch === "number", `${node.nodeId}.voicePitch must be a number`);
   assertOptionalString(node.audioMood, `${node.nodeId}.audioMood`);
-  assertOptionalStringList(node.sfxOnEnter, `${node.nodeId}.sfxOnEnter`);
-  assertOptionalStringList(node.sfxOnChoice, `${node.nodeId}.sfxOnChoice`);
+  assertOptionalCueList(node.sfxOnEnter, `${node.nodeId}.sfxOnEnter`);
+  assertOptionalCueList(node.sfxOnChoice, `${node.nodeId}.sfxOnChoice`);
   if (node.characterScale) assert(characterScaleIds.has(node.characterScale), `${node.nodeId}.characterScale is invalid: ${node.characterScale}`);
   if (node.characterPosition) assert(characterPositionIds.has(node.characterPosition), `${node.nodeId}.characterPosition is invalid: ${node.characterPosition}`);
   if (node.characterFraming) assert(characterFramingIds.has(node.characterFraming), `${node.nodeId}.characterFraming is invalid: ${node.characterFraming}`);
@@ -622,8 +642,8 @@ for (const node of Object.values(DATA.nodes || {})) {
   }
   if (node.bgm) assert(audioKeySets.bgm.has(node.bgm), `${node.nodeId}.bgm references missing audio key: ${node.bgm}`);
   if (node.ambience) assert(audioKeySets.ambience.has(node.ambience), `${node.nodeId}.ambience references missing audio key: ${node.ambience}`);
-  for (const sfx of node.sfxOnEnter || []) assert(audioKeySets.sfx.has(sfx), `${node.nodeId}.sfxOnEnter references missing audio key: ${sfx}`);
-  for (const sfx of node.sfxOnChoice || []) assert(audioKeySets.sfx.has(sfx), `${node.nodeId}.sfxOnChoice references missing audio key: ${sfx}`);
+  for (const sfx of node.sfxOnEnter || []) assert(audioKeySets.sfx.has(cueKey(sfx)), `${node.nodeId}.sfxOnEnter references missing audio key: ${cueKey(sfx)}`);
+  for (const sfx of node.sfxOnChoice || []) assert(audioKeySets.sfx.has(cueKey(sfx)), `${node.nodeId}.sfxOnChoice references missing audio key: ${cueKey(sfx)}`);
   if (node.voiceAudio) assert(audioKeySets.voice.has(node.voiceAudio), `${node.nodeId}.voiceAudio references missing audio key: ${node.voiceAudio}`);
   if (node.narrationAudio) assert(audioKeySets.narration.has(node.narrationAudio), `${node.nodeId}.narrationAudio references missing audio key: ${node.narrationAudio}`);
   if (node.voiceStinger) assert(audioKeySets.stingers.has(node.voiceStinger), `${node.nodeId}.voiceStinger references missing audio key: ${node.voiceStinger}`);
@@ -651,9 +671,11 @@ for (const node of Object.values(DATA.nodes || {})) {
     for (const tag of choice.endingPathTags || []) {
       assert(typeof tag === "string", `${node.nodeId}.${choice.choiceId}.endingPathTags must contain strings`);
     }
-    assertOptionalStringList(choice.sfxOnChoice, `${node.nodeId}.${choice.choiceId}.sfxOnChoice`);
+    assertOptionalString(choice.feedbackTitle, `${node.nodeId}.${choice.choiceId}.feedbackTitle`);
+    assertOptionalString(choice.feedbackTone, `${node.nodeId}.${choice.choiceId}.feedbackTone`);
+    assertOptionalCueList(choice.sfxOnChoice, `${node.nodeId}.${choice.choiceId}.sfxOnChoice`);
     for (const sfx of choice.sfxOnChoice || []) {
-      assert(audioKeySets.sfx.has(sfx), `${node.nodeId}.${choice.choiceId}.sfxOnChoice references missing audio key: ${sfx}`);
+      assert(audioKeySets.sfx.has(cueKey(sfx)), `${node.nodeId}.${choice.choiceId}.sfxOnChoice references missing audio key: ${cueKey(sfx)}`);
     }
     assert(
       (choice.setFlags || []).length ||

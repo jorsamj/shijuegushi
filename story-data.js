@@ -169,6 +169,8 @@ window.MIST_DATA = (() => {
       relationshipEffects: options.relationshipEffects || [],
       endingPathTags: options.endingPathTags || [],
       choiceImpactText: options.choiceImpactText || text,
+      feedbackTitle: options.feedbackTitle,
+      feedbackTone: options.feedbackTone,
       sfxOnChoice: options.sfxOnChoice || [],
       isCorrect: options.isCorrect === true,
     };
@@ -198,6 +200,9 @@ window.MIST_DATA = (() => {
       characterHeadSafe: data.characterHeadSafe,
       characterFocus: data.characterFocus,
       overlayPreset: data.overlayPreset,
+      visualFocus: data.visualFocus,
+      highlightProps: data.highlightProps || [],
+      shotTone: data.shotTone,
       bgm: data.bgm,
       ambience: data.ambience,
       sfxOnEnter: data.sfxOnEnter || [],
@@ -217,6 +222,8 @@ window.MIST_DATA = (() => {
     };
     if (data.nextNodeId === null) delete nodes[nodeId].nextNodeId;
   }
+
+  const cue = (key, options = {}) => ({ key, ...options });
 
   // 第 1 章：雨夜来电
   add(1, 1, { speaker: "旁白", text: "暴雨把窗户拍得发白。林舟盯着电脑里还没写完的周报，泡面汤已经凉透，杯沿留着半圈咖啡渍。\n\n她把许知夏的名字从联系人里删过一次，又在备份里看见过一次。三年了，那个名字一直像一枚没拔出来的刺。", bgm: "rain_night_loop", ambience: "room_night_loop", sfxOnEnter: ["rain_window_soft"], audioPolicy: { bgmMode: "replace", ambienceMode: "replace" } });
@@ -791,6 +798,79 @@ window.MIST_DATA = (() => {
   add(6, 19, { speaker: "旁白", text: "林舟按下确认。\n\n门外安静了半秒。半秒之后，手机屏幕里的光照亮她的手。\n\n这一次，没有系统替她逃避。", scene: "ending_screen", sfxOnEnter: ["archive_stamp"] });
   add(6, 20, { speaker: "旁白", text: "雨声退到窗外。\n\n所有被挂断、删除、备份、保留下来的选择，都开始结算。", scene: "ending_screen", visualMood: "ending", bgm: "ending_archive", ambience: "room_night_loop", resolveEnding: true, nextNodeId: null, sfxOnEnter: ["archive_stamp"] });
   nodes.ch06_019.nextNodeId = "ch06_020";
+
+  const nodeDirection = {
+    ch01_001: { visualFocus: "rain-window", highlightProps: ["prop_laptop", "prop_noodle_bowl"], shotTone: "cold-room" },
+    ch01_003: {
+      visualFocus: "incoming-call",
+      highlightProps: ["prop_phone_modern"],
+      shotTone: "phone-glow",
+      sfxOnEnter: [
+        cue("phone_screen_wake", { volume: 0.34, fadeInMs: 60 }),
+        cue("phone_vibrate", { delayMs: 80, volume: 0.42, duckBgmMs: 500 }),
+        cue("phone_ring_dead_call", { delayMs: 260, volume: 0.36, duckBgmMs: 900 }),
+      ],
+    },
+    ch01_005: { visualFocus: "dead-call", highlightProps: ["prop_phone_modern"], shotTone: "signal-horror" },
+    ch01_006: { visualFocus: "doorbell", highlightProps: ["prop_phone_modern"], shotTone: "door-pressure" },
+    ch01_008: { visualFocus: "peephole", highlightProps: ["prop_door_chain"], shotTone: "corridor-flash" },
+    ch01_010: { visualFocus: "door-chain", highlightProps: ["prop_door_chain"], shotTone: "threshold", sfxOnEnter: [cue("knock_soft", { volume: 0.18, delayMs: 180 })] },
+    ch01_014: { visualFocus: "door-chain", highlightProps: ["prop_door_chain"], shotTone: "threshold", sfxOnEnter: [cue("door_chain_close", { volume: 0.28 })] },
+    ch01_018: { visualFocus: "message", highlightProps: ["prop_phone_modern"], shotTone: "phone-glow" },
+    ch02_004: { visualFocus: "id-proof", highlightProps: ["prop_phone_modern"], shotTone: "evidence", sfxOnEnter: [cue("message_pop_cold", { volume: 0.28 })] },
+    ch02_005: { visualFocus: "wet-visitor", highlightProps: ["prop_door_chain"], shotTone: "corridor-close", sfxOnEnter: [cue("footstep_corridor_wet", { volume: 0.28, delayMs: 120 })] },
+    ch02_006: { visualFocus: "door-lock", highlightProps: ["prop_door_chain"], shotTone: "threshold", sfxOnEnter: [cue("door_chain_close", { volume: 0.26 })] },
+    ch02_008: { visualFocus: "voice-record", highlightProps: ["prop_phone_modern"], shotTone: "signal-horror", sfxOnEnter: [cue("recording_static_short", { volume: 0.25 })] },
+    ch02_014: { visualFocus: "door-open", highlightProps: ["prop_door_chain"], shotTone: "threshold", sfxOnEnter: [cue("door_open_slow", { volume: 0.3, duckBgmMs: 500 })] },
+    ch03_004: { visualFocus: "chat-log", highlightProps: ["prop_laptop"], shotTone: "evidence", sfxOnEnter: [cue("chat_typing_short", { volume: 0.24 })] },
+    ch03_009: { visualFocus: "loan-record", highlightProps: ["prop_laptop", "prop_loan_document"], shotTone: "evidence", sfxOnEnter: [cue("evidence_reveal", { volume: 0.28 })] },
+    ch03_012: { visualFocus: "message", highlightProps: ["prop_phone_modern"], shotTone: "phone-glow", sfxOnEnter: [cue("message_pop_cold", { volume: 0.26 })] },
+    ch03_016: { visualFocus: "timeline", highlightProps: ["prop_laptop"], shotTone: "evidence", sfxOnEnter: [cue("chat_typing_short", { volume: 0.2 })] },
+    ch03_019: { visualFocus: "incoming-call", highlightProps: ["prop_phone_modern"], shotTone: "phone-glow", sfxOnEnter: [cue("phone_vibrate", { volume: 0.28 })] },
+    ch04_004: { visualFocus: "photo-box", highlightProps: ["prop_photo_box"], shotTone: "evidence", sfxOnEnter: [cue("old_photo_pickup", { volume: 0.34 })] },
+    ch04_006: { visualFocus: "group-photo", highlightProps: ["prop_photo_polaroid"], shotTone: "photo-evidence" },
+    ch04_010: { visualFocus: "photo-inspect", highlightProps: ["prop_photo_polaroid"], shotTone: "photo-evidence" },
+    ch04_015: { visualFocus: "background-shadow", highlightProps: ["prop_photo_polaroid"], shotTone: "photo-reveal" },
+    ch04_017: { visualFocus: "incoming-call", highlightProps: ["prop_phone_modern", "prop_photo_polaroid"], shotTone: "phone-glow", sfxOnEnter: [cue("phone_vibrate", { volume: 0.28 }), cue("message_pop_cold", { delayMs: 240, volume: 0.24 })] },
+    ch05_004: { visualFocus: "old-phone", highlightProps: ["prop_phone_old_cracked", "prop_recording_file"], shotTone: "device-wake" },
+    ch05_010: { visualFocus: "recording", highlightProps: ["prop_phone_old_cracked", "prop_recording_file"], shotTone: "signal-horror", sfxOnEnter: [cue("old_phone_start", { volume: 0.28 }), cue("recording_static_short", { delayMs: 220, volume: 0.24 })] },
+    ch05_015: { visualFocus: "voice-trigger", highlightProps: ["prop_phone_old_cracked", "prop_recording_file"], shotTone: "device-reveal" },
+    ch05_017: { visualFocus: "incoming-call", highlightProps: ["prop_phone_modern", "prop_recording_file"], shotTone: "phone-glow", sfxOnEnter: [cue("phone_vibrate", { volume: 0.25 })] },
+    ch06_004: { visualFocus: "evidence-table", highlightProps: ["prop_photo_polaroid", "prop_hard_drive"], shotTone: "decision", sfxOnEnter: ["room_silence_drop"] },
+    ch06_010: { visualFocus: "deduction-board", highlightProps: ["prop_photo_polaroid", "prop_recording_file", "prop_archive_folder"], shotTone: "deduction" },
+    ch06_011: { visualFocus: "deduction-board", highlightProps: ["prop_archive_folder"], shotTone: "deduction", sfxOnEnter: ["evidence_reveal"] },
+    ch06_012: { visualFocus: "dead-call", highlightProps: ["prop_archive_folder"], shotTone: "deduction", sfxOnEnter: ["choice_confirm_soft"] },
+    ch06_013: { visualFocus: "identity", highlightProps: ["prop_archive_folder"], shotTone: "deduction", sfxOnEnter: ["choice_confirm_soft"] },
+    ch06_014: { visualFocus: "loan-record", highlightProps: ["prop_archive_folder"], shotTone: "deduction", sfxOnEnter: ["choice_confirm_soft"] },
+    ch06_015: { visualFocus: "background-shadow", highlightProps: ["prop_archive_folder"], shotTone: "deduction" },
+    ch06_016: { visualFocus: "evidence-chain", highlightProps: ["prop_archive_folder"], shotTone: "deduction" },
+    ch06_018: { visualFocus: "archive-choice", highlightProps: ["prop_archive_folder"], shotTone: "ending-choice", sfxOnEnter: ["room_silence_drop"] },
+  };
+  Object.keys(nodeDirection).forEach((nodeId) => nodes[nodeId] && Object.assign(nodes[nodeId], nodeDirection[nodeId]));
+
+  function setChoiceFeedback(nodeId, feedbackByChoiceId) {
+    const node = nodes[nodeId];
+    if (!node) return;
+    node.choices = (node.choices || []).map((item) => ({ ...item, ...(feedbackByChoiceId[item.choiceId] || {}) }));
+  }
+
+  setChoiceFeedback("ch06_012", {
+    a: { choiceImpactText: "这个答案把恐怖归给了人，但解释不了旧手机恢复记录。", feedbackTitle: "推理偏差", feedbackTone: "wrong" },
+    b: { choiceImpactText: "你把死者来电从灵异拉回现实：旧手机、云端提醒、迟到的求救。", feedbackTitle: "推理成立", feedbackTone: "correct" },
+    c: { choiceImpactText: "这个答案把怀疑压到许知晚身上，却避开了手机记录本身。", feedbackTitle: "推理偏差", feedbackTone: "wrong" },
+  });
+  setChoiceFeedback("ch06_013", {
+    a: { choiceImpactText: "你承认她是妹妹，也保留了她调查方式里的不透明。", feedbackTitle: "推理成立", feedbackTone: "correct" },
+    b: { choiceImpactText: "周屿确实在施压，但这不能解释许知晚掌握的私人细节。", feedbackTitle: "推理偏差", feedbackTone: "wrong" },
+    c: { choiceImpactText: "死而复生会让雨夜更恐怖，却不符合证件和旧案记录。", feedbackTitle: "推理偏差", feedbackTone: "wrong" },
+  });
+  setChoiceFeedback("ch06_014", {
+    a: { choiceImpactText: "情感矛盾太轻，遮不住借贷资料和报警前的准备。", feedbackTitle: "推理偏差", feedbackTone: "wrong" },
+    b: { choiceImpactText: "旧楼困住的是当晚的真相，不是许知夏死亡的动机。", feedbackTitle: "推理偏差", feedbackTone: "wrong" },
+    c: { choiceImpactText: "灰色借贷把许知夏的求救、周屿的离城和后续威胁连了起来。", feedbackTitle: "推理成立", feedbackTone: "correct" },
+  });
+  setChoiceFeedback("ch06_015", { a: { choiceImpactText: "合照不只是怀旧，它的价值在背景，不在笑容。", feedbackTitle: "推理偏差", feedbackTone: "wrong" }, b: { choiceImpactText: "你抓住了照片最危险的地方：周屿在他声称不在场的位置。", feedbackTitle: "推理成立", feedbackTone: "correct" }, c: { choiceImpactText: "许知晚像许知夏，但照片里真正动摇证词的是另一个人。", feedbackTitle: "推理偏差", feedbackTone: "wrong" } });
+  setChoiceFeedback("ch06_016", { a: { choiceImpactText: "你看见了周屿真正怕的东西：完整证据链，而不是单张照片。", feedbackTitle: "推理成立", feedbackTone: "correct" }, b: { choiceImpactText: "房东老太也许能作证，但不是周屿今晚最急着阻止的核心。", feedbackTitle: "推理偏差", feedbackTone: "wrong" }, c: { choiceImpactText: "他不在乎许知晚离不离开，他在乎证据会不会留下。", feedbackTitle: "推理偏差", feedbackTone: "wrong" } });
 
   return {
     schemaVersion: "0.6",

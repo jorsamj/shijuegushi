@@ -43,14 +43,18 @@ function add(category, key, nodeId) {
   used[category].get(key).add(nodeId);
 }
 
+function cueKey(cue) {
+  return typeof cue === "string" ? cue : cue?.key || "";
+}
+
 for (const [nodeId, node] of Object.entries(DATA.nodes || {})) {
   add("bgm", node.bgm, nodeId);
   add("ambience", node.ambience, nodeId);
   add("stingers", node.voiceStinger, nodeId);
-  for (const key of node.sfxOnEnter || []) add("sfx", key, nodeId);
-  for (const key of node.sfxOnChoice || []) add("sfx", key, nodeId);
+  for (const cue of node.sfxOnEnter || []) add("sfx", cueKey(cue), nodeId);
+  for (const cue of node.sfxOnChoice || []) add("sfx", cueKey(cue), nodeId);
   for (const choice of node.choices || []) {
-    for (const key of choice.sfxOnChoice || []) add("sfx", key, nodeId);
+    for (const cue of choice.sfxOnChoice || []) add("sfx", cueKey(cue), nodeId);
   }
 }
 
@@ -58,7 +62,7 @@ for (const [sceneId, cue] of Object.entries(VISUALS?.audio?.scenes || {})) {
   add("bgm", cue.bgm, `visual:${sceneId}`);
   add("ambience", cue.ambience, `visual:${sceneId}`);
   const sceneSfx = Array.isArray(cue.sfx) ? cue.sfx : cue.sfx ? [cue.sfx] : [];
-  for (const key of sceneSfx) add("sfx", key, `visual:${sceneId}`);
+  for (const cue of sceneSfx) add("sfx", cueKey(cue), `visual:${sceneId}`);
 }
 
 function getExternalAsset(category, key) {

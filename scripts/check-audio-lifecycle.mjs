@@ -15,6 +15,14 @@ function loadStory() {
 const script = read("script.js");
 const story = loadStory();
 
+function cueKey(cue) {
+  return typeof cue === "string" ? cue : cue?.key || "";
+}
+
+function hasCue(list, key) {
+  return (list || []).map(cueKey).includes(key);
+}
+
 for (const required of [
   "function stopNodeTransientAudio",
   "function fadeOutAudio",
@@ -53,10 +61,10 @@ for (const [nodeId, rule] of Object.entries(lifecycleNodes)) {
   assert(node, `${nodeId} is missing`);
   if (!node) continue;
   for (const key of rule.sfxOnEnter || []) {
-    assert((node.sfxOnEnter || []).includes(key), `${nodeId} must include sfxOnEnter=${key}`);
+    assert(hasCue(node.sfxOnEnter, key), `${nodeId} must include sfxOnEnter=${key}`);
   }
   for (const key of rule.forbiddenSfx || []) {
-    assert(!(node.sfxOnEnter || []).includes(key), `${nodeId} must not include sfxOnEnter=${key}`);
+    assert(!hasCue(node.sfxOnEnter, key), `${nodeId} must not include sfxOnEnter=${key}`);
   }
   if (rule.voiceStinger) assert(node.voiceStinger === rule.voiceStinger, `${nodeId} must use voiceStinger=${rule.voiceStinger}`);
   if (rule.bgm) assert(node.bgm === rule.bgm, `${nodeId} must use bgm=${rule.bgm}`);

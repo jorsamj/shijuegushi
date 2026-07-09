@@ -130,6 +130,9 @@
     realVoice: null,
     activeSfx: [],
     activeStingers: [],
+    pendingSfxTimers: [],
+    recentSfx: {},
+    duckRestoreTimer: null,
     currentDialogueAudio: null,
     currentDialogueAbortController: null,
     currentBgm: "",
@@ -178,6 +181,7 @@
       }
     }
     bindGlobalModalEvents();
+    bindAssetFallbacks();
     showSplash();
     if (!storageAvailable) {
       showToast("本地存储不可用，本次进度只会保留在当前页面。", "warn");
@@ -366,7 +370,7 @@
   function renderPropStrip(ids = []) {
     const rows = ids
       .map((id) => VISUALS.props?.[id])
-      .filter(Boolean)
+      .filter(({ prop }) => Boolean(prop))
       .map((prop) => `<span class="prop-token"><img src="${escapeHTML(prop.image)}" alt="" loading="lazy" />${escapeHTML(prop.label)}</span>`)
       .join("");
     return rows ? `<div class="prop-strip">${rows}</div>` : "";
@@ -387,7 +391,7 @@
     app.dataset.audioScene = node.scene || "rental_room_rain_night";
     app.dataset.audioBgm = resolvedCue.bgm || "";
     app.dataset.audioAmbience = resolvedCue.ambience || "";
-    app.dataset.audioSfx = sfxList.join(",");
+    app.dataset.audioSfx = sfxList.map(cueKey).filter(Boolean).join(",");
     app.dataset.audioVoice = speakerProfile;
     updateAudioForNode(node, resolvedCue);
   }
@@ -461,6 +465,23 @@
     if (index >= 0) list.splice(index, 1);
   }
 
+  function cueKey(cue) {
+    return typeof cue === "string" ? cue : cue?.key || "";
+  }
+
+  function normalizeAudioCue(cue, defaults = {}) {
+    if (typeof cue === "string") return { key: cue, ...defaults };
+    if (!cue || typeof cue !== "object") return null;
+    const key = cue.key || "";
+    if (!key) return null;
+    return { ...defaults, ...cue, key };
+  }
+
+  function clearPendingSfxTimers() {
+    (audioState.pendingSfxTimers || []).forEach((timer) => window.clearTimeout(timer));
+    audioState.pendingSfxTimers = [];
+  }
+
   function stopTrackedAudioList(listName, reason = "node-change") {
     const list = Array.isArray(audioState[listName]) ? [...audioState[listName]] : [];
     audioState[listName] = [];
@@ -471,6 +492,7 @@
   }
 
   function stopNodeTransientAudio(reason = "node-change") {
+    clearPendingSfxTimers();
     stopTrackedAudioList("activeSfx", reason);
     stopTrackedAudioList("activeStingers", reason);
     stopAllDialogueAudio();
@@ -780,22 +802,80 @@
     console.warn(`[Second Life Audio] Synthetic SFX disabled in external-approved-only mode: ${name}`);
   }
 
-  function playSfx(name = "") {
+  function duckBgmForSfx(durationMs = 0) {
+    if (!durationMs || durationMs < 80) return;
+    window.clearTimeout(audioState.duckRestoreTimer);
+    const bgm = audioState.realBgm;
+    const ambience = audioState.realAmbience;
+    try {
+      if (bgm) bgm.volume = Math.min(bgm.volume, 0.08);
+      if (ambience) ambience.volume = Math.min(ambience.volume, 0.05);
+    } catch (error) {}
+    audioState.duckRestoreTimer = window.setTimeout(() => {
+      try {
+        if (bgm && audioState.realBgm === bgm) bgm.volume = 0.14;
+        if (ambience && audioState.realAmbience === ambience) ambience.volume = 0.08;
+      } catch (error) {}
+    }, durationMs);
+  }
+
+  function fadeInAudio(audio, targetVolume = 0.46, fadeInMs = 0) {
+    if (!audio || !fadeInMs) return;
+    const startedAt = Date.now();
+    try { audio.volume = 0; } catch (error) {}
+    const tick = () => {
+      const progress = Math.min(1, (Date.now() - startedAt) / Math.max(1, fadeInMs));
+      try { audio.volume = targetVolume * progress; } catch (error) {}
+      if (progress < 1) window.setTimeout(tick, 40);
+    };
+    tick();
+  }
+
+  function playSfx(cue = "") {
     const settings = getAudioSettings();
+    const normalized = normalizeAudioCue(cue);
+    const name = normalized?.key || "";
     if (!settings.audioEnabled || !settings.sfxEnabled || !audioState.unlocked || !name) return;
+    const now = Date.now();
+    const suppressMs = Number(normalized.suppressMs ?? 180);
+    if (audioState.recentSfx[name] && now - audioState.recentSfx[name] < suppressMs) return;
+    audioState.recentSfx[name] = now;
+    const playNow = () => playSfxNow(normalized);
+    const delayMs = Math.max(0, Number(normalized.delayMs || 0));
+    if (delayMs > 0) {
+      const timer = window.setTimeout(() => {
+        removePendingSfxTimer(timer);
+        playNow();
+      }, delayMs);
+      audioState.pendingSfxTimers.push(timer);
+      return;
+    }
+    playNow();
+  }
+
+  function removePendingSfxTimer(timer) {
+    const index = audioState.pendingSfxTimers.indexOf(timer);
+    if (index >= 0) audioState.pendingSfxTimers.splice(index, 1);
+  }
+
+  function playSfxNow(cue = {}) {
+    const name = cue.key || "";
     const src = getAudioSource("sfx", name);
     if (src) {
+      const volume = clampNumber(cue.volume ?? 0.46, 0.02, 1);
+      duckBgmForSfx(Number(cue.duckBgmMs || 0));
       const audio = playRealAudio(src, {
         category: "sfx",
         key: name,
         loop: false,
-        volume: 0.46,
-        reason: "node-enter",
+        volume,
+        reason: cue.reason || "node-enter",
         onFallback: () => {
           if (getAudioSettings().audioSourceMode === "generated-dev-only") playSyntheticSfx(name);
         },
       });
       if (audio) {
+        fadeInAudio(audio, volume, Number(cue.fadeInMs || 0));
         audioState.activeSfx.push(audio);
         audio.addEventListener("ended", () => removeActiveAudio("activeSfx", audio), { once: true });
         audio.addEventListener("error", () => removeActiveAudio("activeSfx", audio), { once: true });
@@ -1492,11 +1572,16 @@
       .concat(choice.sfxOnChoice || [])
       .concat(node.sfxOnChoice || [])
       .filter(Boolean);
-    if (choiceSfx.length) {
-      choiceSfx.forEach((name) => playSfx(name));
-    } else {
-      playSfx("choice_confirm_soft");
-    }
+    enqueueFeedback({
+      type: "choice",
+      title: choice.feedbackTitle || (node.type === "deduction" ? (choice.isCorrect ? "推理成立" : "推理偏差") : "选择留下痕迹"),
+      tone: choice.feedbackTone || (node.type === "deduction" ? (choice.isCorrect ? "correct" : "wrong") : "neutral"),
+      isDeduction: node.type === "deduction",
+      choiceText: choice.text,
+      text: choice.choiceImpactText || "这个选择已被记录。",
+      relationshipEffects: choice.relationshipEffects || [],
+      gainClues: choice.gainClues || [],
+    });
     evaluateProgressTriggers();
     evaluateAchievements();
     autoSave();
@@ -1506,6 +1591,7 @@
       state.endingId = resolveEnding();
       showEnding(state.endingId);
     }
+    (choiceSfx.length ? choiceSfx : ["choice_confirm_soft"]).forEach((item) => playSfx(item));
   }
 
   function applyRelationshipEffects(effects) {
@@ -1668,6 +1754,10 @@
     }
     if (item.type === "chapter") {
       openChapterSummaryFeedback(item);
+      return;
+    }
+    if (item.type === "choice") {
+      openChoiceFeedback(item);
       return;
     }
     if (item.type === "milestone") {
@@ -2129,6 +2219,40 @@
     openModal(title, "NOTICE", `<p class="notice-text">${escapeHTML(text)}</p>`);
   }
 
+  function openChoiceFeedback(item) {
+    const relationRows = (item.relationshipEffects || [])
+      .map((effect) => {
+        const def = getRelationshipDef(effect.id);
+        const delta = Number(effect.delta || 0);
+        if (!def || delta === 0) return "";
+        return `<li>${escapeHTML(def.character)}${escapeHTML(def.label)} ${delta > 0 ? "+" : ""}${delta}：${escapeHTML(effect.reason || "关键选择影响")}</li>`;
+      })
+      .filter(Boolean)
+      .join("");
+    const clueRows = (item.gainClues || [])
+      .map((clueId) => DATA.clues[clueId])
+      .filter(Boolean)
+      .map((clue) => `<li>线索归档：${escapeHTML(clue.title)}</li>`)
+      .join("");
+    const deduction = item.isDeduction
+      ? `<div class="feedback-progress"><span>推理进度</span><strong>${state.deductionScore}/5</strong></div>`
+      : "";
+    openModal(
+      item.title || "选择留下痕迹",
+      item.isDeduction ? "DEDUCTION TRACE" : "CHOICE TRACE",
+      `<article class="feedback-card choice-feedback-card tone-${escapeHTML(item.tone || "neutral")}">
+        <span class="feedback-badge">${item.isDeduction ? (item.tone === "correct" ? "推理成立" : "推理偏差") : "人生分歧"}</span>
+        <h3>${escapeHTML(item.choiceText || "")}</h3>
+        <p>${escapeHTML(item.text || "这个选择已被记录。")}</p>
+        ${(relationRows || clueRows) ? `<ul class="choice-impact-list">${relationRows}${clueRows}</ul>` : ""}
+        ${deduction}
+        <button class="case-button" type="button" data-feedback-close>继续</button>
+      </article>`,
+      continueFeedbackQueue
+    );
+    modalBody.querySelector("[data-feedback-close]").addEventListener("click", closeModal);
+  }
+
   function openClueRevealFeedback(clueId) {
     const clue = DATA.clues[clueId];
     if (!clue) {
@@ -2262,6 +2386,16 @@
     });
   }
 
+  function bindAssetFallbacks() {
+    document.addEventListener("error", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLImageElement)) return;
+      target.classList.add("is-missing");
+      target.alt ||= "资源暂未加载";
+      target.removeAttribute("src");
+    }, true);
+  }
+
   function showToast(message, type = "info") {
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
@@ -2271,26 +2405,60 @@
     window.setTimeout(() => toast.remove(), 3000);
   }
 
+  function renderFocusLabel(focus = "") {
+    const labels = {
+      "incoming-call": "来电",
+      "dead-call": "旧号",
+      "doorbell": "门外",
+      "door-chain": "门链",
+      "peephole": "猫眼",
+      "id-proof": "核验",
+      "wet-visitor": "湿痕",
+      "voice-record": "录音",
+      "chat-log": "聊天",
+      "loan-record": "借贷",
+      "timeline": "时间线",
+      "photo-box": "照片盒",
+      "group-photo": "合照",
+      "photo-inspect": "放大",
+      "background-shadow": "背景人影",
+      "old-phone": "旧手机",
+      "recording": "语音",
+      "voice-trigger": "触发记录",
+      "evidence-table": "证据桌",
+      "deduction-board": "推理板",
+      "evidence-chain": "证据链",
+      "archive-choice": "归档选择",
+      "rain-window": "雨窗",
+      message: "消息",
+    };
+    return labels[focus] || "现场";
+  }
+
   function renderSceneVisual(node) {
     const scene = node.scene || "rental_room_rain_night";
     const visual = VISUALS.scenes?.[scene] || VISUALS.scenes?.rental_room_rain_night;
     const chapter = getChapter(node.chapterId);
     const stateClass = node.type ? `visual-state-${node.type}` : "visual-state-dialogue";
     const title = visual?.title || chapter?.title || "未知场景";
+    const focus = node.visualFocus || visual?.focus || "center";
+    const shotTone = node.shotTone || node.visualMood || "normal";
+    const highlightedProps = new Set(node.highlightProps || []);
     const overlays = (visual?.overlays || [])
       .map((src) => `<img class="scene-overlay" src="${escapeHTML(src)}" alt="" aria-hidden="true" loading="lazy" />`)
       .join("");
     const props = (visual?.props || [])
-      .map((id) => VISUALS.props?.[id])
+      .map((id) => ({ id, prop: VISUALS.props?.[id] }))
       .filter(Boolean)
-      .map((prop) => `<img class="scene-prop" src="${escapeHTML(prop.image)}" alt="${escapeHTML(prop.label)}" loading="lazy" />`)
+      .map(({ id, prop }) => `<img class="scene-prop ${highlightedProps.has(id) ? "is-highlighted" : ""}" data-prop-id="${escapeHTML(id)}" src="${escapeHTML(prop.image)}" alt="${escapeHTML(prop.label)}" loading="lazy" />`)
       .join("");
     return `
-      <div class="scene-asset-shell ${stateClass} focus-${escapeHTML(visual?.focus || "center")}" data-scene-id="${escapeHTML(scene)}">
+      <div class="scene-asset-shell ${stateClass} focus-${escapeHTML(focus)} shot-${escapeHTML(shotTone)}" data-scene-id="${escapeHTML(scene)}" data-visual-focus="${escapeHTML(focus)}">
         <img class="scene-bg-image" src="${escapeHTML(visual?.bg || "")}" alt="${escapeHTML(title)}" loading="lazy" />
         ${renderCharacterLayer(node.speaker, node)}
         <div class="scene-overlay-layer">${overlays}</div>
         <div class="scene-prop-layer">${props}</div>
+        <div class="scene-focus-tag">${escapeHTML(renderFocusLabel(focus))}</div>
         <div class="scene-asset-label">
           <span>${escapeHTML(title)}</span>
           <small>${escapeHTML(chapter?.title || node.chapterTitle || "")}</small>
