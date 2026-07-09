@@ -195,6 +195,7 @@ assert(exists("scripts/check-audio-coverage.mjs"), "audio coverage check script 
 assert(exists("docs/PROCEDURAL_AUDIO_GENERATION.md"), "procedural audio generation doc is missing");
 assert(exists("docs/AUDIO_PLAYTEST_CHECKLIST.md"), "audio playtest checklist doc is missing");
 assert(exists("docs/AUDIO_STYLE_QA_REPORT.md"), "audio style QA report is missing");
+assert(exists("docs/SCENE_AUDIO_DESIGN.md"), "scene audio design doc is missing");
 assert(exists(".env.example"), ".env.example is missing");
 assert(AUDIO && typeof AUDIO === "object", "window.SECOND_LIFE_AUDIO is missing");
 assert(indexText.includes("assets/audio/audio-assets.js"), "index.html must load assets/audio/audio-assets.js");

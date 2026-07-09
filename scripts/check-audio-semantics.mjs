@@ -101,6 +101,13 @@ for (const [path, keys] of pathUse.entries()) {
   if (keys.length > 3 && !categorySet.has("ambience")) {
     warn.push(`${path} is reused by ${keys.length} keys: ${keys.join(", ")}`);
   }
+  const stingerKeys = keys.filter((item) => item.startsWith("stingers."));
+  const usesXuzhiwan = stingerKeys.some((item) => item.includes("xuzhiwan"));
+  const usesXuzhixia = stingerKeys.some((item) => item.includes("xuzhixia"));
+  assert(
+    !(usesXuzhiwan && usesXuzhixia),
+    `${path} must not be shared by Xuzhiwan and Xuzhixia stingers; their audio identities need to stay distinct`
+  );
 }
 
 const used = new Set();

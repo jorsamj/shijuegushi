@@ -344,7 +344,7 @@
       attributionRequired: false,
       attributionText: "",
       file: "stinger_female_quiet_breath_freesound_554735.mp3",
-      qualityNotes: "Quiet female respiration. Selected for Xuzhiwan/Xuzhixia breath cues.",
+      qualityNotes: "Quiet female respiration. Reserved for Xuzhiwan's physical presence at the door; Xuzhixia uses recording-texture cues instead to avoid role repetition.",
     },
   };
 
@@ -426,20 +426,20 @@
 
   const stingers = {
     linzhou_gasp_short: asset("stingers", "linzhou_gasp_short", "stinger_linzhou_gasp_short_real_01", "maleGasp", ["linzhou", "gasp"]),
-    linzhou_breath_tense: asset("stingers", "linzhou_breath_tense", "stinger_linzhou_breath_tense_real_01", "breath", ["linzhou", "breath"]),
-    linzhou_swallow_tense: asset("stingers", "linzhou_swallow_tense", "stinger_linzhou_swallow_tense_real_01", "breath", ["linzhou", "tension"]),
+    linzhou_breath_tense: asset("stingers", "linzhou_breath_tense", "stinger_linzhou_breath_tense_real_01", "maleGasp", ["linzhou", "breath", "male_reaction"]),
+    linzhou_swallow_tense: asset("stingers", "linzhou_swallow_tense", "stinger_linzhou_swallow_tense_real_01", "maleGasp", ["linzhou", "swallow", "male_reaction"]),
     linzhou_heartbeat_soft: asset("stingers", "linzhou_heartbeat_soft", "stinger_linzhou_heartbeat_soft_real_01", "heartbeat", ["linzhou", "heartbeat"]),
-    xuzhiwan_low_breath: asset("stingers", "xuzhiwan_low_breath", "stinger_xuzhiwan_low_breath_real_01", "femaleQuietBreath", ["xuzhiwan", "breath"]),
+    xuzhiwan_low_breath: asset("stingers", "xuzhiwan_low_breath", "stinger_xuzhiwan_low_breath_real_01", "femaleQuietBreath", ["xuzhiwan", "breath", "physical_presence"]),
     xuzhiwan_step_wet: asset("stingers", "xuzhiwan_step_wet", "stinger_xuzhiwan_step_wet_real_01", "rainWindow", ["xuzhiwan", "wet_step"]),
-    xuzhiwan_cold_exhale: asset("stingers", "xuzhiwan_cold_exhale", "stinger_xuzhiwan_cold_exhale_real_01", "femaleQuietBreath", ["xuzhiwan", "exhale"]),
+    xuzhiwan_cold_exhale: asset("stingers", "xuzhiwan_cold_exhale", "stinger_xuzhiwan_cold_exhale_real_01", "breath", ["xuzhiwan", "cold_exhale", "air"]),
     xuzhiwan_sleeve_drip: asset("stingers", "xuzhiwan_sleeve_drip", "stinger_xuzhiwan_sleeve_drip_real_01", "rainWindow", ["xuzhiwan", "rain_drip"]),
     zhouyu_low_laugh: asset("stingers", "zhouyu_low_laugh", "stinger_zhouyu_low_laugh_real_01", "maleChuckle", ["zhouyu", "low_reaction"]),
     zhouyu_pressure_breath: asset("stingers", "zhouyu_pressure_breath", "stinger_zhouyu_pressure_breath_real_01", "breath", ["zhouyu", "breath"]),
     zhouyu_phone_silence: asset("stingers", "zhouyu_phone_silence", "stinger_zhouyu_phone_silence_real_01", "airHum2", ["zhouyu", "phone_silence"]),
     zhouyu_tiny_smile: asset("stingers", "zhouyu_tiny_smile", "stinger_zhouyu_tiny_smile_real_01", "maleChuckle", ["zhouyu", "tiny_reaction"]),
-    xuzhixia_static_breath: asset("stingers", "xuzhixia_static_breath", "stinger_xuzhixia_static_breath_real_01", "femaleQuietBreath", ["xuzhixia", "recording_breath"]),
+    xuzhixia_static_breath: asset("stingers", "xuzhixia_static_breath", "stinger_xuzhixia_static_breath_real_01", "oldRecordStatic", ["xuzhixia", "recording_breath", "old_phone_texture"]),
     xuzhixia_recording_cut: asset("stingers", "xuzhixia_recording_cut", "stinger_xuzhixia_recording_cut_real_01", "bristles", ["xuzhixia", "recording_cut"]),
-    xuzhixia_weak_static_exhale: asset("stingers", "xuzhixia_weak_static_exhale", "stinger_xuzhixia_weak_static_exhale_real_01", "femaleQuietBreath", ["xuzhixia", "weak_exhale"]),
+    xuzhixia_weak_static_exhale: asset("stingers", "xuzhixia_weak_static_exhale", "stinger_xuzhixia_weak_static_exhale_real_01", "bristles", ["xuzhixia", "weak_static_exhale", "recording_fray"]),
     xuzhixia_memory_fade: asset("stingers", "xuzhixia_memory_fade", "stinger_xuzhixia_memory_fade_real_01", "bristles", ["xuzhixia", "memory_fade"]),
   };
 

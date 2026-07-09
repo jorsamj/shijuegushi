@@ -122,3 +122,17 @@ Formal QA rule:
 - No white-noise source may enter active manifest.
 - No electric razor, dial-up failure, or unrelated mechanical source may be used when the scene demands a clear phone vibration or old recording.
 - No active audio key may be `pending-download`, `fallback only`, `generated only`, or `silent only`.
+
+## 2026-07-09 Character Stinger De-Repetition
+
+Issue found during playtest: Xu Zhiwan and Xu Zhixia reused the same quiet female-breath source, making the door visitor and the dead roommate feel too similar.
+
+Fix:
+
+- `xuzhiwan_low_breath` keeps the real quiet female breath, so Xu Zhiwan still feels physically present outside the door.
+- `xuzhiwan_cold_exhale` now uses a colder wind/breath texture, so her later pressure cue does not repeat the first-door cue exactly.
+- `xuzhixia_static_breath` now uses an old-record/static source.
+- `xuzhixia_weak_static_exhale` now uses a crackle/bristle recording texture.
+- `scripts/check-audio-semantics.mjs` now fails if Xu Zhiwan and Xu Zhixia share the same stinger file.
+
+Remaining human QA risk: these are still curated demo assets, not role-specific recorded performances. The two characters are now separated sonically, but final production should record bespoke short breaths for Xu Zhiwan and damaged old-phone residue for Xu Zhixia.
