@@ -37,8 +37,13 @@ for (const node of [...choiceNodes, ...deductionNodes]) {
       choice.choiceImpactText ||
       node.type === "deduction";
     assert(hasImpact, `${node.nodeId}.${choice.choiceId} needs perceptible impact`);
+    assert(typeof choice.choiceIntent === "string" && choice.choiceIntent.length > 0, `${node.nodeId}.${choice.choiceId} needs a non-spoiler choiceIntent`);
   }
 }
+
+assert(nodes.some((node) => node.objectiveId && node.objectiveText), "runtime data must include current objectives");
+assert(nodes.some((node) => (node.investigationHotspots || []).length), "runtime data must include investigation hotspots");
+assert(nodes.some((node) => (node.evidenceLinks || []).length), "runtime data must include evidence board links");
 
 for (const node of deductionNodes) {
   assert(node.choices.filter((choice) => choice.isCorrect).length === 1, `${node.nodeId} must have exactly one correct answer`);

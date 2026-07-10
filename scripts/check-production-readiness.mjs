@@ -12,10 +12,13 @@ const checks = [
   ["node", ["scripts/check-audio-lifecycle.mjs"]],
   ["node", ["scripts/check-audio-semantics.mjs"]],
   ["node", ["scripts/check-audio-continuity.mjs"]],
+  ["node", ["scripts/check-scene-continuity.mjs"]],
+  ["node", ["scripts/check-sound-library-only.mjs"]],
   ["node", ["scripts/check-external-audio-assets.mjs"]],
   ["node", ["scripts/check-asset-library.mjs"]],
   ["node", ["scripts/check-visual-semantics.mjs"]],
   ["node", ["scripts/check-playability.mjs"]],
+  ["node", ["scripts/check-rc2-interactions.mjs"]],
   ["node", ["scripts/check-mobile-ui.mjs"]],
 ];
 

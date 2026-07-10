@@ -128,6 +128,8 @@ window.MIST_DATA = (() => {
     answered_zhou_call: false,
     refused_zhou_pressure: false,
     gave_original_photo: false,
+    checked_peephole: false,
+    final_backup_reviewed: false,
   };
 
   const endings = {
@@ -171,6 +173,7 @@ window.MIST_DATA = (() => {
       choiceImpactText: options.choiceImpactText || text,
       feedbackTitle: options.feedbackTitle,
       feedbackTone: options.feedbackTone,
+      choiceIntent: options.choiceIntent,
       sfxOnChoice: options.sfxOnChoice || [],
       isCorrect: options.isCorrect === true,
     };
@@ -203,6 +206,12 @@ window.MIST_DATA = (() => {
       visualFocus: data.visualFocus,
       highlightProps: data.highlightProps || [],
       shotTone: data.shotTone,
+      objectiveId: data.objectiveId,
+      objectiveText: data.objectiveText,
+      objectiveComplete: data.objectiveComplete === true,
+      investigationHotspots: data.investigationHotspots || [],
+      evidenceLinks: data.evidenceLinks || [],
+      chapterRecap: data.chapterRecap,
       bgm: data.bgm,
       ambience: data.ambience,
       sfxOnEnter: data.sfxOnEnter || [],
@@ -827,7 +836,8 @@ window.MIST_DATA = (() => {
     ch03_012: { visualFocus: "message", highlightProps: ["prop_phone_modern"], shotTone: "phone-glow", sfxOnEnter: [cue("message_pop_cold", { volume: 0.26 })] },
     ch03_016: { visualFocus: "timeline", highlightProps: ["prop_laptop"], shotTone: "evidence", sfxOnEnter: [cue("chat_typing_short", { volume: 0.2 })] },
     ch03_019: { visualFocus: "incoming-call", highlightProps: ["prop_phone_modern"], shotTone: "phone-glow", sfxOnEnter: [cue("phone_vibrate", { volume: 0.28 })] },
-    ch04_004: { visualFocus: "photo-box", highlightProps: ["prop_photo_box"], shotTone: "evidence", sfxOnEnter: [cue("old_photo_pickup", { volume: 0.34 })] },
+    ch04_001: { visualFocus: "photo-box", highlightProps: ["prop_photo_box"], shotTone: "evidence", sfxOnEnter: [cue("box_drag_soft", { volume: 0.2, duckBgmMs: 360 })] },
+    ch04_004: { visualFocus: "photo-box", highlightProps: ["prop_photo_box"], shotTone: "evidence", sfxOnEnter: [cue("old_photo_pickup", { volume: 0.26 })] },
     ch04_006: { visualFocus: "group-photo", highlightProps: ["prop_photo_polaroid"], shotTone: "photo-evidence" },
     ch04_010: { visualFocus: "photo-inspect", highlightProps: ["prop_photo_polaroid"], shotTone: "photo-evidence" },
     ch04_015: { visualFocus: "background-shadow", highlightProps: ["prop_photo_polaroid"], shotTone: "photo-reveal" },
@@ -837,7 +847,7 @@ window.MIST_DATA = (() => {
     ch05_015: { visualFocus: "voice-trigger", highlightProps: ["prop_phone_old_cracked", "prop_recording_file"], shotTone: "device-reveal" },
     ch05_017: { visualFocus: "incoming-call", highlightProps: ["prop_phone_modern", "prop_recording_file"], shotTone: "phone-glow", sfxOnEnter: [cue("phone_vibrate", { volume: 0.25 })] },
     ch06_004: { visualFocus: "evidence-table", highlightProps: ["prop_photo_polaroid", "prop_hard_drive"], shotTone: "decision", sfxOnEnter: ["room_silence_drop"] },
-    ch06_010: { visualFocus: "deduction-board", highlightProps: ["prop_photo_polaroid", "prop_recording_file", "prop_archive_folder"], shotTone: "deduction" },
+    ch06_010: { visualFocus: "deduction-board", highlightProps: ["prop_photo_polaroid", "prop_recording_file", "prop_archive_folder"], shotTone: "deduction", sfxOnEnter: [cue("deduction_tension", { volume: 0.16, fadeInMs: 120, duckBgmMs: 520 })] },
     ch06_011: { visualFocus: "deduction-board", highlightProps: ["prop_archive_folder"], shotTone: "deduction", sfxOnEnter: ["evidence_reveal"] },
     ch06_012: { visualFocus: "dead-call", highlightProps: ["prop_archive_folder"], shotTone: "deduction", sfxOnEnter: ["choice_confirm_soft"] },
     ch06_013: { visualFocus: "identity", highlightProps: ["prop_archive_folder"], shotTone: "deduction", sfxOnEnter: ["choice_confirm_soft"] },
@@ -847,6 +857,132 @@ window.MIST_DATA = (() => {
     ch06_018: { visualFocus: "archive-choice", highlightProps: ["prop_archive_folder"], shotTone: "ending-choice", sfxOnEnter: ["room_silence_drop"] },
   };
   Object.keys(nodeDirection).forEach((nodeId) => nodes[nodeId] && Object.assign(nodes[nodeId], nodeDirection[nodeId]));
+
+  const rc2Objectives = {
+    ch01_001: ["obj_dead_call", "确认来电是否真实"],
+    ch01_003: ["obj_dead_call", "确认来电是否真实"],
+    ch01_005: ["obj_dead_call", "确认来电是否真实", true],
+    ch01_007: ["obj_door_woman", "判断门外女人是否可信"],
+    ch01_008: ["obj_door_woman", "判断门外女人是否可信"],
+    ch02_003: ["obj_door_woman", "判断门外女人是否可信"],
+    ch02_008: ["obj_door_woman", "判断门外女人是否可信", true],
+    ch03_004: ["obj_loan_chain", "查清旧案里的借贷动机"],
+    ch03_009: ["obj_loan_chain", "查清旧案里的借贷动机"],
+    ch03_017: ["obj_loan_chain", "查清旧案里的借贷动机", true],
+    ch04_004: ["obj_photo_shadow", "找到照片里的异常"],
+    ch04_010: ["obj_photo_shadow", "找到照片里的异常"],
+    ch04_015: ["obj_photo_shadow", "找到照片里的异常", true],
+    ch05_004: ["obj_old_phone", "确认旧手机如何触发来电"],
+    ch05_010: ["obj_old_phone", "确认旧手机如何触发来电"],
+    ch05_015: ["obj_old_phone", "确认旧手机如何触发来电", true],
+    ch06_010: ["obj_final_deduction", "完成最终推理"],
+    ch06_016: ["obj_final_deduction", "完成最终推理", true],
+    ch06_018: ["obj_archive_choice", "决定如何保存真相"],
+  };
+
+  Object.entries(rc2Objectives).forEach(([nodeId, [objectiveId, objectiveText, objectiveComplete]]) => {
+    if (!nodes[nodeId]) return;
+    Object.assign(nodes[nodeId], { objectiveId, objectiveText, objectiveComplete: objectiveComplete === true });
+  });
+
+  const hotspot = (hotspotId, label, text, options = {}) => ({
+    hotspotId,
+    label,
+    text,
+    detailTitle: options.detailTitle || label,
+    gainClues: options.gainClues || [],
+    setFlags: options.setFlags || [],
+    relationshipEffects: options.relationshipEffects || [],
+    sfxOnInspect: options.sfxOnInspect || [],
+    zoomAsset: options.zoomAsset || "",
+    evidenceLinkId: options.evidenceLinkId || "",
+  });
+
+  const rc2Hotspots = {
+    ch01_003: [
+      hotspot("phone_screen", "手机屏幕", "来电记录没有号码，只有许知夏的名字。屏幕边缘的水渍让它像从雨里亮起来。", { gainClues: ["clue_dead_call"], sfxOnInspect: [cue("phone_screen_wake", { volume: 0.22 })], zoomAsset: "prop_phone_modern" }),
+      hotspot("window_rain", "窗户", "雨声很密，窗外没有脚步声。真正靠近房间的，只有手机震动。", { sfxOnInspect: [cue("rain_window_soft", { volume: 0.16 })] }),
+    ],
+    ch01_008: [
+      hotspot("peephole", "猫眼", "楼道灯闪了一下，门外女人低着头，湿发挡住半张脸。她没有急着敲门。", { setFlags: ["checked_peephole"], sfxOnInspect: [cue("corridor_light_flicker", { volume: 0.18 })] }),
+      hotspot("door_chain", "门链", "门链还扣着。金属没有完全合拢，像给恐惧留了一条窄缝。", { setFlags: ["kept_door_closed"], sfxOnInspect: [cue("door_chain_close", { volume: 0.18 })] }),
+    ],
+    ch02_004: [
+      hotspot("id_message", "身份信息", "她发来的证件照片是真的，但发送时间被刻意裁掉了。她在证明身份，也在隐藏路径。", { setFlags: ["verified_zhuwan_identity"], sfxOnInspect: [cue("message_pop_cold", { volume: 0.18 })] }),
+    ],
+    ch03_009: [
+      hotspot("loan_document", "借贷截图", "借款人是许知夏，签名却像被人摹过。报警前两天，这条记录突然出现。", { gainClues: ["clue_gray_loan"], sfxOnInspect: [cue("evidence_reveal", { volume: 0.2 })], evidenceLinkId: "link_motive_chain" }),
+      hotspot("chat_log", "聊天记录", "陈妍把截图来源单独保存了一份。她开始把这件事当成旧案，而不是怪谈。", { relationshipEffects: [rel("support_chenyan", 4, "你给了陈妍可以继续查的方向")], sfxOnInspect: [cue("chat_typing_short", { volume: 0.16 })] }),
+    ],
+    ch04_010: [
+      hotspot("old_photo", "旧照片", "合照里所有人的笑都停在三年前。只有背景的那个人，像是不该被拍进去。", { sfxOnInspect: [cue("photo_zoom", { volume: 0.2 })], zoomAsset: "prop_photo_polaroid" }),
+      hotspot("background_shadow", "背景人影", "楼道入口的反光里有一道人影。位置和周屿声称的时间线对不上。", { gainClues: ["clue_photo_background"], setFlags: ["found_photo_background"], sfxOnInspect: [cue("marker_circle", { volume: 0.18 })], evidenceLinkId: "link_photo_timeline" }),
+    ],
+    ch05_010: [
+      hotspot("old_phone", "旧手机", "旧手机没有灵异，它只是一直保存着一条没被及时听见的语音备忘。", { gainClues: ["clue_timed_voice"], setFlags: ["understood_dead_call"], sfxOnInspect: [cue("old_phone_start", { volume: 0.2 })], evidenceLinkId: "link_call_mechanism" }),
+      hotspot("recording_file", "录音文件", "文件名被系统改写过，触发时间却和今晚的来电重合。", { sfxOnInspect: [cue("recording_static_short", { volume: 0.16 })] }),
+    ],
+    ch06_010: [
+      hotspot("archive_folder", "档案袋", "六条线索已经足够拼出旧案轮廓。缺的不是证据，而是你敢不敢把它们连起来。", { sfxOnInspect: [cue("archive_stamp", { volume: 0.18 })] }),
+      hotspot("backup_file", "备份文件", "备份保留着照片、语音和借贷资料的时间顺序。它会决定真相能否被重新打开。", { setFlags: ["final_backup_reviewed"], sfxOnInspect: [cue("backup_success", { volume: 0.16 })] }),
+    ],
+  };
+
+  Object.entries(rc2Hotspots).forEach(([nodeId, items]) => {
+    if (nodes[nodeId]) nodes[nodeId].investigationHotspots = items;
+  });
+
+  const rc2EvidenceLinks = [
+    {
+      linkId: "link_call_mechanism",
+      title: "伪灵异机制",
+      clueIds: ["clue_dead_call", "clue_timed_voice"],
+      result: "死者来电不是鬼魂回拨，而是旧手机恢复后触发的迟到语音。",
+    },
+    {
+      linkId: "link_photo_timeline",
+      title: "周屿时间线异常",
+      clueIds: ["clue_photo_background", "clue_zhou_left"],
+      result: "照片背景和离城记录互相印证：周屿在撒谎。",
+    },
+    {
+      linkId: "link_motive_chain",
+      title: "旧案动机",
+      clueIds: ["clue_gray_loan", "clue_sister_mark"],
+      result: "灰色借贷和许知夏的求救痕迹连在一起，旧案动机浮出水面。",
+    },
+  ];
+
+  ["ch06_010", "ch06_011", "ch06_012", "ch06_013", "ch06_014", "ch06_015", "ch06_016"].forEach((nodeId) => {
+    if (nodes[nodeId]) nodes[nodeId].evidenceLinks = rc2EvidenceLinks;
+  });
+
+  const chapterRecaps = {
+    ch01_020: { completed: "你确认来电异常，并把门外女人的问题留到了下一章。", missed: "若没有检查猫眼，门外信息仍然不完整。", next: "下一章要判断许知晚到底是不是可信的人。" },
+    ch02_015: { completed: "你完成了身份核验，知道许知晚并不只是陌生访客。", missed: "旧手机来源仍需要继续追问。", next: "陈妍会把旧案资料拉回现实。" },
+    ch03_019: { completed: "你找到灰色借贷和周屿离城两条关键线。", missed: "借贷动机还需要照片证据补强。", next: "下一章从最后一张合照开始。" },
+    ch04_020: { completed: "你在照片背景里找到周屿时间线的裂缝。", missed: "照片必须备份，否则证据可能被夺走。", next: "旧手机会解释死者来电的现实机制。" },
+    ch05_020: { completed: "你确认旧手机语音触发了所谓死者来电。", missed: "如果没有备份录音，最后证据链会变弱。", next: "最终推理需要把六条线索连成一张网。" },
+  };
+  Object.entries(chapterRecaps).forEach(([nodeId, chapterRecap]) => {
+    if (nodes[nodeId]) nodes[nodeId].chapterRecap = chapterRecap;
+  });
+
+  function inferChoiceIntent(item) {
+    const text = `${item.text || ""} ${(item.endingPathTags || []).join(" ")}`;
+    if (/backup|backed|recorded|evidence|photo|保留|备份|证据|录/.test(text)) return "保全证据";
+    if (/trust|trusted|gave_original|相信|交给/.test(text)) return "偏信任";
+    if (/confront|question|tested|asked_zhou|对质|追问|质问/.test(text)) return "偏对抗";
+    if (/police|chenyan|witness|shared|报警|陈妍|求助/.test(text)) return "寻求协助";
+    if (/delete|avoid|nothing|删除|不做|挂断/.test(text)) return "回避风险";
+    if (/check|look|review|old_phone|photo|查|看|检查|推理/.test(text)) return "调查推进";
+    return "谨慎判断";
+  }
+
+  Object.values(nodes).forEach((node) => {
+    if (!Array.isArray(node.choices)) return;
+    node.choices = node.choices.map((item) => ({ ...item, choiceIntent: item.choiceIntent || inferChoiceIntent(item) }));
+  });
 
   function setChoiceFeedback(nodeId, feedbackByChoiceId) {
     const node = nodes[nodeId];
@@ -871,6 +1007,93 @@ window.MIST_DATA = (() => {
   });
   setChoiceFeedback("ch06_015", { a: { choiceImpactText: "合照不只是怀旧，它的价值在背景，不在笑容。", feedbackTitle: "推理偏差", feedbackTone: "wrong" }, b: { choiceImpactText: "你抓住了照片最危险的地方：周屿在他声称不在场的位置。", feedbackTitle: "推理成立", feedbackTone: "correct" }, c: { choiceImpactText: "许知晚像许知夏，但照片里真正动摇证词的是另一个人。", feedbackTitle: "推理偏差", feedbackTone: "wrong" } });
   setChoiceFeedback("ch06_016", { a: { choiceImpactText: "你看见了周屿真正怕的东西：完整证据链，而不是单张照片。", feedbackTitle: "推理成立", feedbackTone: "correct" }, b: { choiceImpactText: "房东老太也许能作证，但不是周屿今晚最急着阻止的核心。", feedbackTitle: "推理偏差", feedbackTone: "wrong" }, c: { choiceImpactText: "他不在乎许知晚离不离开，他在乎证据会不会留下。", feedbackTitle: "推理偏差", feedbackTone: "wrong" } });
+
+  const approvedSfx = new Set([
+    "rain_window_soft", "phone_vibrate", "phone_ring_dead_call", "message_pop_cold",
+    "recording_static_short", "room_silence_drop", "doorbell_rain_night", "knock_soft",
+    "footstep_corridor_wet", "door_chain_close", "old_phone_start", "old_photo_pickup",
+    "backup_start", "backup_success", "delete_warning", "door_lock_turn", "door_open_slow",
+    "box_drag_soft", "deduction_tension",
+  ]);
+  const approvedStingers = new Set(["linzhou_gasp_short", "linzhou_swallow_tense", "linzhou_heartbeat_soft"]);
+  const soundAliases = {
+    linzhou_breath_tense: "linzhou_swallow_tense",
+    photo_zoom: "old_photo_pickup",
+  };
+  const remapCues = (cues = []) => (Array.isArray(cues) ? cues : [cues])
+    .map((cue) => {
+      const key = typeof cue === "string" ? cue : cue?.key;
+      const mapped = soundAliases[key] || key;
+      if (!approvedSfx.has(mapped)) return null;
+      return typeof cue === "string" ? mapped : { ...cue, key: mapped };
+    })
+    .filter(Boolean);
+
+  Object.values(nodes).forEach((node) => {
+    if (!["rain_night_loop", "horror_corridor", "ending_archive"].includes(node.bgm)) delete node.bgm;
+    if (node.ambience !== "rain_heavy_loop") delete node.ambience;
+    node.sfxOnEnter = remapCues(node.sfxOnEnter);
+    if (!approvedStingers.has(node.voiceStinger)) delete node.voiceStinger;
+    (node.investigationHotspots || []).forEach((hotspot) => {
+      hotspot.sfxOnInspect = remapCues(hotspot.sfxOnInspect);
+    });
+  });
+
+  const continuityRuns = [
+    [1, 1, 2, "rental_room_rain_night", "room-settle"], [1, 3, 6, "phone_call_ui", "dead-call"], [1, 7, 11, "corridor_door", "door-pressure"], [1, 12, 12, "phone_call_ui", "call-record"], [1, 13, 20, "corridor_door", "threshold"],
+    [2, 1, 5, "corridor_door", "door-interview"], [2, 6, 8, "rental_room_rain_night", "room-trust"], [2, 9, 10, "old_phone_view", "old-phone"], [2, 11, 13, "rental_room_rain_night", "room-trust"], [2, 14, 15, "phone_call_ui", "phone-pressure"], [2, 16, 20, "rental_room_rain_night", "room-evidence"],
+    [3, 1, 10, "rental_room_table", "evidence-table"], [3, 11, 11, "phone_call_ui", "phone-pressure"], [3, 12, 15, "rental_room_table", "evidence-table"], [3, 16, 19, "phone_call_ui", "phone-pressure"], [3, 20, 20, "rental_room_table", "evidence-table"],
+    [4, 1, 5, "rental_room_table", "photo-box"], [4, 6, 15, "photo_zoom_view", "photo-inspect"], [4, 16, 16, "corridor_door", "outside-warning"], [4, 17, 20, "phone_call_ui", "phone-pressure"],
+    [5, 1, 3, "rental_room_rain_night", "room-pressure"], [5, 4, 6, "old_phone_view", "old-phone"], [5, 7, 8, "phone_call_ui", "phone-pressure"], [5, 9, 15, "old_phone_view", "recording-reveal"], [5, 16, 19, "phone_call_ui", "phone-pressure"], [5, 20, 20, "corridor_door", "door-lock"],
+    [6, 1, 10, "rental_room_table", "evidence-table"], [6, 11, 20, "ending_screen", "archive-resolution"],
+  ];
+  Object.values(nodes).forEach((node) => {
+    const match = node.nodeId.match(/^ch0(\d)_(\d{3})$/);
+    const chapter = Number(match?.[1] || 0);
+    const index = Number(match?.[2] || 0);
+    const run = continuityRuns.find(([runChapter, start, end]) => runChapter === chapter && index >= start && index <= end);
+    if (!run) return;
+    const [, , , scene, visualBeat] = run;
+    node.scene = scene;
+    node.visualBeat = visualBeat;
+    node.focusTarget = node.visualFocus || visualBeat;
+    node.sceneHold = index > run[1];
+    node.transitionStyle = index === run[1] && index !== 1 ? "dissolve" : "hold";
+  });
+
+  const sparseNodeCues = {
+    ch01_001: [cue("rain_window_soft", { volume: 0.12, suppressMs: 3000 })],
+    ch01_003: [cue("phone_vibrate", { volume: 0.2, suppressMs: 2600 }), cue("phone_ring_dead_call", { delayMs: 180, volume: 0.18, duckBgmMs: 520, suppressMs: 4000 })],
+    ch01_005: [cue("recording_static_short", { volume: 0.12, duckBgmMs: 280 })],
+    ch01_006: [cue("doorbell_rain_night", { volume: 0.18, duckBgmMs: 420 })],
+    ch01_007: [cue("footstep_corridor_wet", { volume: 0.16, suppressMs: 3000 })],
+    ch01_010: [cue("knock_soft", { volume: 0.13, suppressMs: 3000 })],
+    ch01_018: [cue("message_pop_cold", { volume: 0.14, suppressMs: 3000 })],
+    ch02_005: [cue("footstep_corridor_wet", { volume: 0.13, suppressMs: 3000 })],
+    ch02_014: [cue("message_pop_cold", { volume: 0.14, suppressMs: 3000 })],
+    ch04_001: [cue("box_drag_soft", { volume: 0.15, duckBgmMs: 260 })],
+    ch04_004: [cue("old_photo_pickup", { volume: 0.15, suppressMs: 3000 })],
+    ch04_017: [cue("phone_vibrate", { volume: 0.15, suppressMs: 3000 })],
+    ch05_004: [cue("old_phone_start", { volume: 0.17, suppressMs: 3000 })],
+    ch05_005: [cue("recording_static_short", { volume: 0.11, duckBgmMs: 240 })],
+    ch05_011: [cue("recording_static_short", { volume: 0.1, duckBgmMs: 240 })],
+    ch05_013: [cue("footstep_corridor_wet", { volume: 0.14, suppressMs: 3000 })],
+    ch05_020: [cue("door_lock_turn", { volume: 0.16, duckBgmMs: 320 })],
+    ch06_006: [cue("backup_start", { volume: 0.14, duckBgmMs: 260 })],
+    ch06_008: [cue("message_pop_cold", { volume: 0.13, suppressMs: 3000 })],
+    ch06_010: [cue("deduction_tension", { volume: 0.1, fadeInMs: 180, duckBgmMs: 360 })],
+  };
+  Object.values(nodes).forEach((node) => {
+    node.sfxOnEnter = sparseNodeCues[node.nodeId] || [];
+    node.sfxOnChoice = [];
+    node.choices = (node.choices || []).map((choice) => ({ ...choice, sfxOnChoice: [] }));
+    if (node.nodeId !== "ch01_004") delete node.voiceStinger;
+    (node.investigationHotspots || []).forEach((hotspot) => {
+      hotspot.sfxOnInspect = ["old_phone", "recording_file", "door_chain", "old_photo"].includes(hotspot.hotspotId)
+        ? remapCues(hotspot.sfxOnInspect).slice(0, 1)
+        : [];
+    });
+  });
 
   return {
     schemaVersion: "0.6",
