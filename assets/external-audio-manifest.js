@@ -18,8 +18,9 @@
     meta: { version: "1.0.0", playbackPolicy: "library-plus-three-cc0-exceptions", sourcePolicy: "Taira Komori library only, plus public-domain rain, CC0 modern phone call/vibration, and CC0 message notification.", noSemanticSubstitution: true, forbidden: ["game01", "openclose01 (1)", "generated audio", "legacy fallback", "browser narration"] },
     bgm: {
       life_archive_theme: taira("bgm_life_archive_theme", "life_archive_theme", "horror_piano4.mp3", "life archive entry theme", "-33 LUFS target in runtime", "Sparse piano motif for the product entry, archive lobby, and story file only. It must fade before the first story cue."),
-      rain_night_loop: taira("bgm_rain_night", "rain_night_loop", "haunted_area1.mp3", "low suspense bed", "-24 LUFS target in runtime", "Rainy rental room and restrained investigation."),
-      horror_corridor: taira("bgm_corridor", "horror_corridor", "haunted_area2.mp3", "corridor pressure bed", "-25 LUFS target in runtime", "Hallway, door pressure, and Zhou Yu scenes."),
+      urban_suspense_air: taira("bgm_urban_suspense_air", "urban_suspense_air", "in_dream.mp3", "restrained urban suspense air", "-35 LUFS target in runtime", "Slow, non-percussive urban suspense bed for the active investigation."),
+      rain_night_loop: taira("bgm_rain_night", "rain_night_loop", "in_dream.mp3", "restrained rainy-room air", "-35 LUFS target in runtime", "Compatibility alias for quiet rainy-room investigation."),
+      horror_corridor: taira("bgm_corridor", "horror_corridor", "in_dream.mp3", "restrained corridor air", "-36 LUFS target in runtime", "Compatibility alias for corridor pressure without rhythmic pulses."),
       ending_archive: taira("bgm_ending_archive", "ending_archive", "horror_piano4.mp3", "ending release bed", "-28 LUFS target in runtime", "Quiet ending archive only."),
     },
     ambience: {

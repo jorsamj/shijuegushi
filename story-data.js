@@ -1031,6 +1031,7 @@ window.MIST_DATA = (() => {
 
   Object.values(nodes).forEach((node) => {
     if (!["rain_night_loop", "horror_corridor", "ending_archive"].includes(node.bgm)) delete node.bgm;
+    if (["rain_night_loop", "horror_corridor"].includes(node.bgm)) node.bgm = "urban_suspense_air";
     if (node.ambience !== "rain_heavy_loop") delete node.ambience;
     node.sfxOnEnter = remapCues(node.sfxOnEnter);
     if (!approvedStingers.has(node.voiceStinger)) delete node.voiceStinger;
