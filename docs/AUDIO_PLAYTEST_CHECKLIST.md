@@ -9,3 +9,4 @@ Status: `demo` until all three listening passes are signed off.
 5. Phone speakers: run chapter 6; backup, deduction tension, deletion pressure, and ending fade must not sound like a reward UI.
 6. Toggle each audio channel and mute; story progression must never block, and the saved sound preference must be honored after refresh.
 7. Reject any cue that is too loud, sounds like cheap horror, creates an unexplained action, or repeats after a node transition.
+8. Mobile story bed: on phone speakers, play the rain room, corridor, photo, and old-phone scenes for at least one minute each. The music must feel like a cold, continuous space with no audible kick, heartbeat, or repeating thump.

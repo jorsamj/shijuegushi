@@ -210,13 +210,13 @@
       enabled: true,
       channels: ["bgm", "ambience", "sfx", "voice"],
       scenes: {
-        rental_room_rain_night: { bgm: "rain_night_loop" },
-        corridor_door: { bgm: "horror_corridor" },
+        rental_room_rain_night: { bgm: "urban_suspense_air" },
+        corridor_door: { bgm: "urban_suspense_air" },
         phone_call_ui: { ambience: "rain_heavy_loop" },
         old_chat_memory: {},
-        rental_room_table: { bgm: "rain_night_loop" },
-        photo_zoom_view: { bgm: "horror_corridor" },
-        old_phone_view: { bgm: "horror_corridor" },
+        rental_room_table: { bgm: "urban_suspense_air" },
+        photo_zoom_view: { bgm: "urban_suspense_air" },
+        old_phone_view: { bgm: "urban_suspense_air" },
         ending_screen: { bgm: "ending_archive" },
       },
       speakers: {

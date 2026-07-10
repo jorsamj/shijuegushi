@@ -112,6 +112,7 @@
   let currentView = "splash";
   let feedbackQueue = [];
   let visualState = { current: null };
+  let nodeActionLocked = false;
   let state = createInitialState();
   let audioState = {
     context: null,
@@ -429,7 +430,7 @@
       ambienceEnabled: saved.ambienceEnabled !== false,
       sfxEnabled: saved.sfxEnabled !== false,
       masterVolume: clampNumber(saved.masterVolume ?? 0.72, 0, 1),
-      bgmVolume: clampNumber(saved.bgmVolume ?? 0.55, 0, 1),
+      bgmVolume: clampNumber(saved.bgmVolume ?? 0.4, 0, 1),
       ambienceVolume: clampNumber(saved.ambienceVolume ?? 0.5, 0, 1),
       sfxVolume: clampNumber(saved.sfxVolume ?? 0.68, 0, 1),
       stingerVolume: clampNumber(saved.stingerVolume ?? 0.58, 0, 1),
@@ -702,7 +703,7 @@
     audioState.currentBgm = "";
     if (src) {
       audioState.currentBgm = name;
-      const targetVolume = scaledVolume(0.1, "bgm");
+      const targetVolume = scaledVolume(0.055, "bgm");
       const nextAudio = playRealAudio(src, {
         category: "bgm",
         key: name,
@@ -828,7 +829,7 @@
     } catch (error) {}
     audioState.duckRestoreTimer = window.setTimeout(() => {
       try {
-        if (bgm && audioState.realBgm === bgm) bgm.volume = scaledVolume(0.1, "bgm");
+        if (bgm && audioState.realBgm === bgm) bgm.volume = scaledVolume(0.055, "bgm");
         if (ambience && audioState.realAmbience === ambience) ambience.volume = scaledVolume(0.08, "ambience");
       } catch (error) {}
     }, durationMs);
@@ -1528,6 +1529,7 @@
 
     const chapter = getChapter(node.chapterId);
     const sceneClass = `scene-${node.scene || "rental_room_rain_night"}`;
+    const gameModeClass = (node.type === "choice" || node.type === "deduction") ? "is-choice-node" : "is-reading-node";
     const readingSettings = getReadingSettings();
     const previousVisual = visualState.current;
     const sceneMarkup = renderSceneVisual(node, previousVisual);
@@ -1535,7 +1537,7 @@
     setView(
       "game",
       `
-      <section class="game-screen ${sceneClass} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
+      <section class="game-screen ${sceneClass} ${gameModeClass} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
         <header class="game-topbar">
           <div class="game-title">
             <span>${escapeHTML(getScript().title)}</span>
@@ -1602,10 +1604,12 @@
   function renderNodeControls(node) {
     const continueButton = document.getElementById("continueButton");
     const choiceArea = document.getElementById("choiceArea");
+    nodeActionLocked = false;
 
     if (node.resolveEnding === true) {
       continueButton.textContent = "查看结局";
       continueButton.addEventListener("click", () => {
+        if (!lockNodeAction(continueButton)) return;
         stopNodeTransientAudio("continue");
         state.endingId = resolveEnding();
         autoSave();
@@ -1633,6 +1637,7 @@
     if (node.type === "ending" && DATA.endings[node.nodeId]) {
       continueButton.textContent = "查看结局";
       continueButton.addEventListener("click", () => {
+        if (!lockNodeAction(continueButton)) return;
         stopAllDialogueAudio();
         showEnding(node.nodeId);
       });
@@ -1640,6 +1645,7 @@
     }
 
     continueButton.addEventListener("click", () => {
+      if (!lockNodeAction(continueButton)) return;
       stopNodeTransientAudio("continue");
       if (node.nextNodeId) {
         goToNode(node.nextNodeId);
@@ -1650,7 +1656,18 @@
     });
   }
 
+  function lockNodeAction(button = null) {
+    if (nodeActionLocked) return false;
+    nodeActionLocked = true;
+    button?.setAttribute("aria-busy", "true");
+    document.querySelectorAll("#continueButton, #choiceArea .choice-button").forEach((control) => {
+      control.disabled = true;
+    });
+    return true;
+  }
+
   function handleChoice(node, choiceId) {
+    if (!lockNodeAction()) return;
     const choice = (node.choices || []).find((item) => item.choiceId === choiceId);
     if (!choice) return;
     stopNodeTransientAudio("choice");
@@ -2327,7 +2344,7 @@
         const key = control.dataset.setting;
         const value = control.type === "checkbox" ? control.checked : Number(control.value);
         saveAudioSettings({ [key]: value });
-        if (["masterVolume", "bgmVolume"].includes(key) && audioState.realBgm) audioState.realBgm.volume = scaledVolume(0.10, "bgm");
+        if (["masterVolume", "bgmVolume"].includes(key) && audioState.realBgm) audioState.realBgm.volume = scaledVolume(0.055, "bgm");
         if (["masterVolume", "ambienceVolume"].includes(key) && audioState.realAmbience) audioState.realAmbience.volume = scaledVolume(0.08, "ambience");
         refreshGameMeta();
       });
