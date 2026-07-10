@@ -4,6 +4,7 @@
 
 | Runtime use | Local file | Source | License |
 |---|---|---|---|
+| Entry archive theme | `assets/library/audio/reconstructed/horror_piano4.mp3` | [Taira Komori / Free Sound Effects](https://taira-komori.jpn.org/) | Site royalty-free terms; low-volume piano motif used only after the first user interaction and before story play. |
 | BGM, door, object, tension, footsteps, non-verbal reactions | `assets/library/audio/reconstructed/*.mp3` | [Taira Komori / Free Sound Effects](https://taira-komori.jpn.org/) | Site royalty-free terms; raw files are not redistributed as a standalone library. |
 | Rain | `assets/library/audio/exceptions/ambience_rain_public_domain_cori_01.ogg` | [Rain against the window](https://commons.wikimedia.org/wiki/File:Rain_against_the_window.ogg), cori | Public domain |
 | Modern phone ring | `assets/library/audio/exceptions/sfx_phone_ring_cc0_thezero_273540.mp3` | [Simple ringtone](https://freesound.org/people/TheZero/sounds/273540/), TheZero | CC0 |

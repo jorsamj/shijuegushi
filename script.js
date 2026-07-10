@@ -119,6 +119,7 @@
     bgm: null,
     ambience: null,
     realBgm: null,
+    realEntryBgm: null,
     realAmbience: null,
     realVoice: null,
     activeSfx: [],
@@ -129,6 +130,7 @@
     currentDialogueAudio: null,
     currentDialogueAbortController: null,
     currentBgm: "",
+    currentEntryBgm: "",
     currentAmbience: "",
     unlocked: false,
     lastVoiceNodeId: "",
@@ -713,6 +715,29 @@
     audioState.currentBgm = "";
   }
 
+  function startEntryMusic(name = "life_archive_theme") {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
+    if (audioState.currentEntryBgm === name && audioState.realEntryBgm) return;
+    const src = getAudioSource("bgm", name);
+    if (!src) return;
+    audioState.currentEntryBgm = name;
+    const nextAudio = playRealAudio(src, {
+      category: "bgm",
+      key: name,
+      loop: true,
+      volume: 0,
+      reason: "entry-archive",
+    });
+    if (nextAudio) crossfadeAudioLayer("realEntryBgm", nextAudio, scaledVolume(0.072, "bgm"), 1000, "entry-theme-crossfade");
+  }
+
+  function stopEntryMusic(reason = "leave-entry") {
+    if (audioState.realEntryBgm) fadeOutAudio(audioState.realEntryBgm, 1000, reason);
+    audioState.realEntryBgm = null;
+    audioState.currentEntryBgm = "";
+  }
+
   function startAmbience(name) {
     const settings = getAudioSettings();
     if (!settings.audioEnabled || !settings.ambienceEnabled || !audioState.unlocked || !name) return;
@@ -1101,12 +1126,15 @@
     stopAudioHandle(audioState.bgm);
     stopAudioHandle(audioState.ambience);
     stopRealAudio(audioState.realBgm);
+    stopRealAudio(audioState.realEntryBgm);
     stopRealAudio(audioState.realAmbience);
     audioState.bgm = null;
     audioState.ambience = null;
     audioState.realBgm = null;
+    audioState.realEntryBgm = null;
     audioState.realAmbience = null;
     audioState.currentBgm = "";
+    audioState.currentEntryBgm = "";
     audioState.currentAmbience = "";
   }
 
@@ -1116,7 +1144,8 @@
     if (next) {
       unlockAudio();
       const node = getNode();
-      if (node) prepareAudioCue(node);
+      if (currentView === "hall" || currentView === "series") startEntryMusic("life_archive_theme");
+      else if (node) prepareAudioCue(node);
       showToast("声音已开启", "clue");
     } else {
       stopAllAudio();
@@ -1315,7 +1344,10 @@
   function setView(name, html) {
     currentView = name;
     app.className = `app-shell view-${name}`;
+    app.dataset.view = name;
+    document.body.dataset.view = name;
     app.innerHTML = html;
+    window.requestAnimationFrame(() => app.classList.add("is-view-ready"));
   }
 
   function showSplash() {
@@ -1324,16 +1356,19 @@
       `
       <section class="splash-screen">
         <img class="splash-hero-art" src="${escapeHTML(VISUALS.covers?.home || "")}" alt="" aria-hidden="true" />
-        <div class="life-orbit" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
+        <div class="splash-veil" aria-hidden="true"></div>
+        <div class="splash-content">
+          <p class="brand-mark">SECOND LIFE / 人生档案计划</p>
+          <p class="splash-index">ARCHIVE ACCESS 0001</p>
+          <h1>${escapeHTML(DATA.product.name)}</h1>
+          <p class="splash-subtitle">${escapeHTML(DATA.product.subtitle)}</p>
+          <p class="splash-intro">每一次选择，都会走向另一种人生。</p>
+          <div class="splash-action">
+            <button class="primary-cta" type="button" data-action="enter-hall"><span>进入人生档案</span><i aria-hidden="true">&#8594;</i></button>
+            <small>首次操作后轻柔开启声音，可随时关闭。</small>
+          </div>
         </div>
-        <div class="brand-mark">SECOND LIFE</div>
-        <h1>${escapeHTML(DATA.product.name)}</h1>
-        <p>${escapeHTML(DATA.product.subtitle)}</p>
-        <small>每一次选择，都会走向另一种人生。</small>
-        <button class="primary-cta" type="button" data-action="enter-hall">开始体验</button>
+        <footer class="splash-footer"><span>01 / PUBLIC ARCHIVE</span><span>请妥善保管你的选择</span></footer>
       </section>
       `
     );
@@ -1345,45 +1380,51 @@
 
   function showHall() {
     stopNodeTransientAudio("leave-game");
-    const cards = DATA.series
-      .map((series) => {
-        const isOpen = series.status === "open";
-        const coverImage = series.seriesId === "series_rain_call"
-          ? VISUALS.covers?.home
-          : series.seriesId === "series_old_building"
-            ? VISUALS.covers?.oldBuilding
-            : VISUALS.covers?.missingPerson;
-        return `
-          <article class="case-folder ${isOpen ? "is-open" : "is-locked"}" data-series-id="${series.seriesId}">
-            <div class="folder-cover ${isOpen ? "cover-rain-call" : "cover-sealed"}">
-              <img src="${escapeHTML(coverImage || VISUALS.covers?.lockedArchive || "")}" alt="" loading="lazy" />
-            </div>
-            <div class="folder-tab">${isOpen ? "已开放" : "未开放"}</div>
-            <div class="folder-lines" aria-hidden="true"></div>
-            <span class="story-kind">${isOpen ? "悬疑人生" : "待解锁人生"}</span>
-            <h2>${escapeHTML(series.title)}</h2>
-            <p>${escapeHTML(series.summary)}</p>
-            <button class="ghost-button" type="button">${isOpen ? "查看档案" : "未开放"}</button>
-          </article>
-        `;
-      })
-      .join("");
+    stopBgm("return-to-archive");
+    stopAmbience("return-to-archive");
+    startEntryMusic("life_archive_theme");
+    const openSeries = DATA.series.find((series) => series.status === "open");
+    const lockedSeries = DATA.series.filter((series) => series !== openSeries);
+    const lockedRows = lockedSeries.map((series, index) => `
+      <button class="archive-ledger-row" type="button" data-series-id="${series.seriesId}">
+        <span class="archive-ledger-index">0${index + 2}</span>
+        <strong>${escapeHTML(series.title)}</strong>
+        <span>档案封存中</span>
+        <i aria-hidden="true">&#8594;</i>
+      </button>
+    `).join("");
 
     setView(
       "hall",
       `
       <section class="hall-screen">
-        <header class="page-header">
-          <p class="eyebrow">LIFE ARCHIVE</p>
+        <header class="page-header archive-header">
+          <p class="eyebrow">SECOND LIFE / LIFE ARCHIVE</p>
           <h1>人生档案</h1>
-          <p>选择一个人生故事，进入别人的秘密、选择与结局。</p>
+          <p>这里保存着尚未结束的人生。选择一份档案，接过其中的秘密、选择与结局。</p>
         </header>
-        <div class="series-shelf">${cards}</div>
+        ${openSeries ? `
+          <article class="archive-feature" data-series-id="${openSeries.seriesId}">
+            <img src="${escapeHTML(VISUALS.covers?.home || "")}" alt="《${escapeHTML(openSeries.title)}》故事封面" />
+            <div class="archive-feature-scrim" aria-hidden="true"></div>
+            <div class="archive-feature-copy">
+              <p class="archive-status">开放档案 / 01</p>
+              <span class="story-kind">悬疑人生</span>
+              <h2>${escapeHTML(openSeries.title)}</h2>
+              <p>${escapeHTML(openSeries.summary)}</p>
+              <button class="case-button" type="button">查看档案 <i aria-hidden="true">&#8594;</i></button>
+            </div>
+          </article>
+        ` : `<div class="archive-empty-state"><p>暂时没有可读取的档案。</p></div>`}
+        <section class="archive-ledger" aria-label="封存档案">
+          <div class="archive-ledger-head"><p>后续人生</p><span>${lockedSeries.length} 份档案仍在封存</span></div>
+          ${lockedRows}
+        </section>
       </section>
       `
     );
 
-    app.querySelectorAll(".case-folder").forEach((card) => {
+    app.querySelectorAll("[data-series-id]").forEach((card) => {
       card.addEventListener("click", () => {
         const series = getSeries(card.dataset.seriesId);
         if (series.status !== "open") {
@@ -1418,8 +1459,11 @@
       <section class="series-screen story-file-screen">
         <button class="back-link" type="button" data-action="back-hall">\u2190 \u8fd4\u56de\u4eba\u751f\u6863\u6848</button>
         <header class="series-brief story-file-brief">
+          <img class="story-file-cover" src="${escapeHTML(VISUALS.covers?.home || "")}" alt="" aria-hidden="true" />
+          <div class="story-file-cover-scrim" aria-hidden="true"></div>
           <div class="story-file-copy">
             <p class="eyebrow">LIFE FILE</p>
+            <p class="story-file-number">ARCHIVE / 01 / AVAILABLE</p>
             <h1>${escapeHTML(openScript.title)}</h1>
             <p>\u66b4\u96e8\u591c\uff0c\u6797\u821f\u63a5\u5230\u6765\u81ea\u5df2\u6545\u5ba4\u53cb\u8bb8\u77e5\u590f\u7684\u7535\u8bdd\uff1b\u95e8\u5916\u5374\u7ad9\u7740\u4e00\u4e2a\u548c\u5979\u6781\u50cf\u7684\u5973\u4eba\u3002</p>
             <div class="story-file-tags"><span>\u60ac\u7591\u4eba\u751f</span><span>\u90fd\u5e02\u96e8\u591c</span><span>\u4f2a\u7075\u5f02\u65e7\u6848</span></div>
@@ -1442,6 +1486,7 @@
       </section>
       `
     );
+    startEntryMusic("life_archive_theme");
 
     app.querySelector("[data-action='back-hall']").addEventListener("click", showHall);
     app.querySelector("[data-action='start-script']").addEventListener("click", () => {
@@ -1462,6 +1507,7 @@
 
   function startNewGame() {
     stopNodeTransientAudio("restart");
+    stopEntryMusic("story-start");
     visualState = { current: null };
     unlockAudio();
     state = createInitialState();
@@ -1470,6 +1516,7 @@
   }
 
   function showGame() {
+    stopEntryMusic("story-enter");
     const node = getNode();
     if (!node) {
       showToast("剧情节点缺失，已返回人生档案。", "warn");

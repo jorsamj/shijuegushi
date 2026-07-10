@@ -11,7 +11,7 @@ const html = read("index.html");
 const css = read("style.css");
 const script = read("script.js");
 
-assert(/<meta\s+name="viewport"\s+content="width=device-width,\s*initial-scale=1(?:\.0)?"/.test(html), "index.html must keep zoom-friendly viewport meta");
+assert(/<meta\s+name="viewport"\s+content="width=device-width,\s*initial-scale=1(?:\.0)?(?:,\s*viewport-fit=cover)?"/.test(html), "index.html must keep zoom-friendly viewport meta and allow safe-area coverage");
 assert(css.includes("@media (max-width: 900px)"), "style.css must include mobile breakpoint");
 assert(css.includes("max-height: 47dvh"), "mobile dialogue panel must reserve scrollable height");
 assert(css.includes("overflow-y: auto"), "mobile dialogue panel must be scrollable");

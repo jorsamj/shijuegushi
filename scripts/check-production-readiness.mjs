@@ -20,6 +20,9 @@ const checks = [
   ["node", ["scripts/check-playability.mjs"]],
   ["node", ["scripts/check-rc2-interactions.mjs"]],
   ["node", ["scripts/check-mobile-ui.mjs"]],
+  ["node", ["scripts/check-entry-experience.mjs"]],
+  ["node", ["scripts/check-entry-experience.mjs"]],
+  ["node", ["scripts/check-entry-experience.mjs"]],
 ];
 
 const requiredDocs = [

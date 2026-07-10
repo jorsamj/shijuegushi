@@ -51,7 +51,7 @@ const keyNodes = [
   "ch06_020",
 ];
 
-assert(indexText.includes("<title>第二人生</title>"), "index.html title must be 第二人生");
+assert(indexText.includes("<title>第二人生 | 互动视觉小说</title>"), "index.html title must identify 第二人生 as an interactive visual novel");
 assert(indexText.includes("aria-label=\"关闭弹窗\""), "modal close button must have readable Chinese aria-label");
 
 assert(showSeriesBody, "showSeries function is missing");
