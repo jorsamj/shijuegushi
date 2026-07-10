@@ -2,13 +2,13 @@
 
 ## 项目定位
 
-互动视觉小说体验平台 Demo。
+面向公开试玩的互动视觉小说平台。
 
-欢迎来体验别人的人生。
+欢迎进入一段尚未结束的人生。
 
 ## 当前阶段
 
-前端 Demo 生成式美术资产接入阶段。
+静态公开试玩候选版本；《雨夜来电》为当前开放档案。
 
 ## 文档版本
 
@@ -44,9 +44,7 @@
 
 ## 运行说明
 
-可直接双击打开 [index.html](index.html) 体验前端 Demo。
-
-也可以在仓库根目录启动本地静态服务：
+在仓库根目录启动本地静态服务：
 
 ```bash
 python -m http.server 8080
@@ -57,6 +55,14 @@ python -m http.server 8080
 ```text
 http://localhost:8080
 ```
+
+## 公开部署
+
+仓库内置 GitHub Pages 工作流：`main` 分支更新后会发布静态站点。首次发布前，请在仓库 Settings -> Pages 中将 Source 设为 **GitHub Actions**。
+
+预期公开地址为：`https://jorsamj.github.io/shijuegushi/`。
+
+入口音乐在用户首次点击“进入人生档案”后播放；它会在进入《雨夜来电》前与剧情 BGM 交叉淡出。静音和音量偏好存储在浏览器 localStorage 中。
 
 ## 数据校验
 

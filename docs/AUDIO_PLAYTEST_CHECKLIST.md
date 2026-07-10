@@ -1,48 +1,11 @@
 # Audio Playtest Checklist
 
-Runtime rule: ordinary narration and dialogue are not read aloud. The formal playtest default is `external-approved-only`; generated and synthetic audio must not play unless a developer manually enables `generated-dev-only`.
+Status: `demo` until all three listening passes are signed off.
 
-Global style rule: sounds must support urban suspense and rain-night realism. They must not sound like a game, Super Mario, pixel game, arcade cue, coin sound, victory jingle, cute UI beep, white noise, or TTS.
-
-Validation phrases: 不能像游戏；不能像超级马里奥；真实敲门；手机铃声；阴森背景音乐；下雨声；Fallback is allowed only in `generated-dev-only` mode and must stay silent in the formal runtime.
-
-| Category | Key | Used in nodes | External asset | Source | Local path | Quality status | Manual result |
-|---|---|---|---|---|---|---|---|
-| bgm | `ending_archive` | ch06_020 | `bgm_archive_ending_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_real_01.wav` | approved | pending human listen |
-| bgm | `horror_corridor` | ch01_007, ch01_008, ch02_003, ch02_015, ch03_011, ch03_018, ch04_018, ch04_020, ch05_005, ch05_007, ch05_011, ch05_015, ch05_016, ch05_018, ch05_019 | `bgm_corridor_tension_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_2_real_01.wav` | approved | pending human listen |
-| bgm | `rain_night_loop` | ch01_001, ch01_003, ch01_005 | `bgm_rain_night_dark_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_real_01.wav` | approved | pending human listen |
-| ambience | `corridor_hum` | ch01_007, ch01_008, ch02_015, ch05_016 | `amb_corridor_hum_clean_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_2_real_01.wav` | approved | pending human listen |
-| ambience | `rain_heavy_loop` | ch01_003, ch01_005, ch02_003 | `amb_rain_heavy_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_rain_drops_gravity_real_01.wav` | approved | pending human listen |
-| ambience | `room_night_loop` | ch01_001, ch05_005, ch05_011, ch05_015, ch06_020 | `amb_room_night_clean_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_real_01.wav` | approved | pending human listen |
-| sfx | `archive_stamp` | ch06_019, ch06_020 | `sfx_archive_stamp_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_door_lock_tight_real_01.wav` | approved | pending human listen |
-| sfx | `backup_start` | ch06_006 | `sfx_backup_start_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_computer_keyboard_real_01.ogg` | approved | pending human listen |
-| sfx | `backup_success` | ch05_012, ch06_005 | `sfx_backup_success_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_clicking_gravity_real_01.wav` | approved | pending human listen |
-| sfx | `choice_confirm_soft` | ch01_006, ch01_010, ch01_014, ch04_010, ch05_004, ch05_017, ch06_004, ch06_010 | `sfx_choice_confirm_soft_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_click_switch_real_01.ogg` | approved | pending human listen |
-| sfx | `corridor_light_flicker` | ch01_008, ch01_020, ch02_003, ch05_009 | `sfx_corridor_light_flicker_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_dipswitch_real_01.ogg` | approved | pending human listen |
-| sfx | `delete_warning` | ch06_007 | `sfx_delete_warning_real_01` | Wikimedia Commons / CC BY 3.0 | `assets/library/audio/external/processed/stinger_heartbeat_real_01.ogg` | approved | pending human listen |
-| sfx | `door_chain_close` | ch01_008 | `sfx_door_chain_close_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_door_lock_tight_real_01.wav` | approved | pending human listen |
-| sfx | `door_lock_turn` | ch05_020, ch06_008 | `sfx_door_lock_turn_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_door_lock_tight_real_01.wav` | approved | pending human listen |
-| sfx | `doorbell_rain_night` | ch01_007 | `sfx_doorbell_apartment_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_doorbell_old_tring_real_01.ogg` | approved | pending human listen |
-| sfx | `evidence_reveal` | ch03_010, ch03_017, ch04_015, ch06_017 | `sfx_evidence_reveal_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_clicking_gravity_real_01.wav` | approved | pending human listen |
-| sfx | `footstep_corridor_wet` | ch01_007, ch05_013 | `sfx_footstep_corridor_wet_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/amb_rain_window_real_01.ogg` | approved | pending human listen |
-| sfx | `marker_circle` | ch04_015 | `sfx_marker_circle_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_clicking_gravity_real_01.wav` | approved | pending human listen |
-| sfx | `message_pop_cold` | ch01_009, ch01_018, ch02_007, ch02_015, ch03_011, ch03_018, ch04_018, ch04_020, ch05_007, ch05_016, ch05_018, ch05_019, ch06_008 | `sfx_message_pop_cold_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_clicking_gravity_real_01.wav` | approved | pending human listen |
-| sfx | `old_phone_start` | ch05_004, ch05_005, ch05_011, ch05_015 | `sfx_old_phone_start_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_dipswitch_real_01.ogg` | approved | pending human listen |
-| sfx | `old_photo_pickup` | ch04_001, ch04_006 | `sfx_old_photo_pickup_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_computer_keyboard_real_01.ogg` | approved | pending human listen |
-| sfx | `phone_call_end` | ch01_006, ch01_012 | `sfx_phone_call_end_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_click_switch_real_01.ogg` | approved | pending human listen |
-| sfx | `phone_ring_dead_call` | ch01_003 | `sfx_phone_ring_dark_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/sfx_old_telephone_ring_real_01.ogg` | approved | pending human listen |
-| sfx | `phone_screen_wake` | ch01_003 | `sfx_phone_screen_wake_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_click_switch_real_01.ogg` | approved | pending human listen |
-| sfx | `photo_reflection_find` | ch04_011, ch04_013 | `sfx_photo_reflection_find_real_01` | Wikimedia Commons / CC0 | `assets/library/audio/external/processed/sfx_camera_canon_real_01.wav` | approved | pending human listen |
-| sfx | `photo_zoom` | ch04_010 | `sfx_photo_zoom_real_01` | Wikimedia Commons / CC0 | `assets/library/audio/external/processed/sfx_camera_canon_real_01.wav` | approved | pending human listen |
-| sfx | `rain_window_soft` | ch01_001 | `sfx_rain_window_soft_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/amb_rain_window_real_01.ogg` | approved | pending human listen |
-| sfx | `recording_static_short` | ch01_005, ch01_013, ch05_005, ch05_011, ch05_015 | `sfx_recording_tape_soft_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_metal_bristles_real_01.ogg` | approved | pending human listen |
-| sfx | `room_silence_drop` | ch01_004, ch05_001, ch06_010 | `sfx_room_silence_drop_real_01` | Wikimedia Commons / CC BY 3.0 | `assets/library/audio/external/processed/stinger_heartbeat_real_01.ogg` | approved | pending human listen |
-| stingers | `linzhou_gasp_short` | ch01_004 | `stinger_linzhou_gasp_short_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
-| stingers | `xuzhiwan_cold_exhale` | ch01_020, ch02_001 | `stinger_xuzhiwan_cold_exhale_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
-| stingers | `xuzhiwan_low_breath` | ch01_007, ch02_003 | `stinger_xuzhiwan_low_breath_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
-| stingers | `xuzhixia_memory_fade` | ch05_015 | `stinger_xuzhixia_memory_fade_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/sfx_metal_bristles_real_01.ogg` | approved | pending human listen |
-| stingers | `xuzhixia_weak_static_exhale` | ch01_005, ch05_005, ch05_011 | `stinger_xuzhixia_weak_static_exhale_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
-| stingers | `zhouyu_low_laugh` | ch05_019 | `stinger_zhouyu_low_laugh_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
-| stingers | `zhouyu_phone_silence` | ch01_018, ch02_015, ch03_011, ch03_019 | `stinger_zhouyu_phone_silence_real_01` | Wikimedia Commons / CC BY 4.0 | `assets/library/audio/external/processed/amb_air_conditioner_hum_2_real_01.wav` | approved | pending human listen |
-| stingers | `zhouyu_pressure_breath` | ch05_016 | `stinger_zhouyu_pressure_breath_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
-| stingers | `zhouyu_tiny_smile` | ch03_018, ch04_020 | `stinger_zhouyu_tiny_smile_real_01` | Wikimedia Commons / Public domain | `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | approved | pending human listen |
+1. Entry: on the splash screen, tap `进入人生档案`; the sparse archive piano begins once, stays below copy, and continues through the archive and story file.
+2. Transition: tap `开始体验`; the entry piano fades over the opening story cue and must not remain audible after the rain-room BGM has settled.
+3. Headphones: play `ch01_001` through `ch01_008`; rain stays behind text, the phone vibrates/rings once, doorbell and footsteps land on the described action.
+4. Desktop speakers: inspect the photo in chapter 4 and old phone in chapter 5; object handling and recording degradation must remain restrained.
+5. Phone speakers: run chapter 6; backup, deduction tension, deletion pressure, and ending fade must not sound like a reward UI.
+6. Toggle each audio channel and mute; story progression must never block, and the saved sound preference must be honored after refresh.
+7. Reject any cue that is too loud, sounds like cheap horror, creates an unexplained action, or repeats after a node transition.

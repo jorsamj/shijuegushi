@@ -10,15 +10,6 @@
     chapters: {},
     props: {},
   };
-  const AUDIO = window.SECOND_LIFE_AUDIO || {
-    bgm: {},
-    ambience: {},
-    sfx: {},
-    stingers: {},
-    narration: {},
-    voice: {},
-    voiceProfiles: {},
-  };
   const STORAGE_KEYS = {
     progress: "mist.currentProgress",
     saves: "mist.saveSlots",
@@ -26,6 +17,7 @@
     settings: "mist.settings",
     schema: "mist.schemaVersion",
     achievements: "secondLife.achievements",
+    collection: "secondLife.collection",
   };
 
   const CORE_CLUE_IDS = [
@@ -119,6 +111,7 @@
   let modalCloseHandler = null;
   let currentView = "splash";
   let feedbackQueue = [];
+  let visualState = { current: null };
   let state = createInitialState();
   let audioState = {
     context: null,
@@ -126,11 +119,18 @@
     bgm: null,
     ambience: null,
     realBgm: null,
+    realEntryBgm: null,
     realAmbience: null,
     realVoice: null,
+    activeSfx: [],
+    activeStingers: [],
+    pendingSfxTimers: [],
+    recentSfx: {},
+    duckRestoreTimer: null,
     currentDialogueAudio: null,
     currentDialogueAbortController: null,
     currentBgm: "",
+    currentEntryBgm: "",
     currentAmbience: "",
     unlocked: false,
     lastVoiceNodeId: "",
@@ -139,6 +139,7 @@
     placeholderVoiceNoticeShown: false,
     dialogueToken: 0,
     dialogueSessionId: 0,
+    currentNodeId: "",
     debugLog: [],
   };
 
@@ -161,6 +162,12 @@
       relationships: createDefaultRelationships(),
       relationshipEvents: [],
       endingPathTags: [],
+      completedObjectives: [],
+      checkedHotspots: [],
+      evidenceConnections: [],
+      endingCollection: loadStoredCollection().endings,
+      galleryUnlocks: loadStoredCollection().gallery,
+      readNodes: [],
       startedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -175,6 +182,7 @@
       }
     }
     bindGlobalModalEvents();
+    bindAssetFallbacks();
     showSplash();
     if (!storageAvailable) {
       showToast("本地存储不可用，本次进度只会保留在当前页面。", "warn");
@@ -219,6 +227,29 @@
     } catch (error) {
       return [];
     }
+  }
+
+  function loadStoredCollection() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.collection);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return {
+        endings: Array.isArray(parsed.endings) ? parsed.endings : [],
+        gallery: Array.isArray(parsed.gallery) ? parsed.gallery : [],
+        recordings: Array.isArray(parsed.recordings) ? parsed.recordings : [],
+      };
+    } catch (error) {
+      return { endings: [], gallery: [], recordings: [] };
+    }
+  }
+
+  function saveStoredCollection(collection = {}) {
+    const current = loadStoredCollection();
+    saveJSON(STORAGE_KEYS.collection, {
+      endings: Array.from(new Set([...(current.endings || []), ...(collection.endings || [])])),
+      gallery: Array.from(new Set([...(current.gallery || []), ...(collection.gallery || [])])),
+      recordings: Array.from(new Set([...(current.recordings || []), ...(collection.recordings || [])])),
+    });
   }
 
   function getScript(scriptId = "script_rain_call") {
@@ -363,7 +394,7 @@
   function renderPropStrip(ids = []) {
     const rows = ids
       .map((id) => VISUALS.props?.[id])
-      .filter(Boolean)
+      .filter(({ prop }) => Boolean(prop))
       .map((prop) => `<span class="prop-token"><img src="${escapeHTML(prop.image)}" alt="" loading="lazy" />${escapeHTML(prop.label)}</span>`)
       .join("");
     return rows ? `<div class="prop-strip">${rows}</div>` : "";
@@ -384,7 +415,7 @@
     app.dataset.audioScene = node.scene || "rental_room_rain_night";
     app.dataset.audioBgm = resolvedCue.bgm || "";
     app.dataset.audioAmbience = resolvedCue.ambience || "";
-    app.dataset.audioSfx = sfxList.join(",");
+    app.dataset.audioSfx = sfxList.map(cueKey).filter(Boolean).join(",");
     app.dataset.audioVoice = speakerProfile;
     updateAudioForNode(node, resolvedCue);
   }
@@ -394,11 +425,15 @@
     return {
       audioEnabled: saved.audioEnabled !== false,
       voiceEnabled: saved.voiceEnabled !== false,
-      voiceMode: ["real", "fallback", "off"].includes(saved.voiceMode) ? saved.voiceMode : "real",
-      audioSourceMode: ["external-approved-only", "generated-dev-only"].includes(saved.audioSourceMode) ? saved.audioSourceMode : "external-approved-only",
-      allowPlaceholderVoices: saved.allowPlaceholderVoices === true,
       bgmEnabled: saved.bgmEnabled !== false,
+      ambienceEnabled: saved.ambienceEnabled !== false,
       sfxEnabled: saved.sfxEnabled !== false,
+      masterVolume: clampNumber(saved.masterVolume ?? 0.72, 0, 1),
+      bgmVolume: clampNumber(saved.bgmVolume ?? 0.55, 0, 1),
+      ambienceVolume: clampNumber(saved.ambienceVolume ?? 0.5, 0, 1),
+      sfxVolume: clampNumber(saved.sfxVolume ?? 0.68, 0, 1),
+      stingerVolume: clampNumber(saved.stingerVolume ?? 0.58, 0, 1),
+      devAudioDebug: saved.devAudioDebug === true,
     };
   }
 
@@ -409,6 +444,37 @@
 
   function isAudioEnabled() {
     return getAudioSettings().audioEnabled;
+  }
+
+  function getReadingSettings() {
+    const saved = readJSON(STORAGE_KEYS.settings, {});
+    return {
+      textSpeed: ["slow", "normal", "fast", "instant"].includes(saved.textSpeed) ? saved.textSpeed : "normal",
+      instantText: saved.instantText === true,
+      autoPlay: saved.autoPlay === true,
+      skipRead: saved.skipRead === true,
+      fontScale: clampNumber(saved.fontScale ?? 1, 0.9, 1.22),
+      deepDarkMode: saved.deepDarkMode === true,
+      hideUi: saved.hideUi === true,
+    };
+  }
+
+  function saveReadingSettings(settings) {
+    const saved = readJSON(STORAGE_KEYS.settings, {});
+    saveJSON(STORAGE_KEYS.settings, { ...saved, ...settings });
+  }
+
+  function scaledVolume(base, channel = "sfx") {
+    const settings = getAudioSettings();
+    const channelMap = {
+      bgm: settings.bgmVolume,
+      ambience: settings.ambienceVolume,
+      sfx: settings.sfxVolume,
+      stingers: settings.stingerVolume,
+      voice: settings.stingerVolume,
+      narration: settings.stingerVolume,
+    };
+    return clampNumber((Number(base) || 0) * settings.masterVolume * (channelMap[channel] ?? 1), 0, 1);
   }
 
   function ensureAudioContext() {
@@ -451,16 +517,78 @@
     } catch (error) {}
   }
 
-  function logAudioEvent(category, key, sourceType, src, status, qualityStatus = "") {
+  function removeActiveAudio(listName, audio) {
+    const list = audioState[listName];
+    if (!Array.isArray(list) || !audio) return;
+    const index = list.indexOf(audio);
+    if (index >= 0) list.splice(index, 1);
+  }
+
+  function cueKey(cue) {
+    return typeof cue === "string" ? cue : cue?.key || "";
+  }
+
+  function normalizeAudioCue(cue, defaults = {}) {
+    if (typeof cue === "string") return { key: cue, ...defaults };
+    if (!cue || typeof cue !== "object") return null;
+    const key = cue.key || "";
+    if (!key) return null;
+    return { ...defaults, ...cue, key };
+  }
+
+  function clearPendingSfxTimers() {
+    (audioState.pendingSfxTimers || []).forEach((timer) => window.clearTimeout(timer));
+    audioState.pendingSfxTimers = [];
+  }
+
+  function stopTrackedAudioList(listName, reason = "node-change") {
+    const list = Array.isArray(audioState[listName]) ? [...audioState[listName]] : [];
+    audioState[listName] = [];
+    list.forEach((audio) => {
+      logAudioEvent(audio.dataset?.audioCategory || listName, audio.dataset?.audioKey || "", audio.dataset?.sourceType || "external-approved", audio.currentSrc || audio.src || "", "stopped", "", "stopped", reason);
+      stopRealAudio(audio);
+    });
+  }
+
+  function stopNodeTransientAudio(reason = "node-change") {
+    clearPendingSfxTimers();
+    stopTrackedAudioList("activeSfx", reason);
+    stopTrackedAudioList("activeStingers", reason);
+    stopAllDialogueAudio();
+  }
+
+  function fadeOutAudio(audio, fadeOutMs = 300, reason = "fadeout") {
+    if (!audio) return;
+    const startVolume = Number.isFinite(audio.volume) ? audio.volume : 0.5;
+    const startedAt = Date.now();
+    const tick = () => {
+      const progress = Math.min(1, (Date.now() - startedAt) / Math.max(1, fadeOutMs));
+      try {
+        audio.volume = Math.max(0, startVolume * (1 - progress));
+      } catch (error) {}
+      if (progress < 1) {
+        window.setTimeout(tick, 40);
+        return;
+      }
+      logAudioEvent(audio.dataset?.audioCategory || "audio", audio.dataset?.audioKey || "", audio.dataset?.sourceType || "external-approved", audio.currentSrc || audio.src || "", "fadeout", "", "fadeout", reason);
+      stopRealAudio(audio);
+    };
+    tick();
+  }
+
+  function logAudioEvent(category, key, sourceType, src, status, qualityStatus = "", eventType = "source", reason = "") {
     audioState.debugLog.push({
       time: new Date().toISOString(),
+      nodeId: state?.nodeId || audioState.currentNodeId || "",
       category,
       key,
+      eventType,
+      reason,
       sourceType,
       src,
       status,
       qualityStatus,
-      fallbackUsed: sourceType === "generated-dev-only" || sourceType === "synthetic-dev-only",
+      fallbackUsed: false,
     });
     if (audioState.debugLog.length > 50) audioState.debugLog.splice(0, audioState.debugLog.length - 50);
     window.SECOND_LIFE_AUDIO_DEBUG = audioState.debugLog;
@@ -470,77 +598,48 @@
     return Boolean(
       asset?.path &&
       ["demo-approved", "final-approved"].includes(asset.status) &&
-      asset.qualityStatus === "approved"
+      asset.qualityStatus === "approved" &&
+      asset.productionGrade !== "reject"
     );
   }
 
   function getAudioSource(category, key) {
     if (!key) return null;
-    const settings = getAudioSettings();
-    const generatedSrc = AUDIO?.[category]?.[key] || "";
-    const external = window.SECOND_LIFE_EXTERNAL_AUDIO;
-    const externalAsset = external?.[category]?.[key] ||
-      Object.values(external?.[category] || {}).find((asset) => asset?.storyKey === key);
-
-    if (isApprovedExternalAsset(externalAsset)) {
-      logAudioEvent(category, key, "external-approved", externalAsset.path, externalAsset.status, externalAsset.qualityStatus);
-      return {
-        src: externalAsset.path,
-        fallbackSrc: settings.audioSourceMode === "generated-dev-only" ? (externalAsset.fallbackPath || generatedSrc) : "",
-        externalId: externalAsset.id || key,
-        sourceType: "external-approved",
-      };
+    const manifest = window.SECOND_LIFE_EXTERNAL_AUDIO;
+    const asset = manifest?.[category]?.[key] || Object.values(manifest?.[category] || {}).find((item) => item?.storyKey === key);
+    if (isApprovedExternalAsset(asset)) {
+      const sourceType = asset.sourceFamily === "CC0 exception" ? "cc0-exception" : "sound-library";
+      logAudioEvent(category, key, sourceType, asset.path, asset.status, asset.qualityStatus);
+      return { src: asset.path, externalId: asset.id || key, sourceType };
     }
-
-    if (externalAsset?.path) {
-      logAudioEvent(category, key, "external-rejected", externalAsset.path, externalAsset.status || "missing-status", externalAsset.qualityStatus || "missing-quality");
-      console.warn(`[Second Life Audio] External asset rejected for ${category}:${key}`);
-    }
-
-    if (settings.audioSourceMode === "generated-dev-only" && generatedSrc) {
-      logAudioEvent(category, key, "generated-dev-only", generatedSrc, "dev-only", "not-runtime-default");
-      return { src: generatedSrc, fallbackSrc: "", sourceType: "generated-dev-only" };
-    }
-
-    logAudioEvent(category, key, "silent-no-approved-external", "", "silent", "missing-approved-external");
-    if (!generatedSrc && !externalAsset) console.warn(`[Second Life Audio] Missing ${category}: ${key}`);
+    logAudioEvent(category, key, "silent", "", "silent", "missing-or-rejected");
+    if (getAudioSettings().devAudioDebug) console.warn(`[Second Life Audio] Silent cue: ${category}:${key}`);
     return null;
-  }
-
-  function isPlaceholderDialogueAsset(node) {
-    const profileId = node.voiceProfile || getVisualCharacter(node.visualCharacter || node.speaker).id || "narrator";
-    const profile = AUDIO.voiceProfiles?.[profileId];
-    return profile?.productionStatus === "need-retake" || profile?.productionStatus === "placeholder";
   }
 
   function playRealAudio(source, options = {}) {
     if (!source || typeof Audio !== "function") return null;
-    const descriptor = typeof source === "string" ? { src: source, fallbackSrc: "" } : source;
+    const descriptor = typeof source === "string" ? { src: source } : source;
     if (!descriptor?.src) return null;
-    let fallbackStarted = false;
-    const startFallback = () => {
-      if (fallbackStarted) return;
-      fallbackStarted = true;
-      if (descriptor.fallbackSrc) {
-        logAudioEvent(options.category || "unknown", options.key || "", "generated-dev-only", descriptor.fallbackSrc, "fallback", "dev-only");
-        const fallbackAudio = playRealAudio({ src: descriptor.fallbackSrc, fallbackSrc: "" }, { ...options, onFallback: null, onFallbackAudio: null });
-        options.onFallbackAudio?.(fallbackAudio);
-        return;
-      }
-      options.onFallback?.();
-    };
     const audio = new Audio(descriptor.src);
     audio.loop = options.loop === true;
     audio.volume = options.volume ?? 0.72;
+    audio.dataset.audioCategory = options.category || "";
+    audio.dataset.audioKey = options.key || "";
+    audio.dataset.sourceType = descriptor.sourceType || options.sourceType || "external-approved";
+    logAudioEvent(options.category || "unknown", options.key || "", audio.dataset.sourceType, descriptor.src, "start", "", "start", options.reason || "node-enter");
     audio.addEventListener("error", () => {
       console.warn(`[Second Life Audio] Unable to load ${descriptor.src}`);
-      startFallback();
+      logAudioEvent(options.category || "unknown", options.key || "", audio.dataset.sourceType, descriptor.src, "silent-load-failure", "", "error", options.reason || "node-enter");
+    }, { once: true });
+    audio.addEventListener("ended", () => {
+      logAudioEvent(options.category || "unknown", options.key || "", audio.dataset.sourceType, descriptor.src, "ended", "", "ended", options.reason || "natural-end");
     }, { once: true });
     const playPromise = audio.play();
     if (playPromise?.catch) {
       playPromise.catch((error) => {
         console.warn(`[Second Life Audio] Unable to play ${descriptor.src}`, error);
-        startFallback();
+        logAudioEvent(options.category || "unknown", options.key || "", audio.dataset.sourceType, descriptor.src, "silent-play-failure", "", "error", options.reason || "node-enter");
       });
     }
     return audio;
@@ -593,115 +692,226 @@
     return [65.41, 98, 146.83];
   }
 
-  function startSyntheticBgm(name) {
-    if (name) console.warn(`[Second Life Audio] BGM missing, skip synthetic bgm in production mode: ${name}`);
-  }
-
   function startBgm(name) {
     const settings = getAudioSettings();
     if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
     if (audioState.currentBgm === name) return;
     const src = getAudioSource("bgm", name);
-    stopRealAudio(audioState.realBgm);
-    audioState.realBgm = null;
     stopAudioHandle(audioState.bgm);
     audioState.bgm = null;
     audioState.currentBgm = "";
     if (src) {
       audioState.currentBgm = name;
-      audioState.realBgm = playRealAudio(src, {
+      const targetVolume = scaledVolume(0.1, "bgm");
+      const nextAudio = playRealAudio(src, {
         category: "bgm",
         key: name,
         loop: true,
-        volume: 0.14,
-        onFallbackAudio: (fallbackAudio) => {
-          if (audioState.currentBgm === name) audioState.realBgm = fallbackAudio;
-        },
-        onFallback: () => {
-          if (audioState.currentBgm === name) {
-            audioState.currentBgm = "";
-            startSyntheticBgm(name);
-          }
-        },
+        volume: 0,
       });
+      if (nextAudio) crossfadeAudioLayer("realBgm", nextAudio, targetVolume, 800, "bgm-crossfade");
       return;
     }
-    startSyntheticBgm(name);
+    audioState.currentBgm = "";
   }
 
-  function startSyntheticAmbience(name) {
-    if (name) console.warn(`[Second Life Audio] Ambience missing, skip synthetic noise ambience: ${name}`);
+  function startEntryMusic(name = "life_archive_theme") {
+    const settings = getAudioSettings();
+    if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
+    if (audioState.currentEntryBgm === name && audioState.realEntryBgm) return;
+    const src = getAudioSource("bgm", name);
+    if (!src) return;
+    audioState.currentEntryBgm = name;
+    const nextAudio = playRealAudio(src, {
+      category: "bgm",
+      key: name,
+      loop: true,
+      volume: 0,
+      reason: "entry-archive",
+    });
+    if (nextAudio) crossfadeAudioLayer("realEntryBgm", nextAudio, scaledVolume(0.072, "bgm"), 1000, "entry-theme-crossfade");
+  }
+
+  function stopEntryMusic(reason = "leave-entry") {
+    if (audioState.realEntryBgm) fadeOutAudio(audioState.realEntryBgm, 1000, reason);
+    audioState.realEntryBgm = null;
+    audioState.currentEntryBgm = "";
   }
 
   function startAmbience(name) {
     const settings = getAudioSettings();
-    if (!settings.audioEnabled || !settings.bgmEnabled || !audioState.unlocked || !name) return;
+    if (!settings.audioEnabled || !settings.ambienceEnabled || !audioState.unlocked || !name) return;
     if (audioState.currentAmbience === name) return;
     const src = getAudioSource("ambience", name);
-    stopRealAudio(audioState.realAmbience);
-    audioState.realAmbience = null;
     stopAudioHandle(audioState.ambience);
     audioState.ambience = null;
     audioState.currentAmbience = "";
     if (src) {
       audioState.currentAmbience = name;
-      audioState.realAmbience = playRealAudio(src, {
+      const targetVolume = scaledVolume(0.08, "ambience");
+      const nextAudio = playRealAudio(src, {
         category: "ambience",
         key: name,
         loop: true,
-        volume: 0.08,
-        onFallbackAudio: (fallbackAudio) => {
-          if (audioState.currentAmbience === name) audioState.realAmbience = fallbackAudio;
-        },
-        onFallback: () => {
-          if (audioState.currentAmbience === name) {
-            audioState.currentAmbience = "";
-            startSyntheticAmbience(name);
-          }
-        },
+        volume: 0,
       });
+      if (nextAudio) crossfadeAudioLayer("realAmbience", nextAudio, targetVolume, 700, "ambience-crossfade");
       return;
     }
-    startSyntheticAmbience(name);
+    audioState.currentAmbience = "";
   }
 
-  function playSyntheticSfx(name = "") {
-    logAudioEvent("sfx", name, "synthetic-dev-only", "", "disabled", "not-runtime-default");
-    console.warn(`[Second Life Audio] Synthetic SFX disabled in external-approved-only mode: ${name}`);
+  function getNodeAudioPolicy(node = {}) {
+    return {
+      stopPreviousSfx: node.audioPolicy?.stopPreviousSfx !== false,
+      stopPreviousStingers: node.audioPolicy?.stopPreviousStingers !== false,
+      bgmMode: ["replace", "keep", "fadeout"].includes(node.audioPolicy?.bgmMode) ? node.audioPolicy.bgmMode : "keep",
+      ambienceMode: ["replace", "keep", "fadeout"].includes(node.audioPolicy?.ambienceMode) ? node.audioPolicy.ambienceMode : "keep",
+      fadeOutMs: Number.isFinite(Number(node.audioPolicy?.fadeOutMs)) ? Number(node.audioPolicy.fadeOutMs) : 300,
+    };
   }
 
-  function playSfx(name = "") {
+  function stopBgm(reason = "policy") {
+    if (audioState.realBgm) fadeOutAudio(audioState.realBgm, 300, reason);
+    stopAudioHandle(audioState.bgm);
+    audioState.realBgm = null;
+    audioState.bgm = null;
+    audioState.currentBgm = "";
+  }
+
+  function stopAmbience(reason = "policy") {
+    if (audioState.realAmbience) fadeOutAudio(audioState.realAmbience, 300, reason);
+    stopAudioHandle(audioState.ambience);
+    audioState.realAmbience = null;
+    audioState.ambience = null;
+    audioState.currentAmbience = "";
+  }
+
+  function transitionAudioForNode(prevNode, nextNode, sceneCue = {}) {
+    const policy = getNodeAudioPolicy(nextNode);
+    if (policy.stopPreviousSfx) stopTrackedAudioList("activeSfx", "node-leave");
+    if (policy.stopPreviousStingers) {
+      stopTrackedAudioList("activeStingers", "node-leave");
+      stopAllDialogueAudio();
+    }
+
+    if (policy.bgmMode === "fadeout") {
+      stopBgm("policy-fadeout");
+    } else if (policy.bgmMode === "replace") {
+      if (sceneCue.bgm) startBgm(sceneCue.bgm);
+      else stopBgm("missing-next-bgm");
+    } else if (policy.bgmMode === "keep" && sceneCue.bgm && audioState.currentBgm !== sceneCue.bgm) {
+      startBgm(sceneCue.bgm);
+    }
+
+    if (policy.ambienceMode === "fadeout") {
+      stopAmbience("policy-fadeout");
+    } else if (policy.ambienceMode === "replace") {
+      if (sceneCue.ambience) startAmbience(sceneCue.ambience);
+      else stopAmbience("missing-next-ambience");
+    } else if (policy.ambienceMode === "keep" && sceneCue.ambience && audioState.currentAmbience !== sceneCue.ambience) {
+      startAmbience(sceneCue.ambience);
+    }
+
+    audioState.currentNodeId = nextNode?.nodeId || "";
+    logAudioEvent("node", nextNode?.nodeId || "", "lifecycle", "", "transitioned", "", "start", prevNode?.nodeId ? "node-change" : "node-enter");
+  }
+
+  function duckBgmForSfx(durationMs = 0) {
+    if (!durationMs || durationMs < 80) return;
+    window.clearTimeout(audioState.duckRestoreTimer);
+    const bgm = audioState.realBgm;
+    const ambience = audioState.realAmbience;
+    try {
+      if (bgm) bgm.volume = Math.min(bgm.volume, 0.08);
+      if (ambience) ambience.volume = Math.min(ambience.volume, 0.05);
+    } catch (error) {}
+    audioState.duckRestoreTimer = window.setTimeout(() => {
+      try {
+        if (bgm && audioState.realBgm === bgm) bgm.volume = scaledVolume(0.1, "bgm");
+        if (ambience && audioState.realAmbience === ambience) ambience.volume = scaledVolume(0.08, "ambience");
+      } catch (error) {}
+    }, durationMs);
+  }
+
+  function fadeInAudio(audio, targetVolume = 0.46, fadeInMs = 0) {
+    if (!audio || !fadeInMs) return;
+    const startedAt = Date.now();
+    try { audio.volume = 0; } catch (error) {}
+    const tick = () => {
+      const progress = Math.min(1, (Date.now() - startedAt) / Math.max(1, fadeInMs));
+      try { audio.volume = targetVolume * progress; } catch (error) {}
+      if (progress < 1) window.setTimeout(tick, 40);
+    };
+    tick();
+  }
+
+  function crossfadeAudioLayer(layerName, nextAudio, targetVolume, fadeMs = 720, reason = "layer-crossfade") {
+    const previousAudio = audioState[layerName];
+    audioState[layerName] = nextAudio || null;
+    if (nextAudio) fadeInAudio(nextAudio, targetVolume, fadeMs);
+    if (previousAudio && previousAudio !== nextAudio) fadeOutAudio(previousAudio, fadeMs, reason);
+  }
+
+  function playSfx(cue = "") {
     const settings = getAudioSettings();
+    const normalized = normalizeAudioCue(cue);
+    const name = normalized?.key || "";
     if (!settings.audioEnabled || !settings.sfxEnabled || !audioState.unlocked || !name) return;
+    const now = Date.now();
+    const suppressMs = Number(normalized.suppressMs ?? 180);
+    if (audioState.recentSfx[name] && now - audioState.recentSfx[name] < suppressMs) return;
+    audioState.recentSfx[name] = now;
+    const playNow = () => playSfxNow(normalized);
+    const delayMs = Math.max(0, Number(normalized.delayMs || 0));
+    if (delayMs > 0) {
+      const timer = window.setTimeout(() => {
+        removePendingSfxTimer(timer);
+        playNow();
+      }, delayMs);
+      audioState.pendingSfxTimers.push(timer);
+      return;
+    }
+    playNow();
+  }
+
+  function removePendingSfxTimer(timer) {
+    const index = audioState.pendingSfxTimers.indexOf(timer);
+    if (index >= 0) audioState.pendingSfxTimers.splice(index, 1);
+  }
+
+  function playSfxNow(cue = {}) {
+    const name = cue.key || "";
     const src = getAudioSource("sfx", name);
     if (src) {
-      playRealAudio(src, {
+      const volume = scaledVolume(clampNumber(cue.volume ?? 0.46, 0.02, 1), "sfx");
+      duckBgmForSfx(Number(cue.duckBgmMs || 0));
+      const audio = playRealAudio(src, {
         category: "sfx",
         key: name,
         loop: false,
-        volume: 0.46,
-        onFallback: () => {
-          if (getAudioSettings().audioSourceMode === "generated-dev-only") playSyntheticSfx(name);
-        },
+        volume,
+        reason: cue.reason || "node-enter",
       });
+      if (audio) {
+        fadeInAudio(audio, volume, Number(cue.fadeInMs || 0));
+        audioState.activeSfx.push(audio);
+        audio.addEventListener("ended", () => removeActiveAudio("activeSfx", audio), { once: true });
+        audio.addEventListener("error", () => removeActiveAudio("activeSfx", audio), { once: true });
+      }
       return;
     }
-    if (name === "static_noise") {
-      console.warn("[Second Life Audio] static_noise missing, skip synthetic noise fallback.");
-      return;
-    }
-    if (getAudioSettings().audioSourceMode === "generated-dev-only") playSyntheticSfx(name);
   }
 
   function speakNode(node) {
     const settings = getAudioSettings();
-    if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked || settings.voiceMode === "off") return;
+    if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked) return;
     if (audioState.lastVoiceNodeId === node.nodeId) return;
     stopAllDialogueAudio();
     const token = audioState.dialogueToken;
     const sessionId = audioState.dialogueSessionId;
-    const realVoiceKey = node.voiceAudio || node.narrationAudio || node.voiceStinger || "";
-    const realVoiceCategory = node.voiceAudio ? "voice" : node.narrationAudio ? "narration" : node.voiceStinger ? "stingers" : "";
+    const realVoiceKey = node.voiceStinger || "";
+    const realVoiceCategory = node.voiceStinger ? "stingers" : "";
     if (!realVoiceKey || !realVoiceCategory) return;
     const realVoiceSrc = getAudioSource(realVoiceCategory, realVoiceKey);
     if (realVoiceCategory !== "stingers" && realVoiceSrc && isPlaceholderDialogueAsset(node) && !settings.allowPlaceholderVoices) {
@@ -719,7 +929,8 @@
         category: realVoiceCategory,
         key: realVoiceKey,
         loop: false,
-        volume: realVoiceCategory === "stingers" ? 0.52 : 0.82,
+        volume: scaledVolume(realVoiceCategory === "stingers" ? 0.52 : 0.82, realVoiceCategory),
+        reason: "node-enter",
         onFallbackAudio: (fallbackAudio) => {
           if (sessionId !== audioState.dialogueSessionId || token !== audioState.dialogueToken) {
             stopRealAudio(fallbackAudio);
@@ -743,9 +954,14 @@
         audioState.currentDialogueAudio = null;
         audioState.realVoice = null;
         audioState.currentDialogueAbortController = null;
+        if (realVoiceCategory === "stingers") removeActiveAudio("activeStingers", audio);
+      }, { once: true });
+      audio.addEventListener("error", () => {
+        if (realVoiceCategory === "stingers") removeActiveAudio("activeStingers", audio);
       }, { once: true });
       audioState.currentDialogueAudio = audio;
       audioState.realVoice = audio;
+      if (realVoiceCategory === "stingers") audioState.activeStingers.push(audio);
       audioState.lastVoiceNodeId = node.nodeId;
       return;
     }
@@ -897,25 +1113,28 @@
   function updateAudioForNode(node, sceneCue = {}) {
     const settings = getAudioSettings();
     if (!settings.audioEnabled || !audioState.unlocked) return;
-    startBgm(sceneCue.bgm);
-    startAmbience(sceneCue.ambience);
+    const prevNode = audioState.currentNodeId ? DATA.nodes?.[audioState.currentNodeId] : null;
+    transitionAudioForNode(prevNode, node, sceneCue);
     const sfxList = Array.isArray(sceneCue.sfx) ? sceneCue.sfx : sceneCue.sfx ? [sceneCue.sfx] : [];
     sfxList.forEach((name) => playSfx(name));
-    if (node.type === "clue") playSfx("clue_reveal");
     speakNode(node);
   }
 
   function stopAllAudio() {
+    stopNodeTransientAudio("all-audio-stop");
     stopAllDialogueAudio();
     stopAudioHandle(audioState.bgm);
     stopAudioHandle(audioState.ambience);
     stopRealAudio(audioState.realBgm);
+    stopRealAudio(audioState.realEntryBgm);
     stopRealAudio(audioState.realAmbience);
     audioState.bgm = null;
     audioState.ambience = null;
     audioState.realBgm = null;
+    audioState.realEntryBgm = null;
     audioState.realAmbience = null;
     audioState.currentBgm = "";
+    audioState.currentEntryBgm = "";
     audioState.currentAmbience = "";
   }
 
@@ -925,7 +1144,8 @@
     if (next) {
       unlockAudio();
       const node = getNode();
-      if (node) prepareAudioCue(node);
+      if (currentView === "hall" || currentView === "series") startEntryMusic("life_archive_theme");
+      else if (node) prepareAudioCue(node);
       showToast("声音已开启", "clue");
     } else {
       stopAllAudio();
@@ -991,6 +1211,46 @@
     `;
   }
 
+  function getCurrentObjective(node = getNode()) {
+    if (!node?.objectiveId || !node?.objectiveText) return null;
+    const done = (state.completedObjectives || []).includes(node.objectiveId);
+    return { id: node.objectiveId, text: node.objectiveText, done };
+  }
+
+  function renderObjectivePanel(node) {
+    const objective = getCurrentObjective(node);
+    if (!objective) return "";
+    return `
+      <section class="objective-panel ${objective.done ? "is-done" : ""}">
+        <span>当前目标</span>
+        <strong>${escapeHTML(objective.text)}</strong>
+      </section>
+    `;
+  }
+
+  function completeObjective(node) {
+    if (!node?.objectiveId || node.objectiveComplete !== true) return;
+    state.completedObjectives ||= [];
+    if (state.completedObjectives.includes(node.objectiveId)) return;
+    state.completedObjectives.push(node.objectiveId);
+    showToast(`目标完成：${node.objectiveText || node.objectiveId}`, "clue");
+  }
+
+  function markNodeRead(node) {
+    if (!node?.nodeId) return;
+    state.readNodes ||= [];
+    if (!state.readNodes.includes(node.nodeId)) state.readNodes.push(node.nodeId);
+  }
+
+  function unlockGalleryForNode(node) {
+    const ids = [node?.scene, node?.visualCharacter, ...(node?.highlightProps || [])].filter(Boolean);
+    state.galleryUnlocks ||= [];
+    ids.forEach((id) => {
+      if (!state.galleryUnlocks.includes(id)) state.galleryUnlocks.push(id);
+    });
+    saveStoredCollection({ gallery: state.galleryUnlocks });
+  }
+
   function ensureChapterStats(chapterId) {
     if (!chapterId) return null;
     if (!state.chapterStats[chapterId]) {
@@ -1047,6 +1307,12 @@
       relationships: normalizeRelationships(input.relationships),
       relationshipEvents: Array.isArray(input.relationshipEvents) ? input.relationshipEvents : [],
       endingPathTags: Array.isArray(input.endingPathTags) ? input.endingPathTags : [],
+      completedObjectives: Array.isArray(input.completedObjectives) ? input.completedObjectives : [],
+      checkedHotspots: Array.isArray(input.checkedHotspots) ? input.checkedHotspots : [],
+      evidenceConnections: Array.isArray(input.evidenceConnections) ? input.evidenceConnections : [],
+      endingCollection: Array.from(new Set([...(loadStoredCollection().endings || []), ...((Array.isArray(input.endingCollection) && input.endingCollection) || [])])),
+      galleryUnlocks: Array.from(new Set([...(loadStoredCollection().gallery || []), ...((Array.isArray(input.galleryUnlocks) && input.galleryUnlocks) || [])])),
+      readNodes: Array.isArray(input.readNodes) ? input.readNodes : [],
     };
   }
 
@@ -1059,6 +1325,12 @@
       relationships: { ...state.relationships },
       relationshipEvents: [...(state.relationshipEvents || [])],
       endingPathTags: [...(state.endingPathTags || [])],
+      completedObjectives: [...(state.completedObjectives || [])],
+      checkedHotspots: [...(state.checkedHotspots || [])],
+      evidenceConnections: [...(state.evidenceConnections || [])],
+      endingCollection: [...(state.endingCollection || [])],
+      galleryUnlocks: [...(state.galleryUnlocks || [])],
+      readNodes: [...(state.readNodes || [])],
       updatedAt: new Date().toISOString(),
     };
   }
@@ -1072,7 +1344,10 @@
   function setView(name, html) {
     currentView = name;
     app.className = `app-shell view-${name}`;
+    app.dataset.view = name;
+    document.body.dataset.view = name;
     app.innerHTML = html;
+    window.requestAnimationFrame(() => app.classList.add("is-view-ready"));
   }
 
   function showSplash() {
@@ -1081,16 +1356,19 @@
       `
       <section class="splash-screen">
         <img class="splash-hero-art" src="${escapeHTML(VISUALS.covers?.home || "")}" alt="" aria-hidden="true" />
-        <div class="life-orbit" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
+        <div class="splash-veil" aria-hidden="true"></div>
+        <div class="splash-content">
+          <p class="brand-mark">SECOND LIFE / 人生档案计划</p>
+          <p class="splash-index">ARCHIVE ACCESS 0001</p>
+          <h1>${escapeHTML(DATA.product.name)}</h1>
+          <p class="splash-subtitle">${escapeHTML(DATA.product.subtitle)}</p>
+          <p class="splash-intro">每一次选择，都会走向另一种人生。</p>
+          <div class="splash-action">
+            <button class="primary-cta" type="button" data-action="enter-hall"><span>进入人生档案</span><i aria-hidden="true">&#8594;</i></button>
+            <small>首次操作后轻柔开启声音，可随时关闭。</small>
+          </div>
         </div>
-        <div class="brand-mark">SECOND LIFE</div>
-        <h1>${escapeHTML(DATA.product.name)}</h1>
-        <p>${escapeHTML(DATA.product.subtitle)}</p>
-        <small>每一次选择，都会走向另一种人生。</small>
-        <button class="primary-cta" type="button" data-action="enter-hall">开始体验</button>
+        <footer class="splash-footer"><span>01 / PUBLIC ARCHIVE</span><span>请妥善保管你的选择</span></footer>
       </section>
       `
     );
@@ -1101,46 +1379,52 @@
   }
 
   function showHall() {
-    stopAllDialogueAudio();
-    const cards = DATA.series
-      .map((series) => {
-        const isOpen = series.status === "open";
-        const coverImage = series.seriesId === "series_rain_call"
-          ? VISUALS.covers?.home
-          : series.seriesId === "series_old_building"
-            ? VISUALS.covers?.oldBuilding
-            : VISUALS.covers?.missingPerson;
-        return `
-          <article class="case-folder ${isOpen ? "is-open" : "is-locked"}" data-series-id="${series.seriesId}">
-            <div class="folder-cover ${isOpen ? "cover-rain-call" : "cover-sealed"}">
-              <img src="${escapeHTML(coverImage || VISUALS.covers?.lockedArchive || "")}" alt="" loading="lazy" />
-            </div>
-            <div class="folder-tab">${isOpen ? "已开放" : "未开放"}</div>
-            <div class="folder-lines" aria-hidden="true"></div>
-            <span class="story-kind">${isOpen ? "悬疑人生" : "待解锁人生"}</span>
-            <h2>${escapeHTML(series.title)}</h2>
-            <p>${escapeHTML(series.summary)}</p>
-            <button class="ghost-button" type="button">${isOpen ? "查看档案" : "未开放"}</button>
-          </article>
-        `;
-      })
-      .join("");
+    stopNodeTransientAudio("leave-game");
+    stopBgm("return-to-archive");
+    stopAmbience("return-to-archive");
+    startEntryMusic("life_archive_theme");
+    const openSeries = DATA.series.find((series) => series.status === "open");
+    const lockedSeries = DATA.series.filter((series) => series !== openSeries);
+    const lockedRows = lockedSeries.map((series, index) => `
+      <button class="archive-ledger-row" type="button" data-series-id="${series.seriesId}">
+        <span class="archive-ledger-index">0${index + 2}</span>
+        <strong>${escapeHTML(series.title)}</strong>
+        <span>档案封存中</span>
+        <i aria-hidden="true">&#8594;</i>
+      </button>
+    `).join("");
 
     setView(
       "hall",
       `
       <section class="hall-screen">
-        <header class="page-header">
-          <p class="eyebrow">LIFE ARCHIVE</p>
+        <header class="page-header archive-header">
+          <p class="eyebrow">SECOND LIFE / LIFE ARCHIVE</p>
           <h1>人生档案</h1>
-          <p>选择一个人生故事，进入别人的秘密、选择与结局。</p>
+          <p>这里保存着尚未结束的人生。选择一份档案，接过其中的秘密、选择与结局。</p>
         </header>
-        <div class="series-shelf">${cards}</div>
+        ${openSeries ? `
+          <article class="archive-feature" data-series-id="${openSeries.seriesId}">
+            <img src="${escapeHTML(VISUALS.covers?.home || "")}" alt="《${escapeHTML(openSeries.title)}》故事封面" />
+            <div class="archive-feature-scrim" aria-hidden="true"></div>
+            <div class="archive-feature-copy">
+              <p class="archive-status">开放档案 / 01</p>
+              <span class="story-kind">悬疑人生</span>
+              <h2>${escapeHTML(openSeries.title)}</h2>
+              <p>${escapeHTML(openSeries.summary)}</p>
+              <button class="case-button" type="button">查看档案 <i aria-hidden="true">&#8594;</i></button>
+            </div>
+          </article>
+        ` : `<div class="archive-empty-state"><p>暂时没有可读取的档案。</p></div>`}
+        <section class="archive-ledger" aria-label="封存档案">
+          <div class="archive-ledger-head"><p>后续人生</p><span>${lockedSeries.length} 份档案仍在封存</span></div>
+          ${lockedRows}
+        </section>
       </section>
       `
     );
 
-    app.querySelectorAll(".case-folder").forEach((card) => {
+    app.querySelectorAll("[data-series-id]").forEach((card) => {
       card.addEventListener("click", () => {
         const series = getSeries(card.dataset.seriesId);
         if (series.status !== "open") {
@@ -1175,8 +1459,11 @@
       <section class="series-screen story-file-screen">
         <button class="back-link" type="button" data-action="back-hall">\u2190 \u8fd4\u56de\u4eba\u751f\u6863\u6848</button>
         <header class="series-brief story-file-brief">
+          <img class="story-file-cover" src="${escapeHTML(VISUALS.covers?.home || "")}" alt="" aria-hidden="true" />
+          <div class="story-file-cover-scrim" aria-hidden="true"></div>
           <div class="story-file-copy">
             <p class="eyebrow">LIFE FILE</p>
+            <p class="story-file-number">ARCHIVE / 01 / AVAILABLE</p>
             <h1>${escapeHTML(openScript.title)}</h1>
             <p>\u66b4\u96e8\u591c\uff0c\u6797\u821f\u63a5\u5230\u6765\u81ea\u5df2\u6545\u5ba4\u53cb\u8bb8\u77e5\u590f\u7684\u7535\u8bdd\uff1b\u95e8\u5916\u5374\u7ad9\u7740\u4e00\u4e2a\u548c\u5979\u6781\u50cf\u7684\u5973\u4eba\u3002</p>
             <div class="story-file-tags"><span>\u60ac\u7591\u4eba\u751f</span><span>\u90fd\u5e02\u96e8\u591c</span><span>\u4f2a\u7075\u5f02\u65e7\u6848</span></div>
@@ -1199,6 +1486,7 @@
       </section>
       `
     );
+    startEntryMusic("life_archive_theme");
 
     app.querySelector("[data-action='back-hall']").addEventListener("click", showHall);
     app.querySelector("[data-action='start-script']").addEventListener("click", () => {
@@ -1218,7 +1506,9 @@
 
 
   function startNewGame() {
-    stopAllDialogueAudio();
+    stopNodeTransientAudio("restart");
+    stopEntryMusic("story-start");
+    visualState = { current: null };
     unlockAudio();
     state = createInitialState();
     autoSave();
@@ -1226,6 +1516,7 @@
   }
 
   function showGame() {
+    stopEntryMusic("story-enter");
     const node = getNode();
     if (!node) {
       showToast("剧情节点缺失，已返回人生档案。", "warn");
@@ -1237,10 +1528,14 @@
 
     const chapter = getChapter(node.chapterId);
     const sceneClass = `scene-${node.scene || "rental_room_rain_night"}`;
+    const readingSettings = getReadingSettings();
+    const previousVisual = visualState.current;
+    const sceneMarkup = renderSceneVisual(node, previousVisual);
+    visualState.current = getSceneSnapshot(node);
     setView(
       "game",
       `
-      <section class="game-screen ${sceneClass}">
+      <section class="game-screen ${sceneClass} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
         <header class="game-topbar">
           <div class="game-title">
             <span>${escapeHTML(getScript().title)}</span>
@@ -1252,8 +1547,11 @@
             <button type="button" data-tool="clues" class="clue-tool ${state.unreadClues.length ? "has-unread" : ""}">
               线索 <span>${state.clues.length}/${getTotalClueCount()}</span>
             </button>
+            <button type="button" data-tool="evidence">证据板</button>
             <button type="button" data-tool="relationships">人物</button>
-            <button type="button" data-tool="audio">${isAudioEnabled() ? "声音 开" : "声音 关"}</button>
+            <button type="button" data-tool="audio">声音</button>
+            <button type="button" data-tool="reader">阅读</button>
+            <button type="button" data-tool="archive">档案馆</button>
 
             <button type="button" data-tool="save">存档</button>
             <button type="button" data-tool="load">读档</button>
@@ -1261,8 +1559,9 @@
             <button type="button" data-tool="hall">返回人生档案</button>
           </nav>
         </header>
+        ${renderObjectivePanel(node)}
         <div class="scene-stage">
-          ${renderSceneVisual(node)}
+          ${sceneMarkup}
         </div>
         <section class="dialogue-panel">
           <div class="speaker-tag">${escapeHTML(node.speaker || "旁白")}</div>
@@ -1285,6 +1584,9 @@
   }
 
   function applyNodeEffects(node) {
+    markNodeRead(node);
+    completeObjective(node);
+    unlockGalleryForNode(node);
     gainClues(node.gainClues || []);
     setFlags(node.setFlags || []);
     if (node.type !== "choice" && node.type !== "deduction") {
@@ -1304,7 +1606,7 @@
     if (node.resolveEnding === true) {
       continueButton.textContent = "查看结局";
       continueButton.addEventListener("click", () => {
-        stopAllDialogueAudio();
+        stopNodeTransientAudio("continue");
         state.endingId = resolveEnding();
         autoSave();
         showEnding(state.endingId);
@@ -1317,6 +1619,7 @@
       choiceArea.innerHTML = (node.choices || [])
         .map((choice) => `
           <button class="choice-button" type="button" data-choice-id="${choice.choiceId}">
+            ${choice.choiceIntent ? `<small>${escapeHTML(choice.choiceIntent)}</small>` : ""}
             <span>${escapeHTML(choice.text)}</span>
           </button>
         `)
@@ -1337,7 +1640,7 @@
     }
 
     continueButton.addEventListener("click", () => {
-      stopAllDialogueAudio();
+      stopNodeTransientAudio("continue");
       if (node.nextNodeId) {
         goToNode(node.nextNodeId);
       } else {
@@ -1350,7 +1653,7 @@
   function handleChoice(node, choiceId) {
     const choice = (node.choices || []).find((item) => item.choiceId === choiceId);
     if (!choice) return;
-    stopAllDialogueAudio();
+    stopNodeTransientAudio("choice");
     recordChoice(node, choice);
     addHistory({
       type: "choice",
@@ -1369,11 +1672,16 @@
       .concat(choice.sfxOnChoice || [])
       .concat(node.sfxOnChoice || [])
       .filter(Boolean);
-    if (choiceSfx.length) {
-      choiceSfx.forEach((name) => playSfx(name));
-    } else {
-      playSfx("choice_confirm_soft");
-    }
+    enqueueFeedback({
+      type: "choice",
+      title: choice.feedbackTitle || (node.type === "deduction" ? (choice.isCorrect ? "推理成立" : "推理偏差") : "选择留下痕迹"),
+      tone: choice.feedbackTone || (node.type === "deduction" ? (choice.isCorrect ? "correct" : "wrong") : "neutral"),
+      isDeduction: node.type === "deduction",
+      choiceText: choice.text,
+      text: choice.choiceImpactText || "这个选择已被记录。",
+      relationshipEffects: choice.relationshipEffects || [],
+      gainClues: choice.gainClues || [],
+    });
     evaluateProgressTriggers();
     evaluateAchievements();
     autoSave();
@@ -1383,6 +1691,7 @@
       state.endingId = resolveEnding();
       showEnding(state.endingId);
     }
+    choiceSfx.forEach((item) => playSfx(item));
   }
 
   function applyRelationshipEffects(effects) {
@@ -1417,7 +1726,7 @@
     });
   }
   function goToNode(nodeId) {
-    stopAllDialogueAudio();
+    stopNodeTransientAudio("node-change");
     if (DATA.endings[nodeId]) {
       showEnding(nodeId);
       return;
@@ -1426,7 +1735,7 @@
     const nextNode = DATA.nodes[nodeId];
     const chapterFeedback =
       previousNode && nextNode && previousNode.chapterId !== nextNode.chapterId
-        ? buildChapterSummaryFeedback(previousNode.chapterId, nextNode.chapterId)
+        ? buildChapterSummaryFeedback(previousNode.chapterId, nextNode.chapterId, previousNode.chapterRecap)
         : null;
     state.nodeId = nodeId;
     showGame();
@@ -1482,7 +1791,7 @@
     }
   }
 
-  function buildChapterSummaryFeedback(chapterId, nextChapterId) {
+  function buildChapterSummaryFeedback(chapterId, nextChapterId, recap = null) {
     const stats = ensureChapterStats(chapterId);
     if (!stats || stats.summaryShown) return null;
     stats.summaryShown = true;
@@ -1496,6 +1805,7 @@
       nextTitle: nextChapter?.title || "下一章",
       clues: [...stats.clues],
       choices: [...stats.choices],
+      recap,
     };
   }
 
@@ -1545,6 +1855,10 @@
     }
     if (item.type === "chapter") {
       openChapterSummaryFeedback(item);
+      return;
+    }
+    if (item.type === "choice") {
+      openChoiceFeedback(item);
       return;
     }
     if (item.type === "milestone") {
@@ -1600,10 +1914,13 @@
   }
 
   function showEnding(endingId) {
-    stopAllDialogueAudio();
+    stopNodeTransientAudio("ending");
     const ending = DATA.endings[endingId] || DATA.endings.ending_d;
     state.endingId = ending.endingId;
     state.nodeId = ending.endingId;
+    state.endingCollection ||= [];
+    if (!state.endingCollection.includes(ending.endingId)) state.endingCollection.push(ending.endingId);
+    saveStoredCollection({ endings: state.endingCollection, gallery: state.galleryUnlocks });
     evaluateAchievements();
     addHistory({
       type: "system",
@@ -1626,6 +1943,7 @@
             <button class="case-button" type="button" data-action="restart">重新开始</button>
             <button class="case-button secondary" type="button" data-action="load">读取存档</button>
             <button class="case-button secondary" type="button" data-action="clues">查看本次线索</button>
+            <button class="case-button secondary" type="button" data-action="archive">档案馆</button>
             <button class="ghost-button" type="button" data-action="hall">返回人生档案</button>
           </div>
         </div>
@@ -1638,6 +1956,7 @@
     });
     app.querySelector("[data-action='load']").addEventListener("click", () => openLoadModal());
     app.querySelector("[data-action='clues']").addEventListener("click", () => openClueModal());
+    app.querySelector("[data-action='archive']").addEventListener("click", () => openArchiveModal());
     app.querySelector("[data-action='hall']").addEventListener("click", showHall);
   }
 
@@ -1682,8 +2001,32 @@
           <h3>你如何走到这个结局</h3>
           <ol class="evidence-chain">${buildEndingPathReport(ending.endingId).map((item, index) => `<li><span>${String(index + 1).padStart(2, "0")}</span>${escapeHTML(item)}</li>`).join("")}</ol>
         </article>
+        ${renderEndingRoadmap(ending.endingId)}
         <blockquote>${escapeHTML(report.comment)}</blockquote>
       </section>
+    `;
+  }
+
+  function renderEndingRoadmap(currentEndingId) {
+    const links = getEvidenceLinks();
+    const connectedRows = links.map((link) => {
+      const connected = hasEvidenceConnection(link.linkId);
+      return `<li class="${connected ? "is-connected" : "is-missing"}"><span>${escapeHTML(link.title)}</span><strong>${connected ? "已连线" : "未连线"}</strong></li>`;
+    }).join("");
+    const collection = loadStoredCollection();
+    const endingRows = ["ending_a", "ending_b", "ending_c", "ending_d"].map((endingId) => {
+      const unlocked = endingId === currentEndingId || (collection.endings || []).includes(endingId) || (state.endingCollection || []).includes(endingId);
+      const title = unlocked ? DATA.endings[endingId]?.title || endingId : "未解锁结局";
+      return `<li class="${unlocked ? "is-unlocked" : "is-locked"}">${escapeHTML(title)}</li>`;
+    }).join("");
+    return `
+      <article class="ending-roadmap">
+        <h3>路线图回溯</h3>
+        <div class="roadmap-columns">
+          <section><h4>证据链</h4><ul>${connectedRows}</ul></section>
+          <section><h4>结局收藏</h4><ul>${endingRows}</ul></section>
+        </div>
+      </article>
     `;
   }
 
@@ -1772,14 +2115,17 @@
       });
     };
     bindTool("clues", openClueModal);
+    bindTool("evidence", openEvidenceBoardModal);
     bindTool("relationships", openRelationshipModal);
-    bindTool("audio", toggleAudio);
+    bindTool("audio", openAudioSettingsModal);
+    bindTool("reader", openReadingSettingsModal);
+    bindTool("archive", openArchiveModal);
     bindTool("save", openSaveModal);
     bindTool("load", openLoadModal);
     bindTool("history", openHistoryModal);
     bindTool("hall", () => {
         openConfirm("返回人生档案", "返回前会自动保存当前进度。要离开当前故事吗？", () => {
-        stopAllDialogueAudio();
+        stopNodeTransientAudio("leave-game");
         autoSave();
         showHall();
       });
@@ -1835,6 +2181,212 @@
     });
   }
 
+  function getEvidenceLinks() {
+    const nodeLinks = Object.values(DATA.nodes || {}).flatMap((node) => node.evidenceLinks || []);
+    const byId = {};
+    nodeLinks.forEach((link) => {
+      if (link?.linkId) byId[link.linkId] = link;
+    });
+    return Object.values(byId);
+  }
+
+  function hasEvidenceConnection(linkId) {
+    return (state.evidenceConnections || []).includes(linkId);
+  }
+
+  function canConnectEvidence(link) {
+    return (link.clueIds || []).every((clueId) => state.clues.includes(clueId));
+  }
+
+  function connectEvidence(linkId) {
+    const link = getEvidenceLinks().find((item) => item.linkId === linkId);
+    if (!link || !canConnectEvidence(link)) return;
+    state.evidenceConnections ||= [];
+    if (!state.evidenceConnections.includes(linkId)) {
+      state.evidenceConnections.push(linkId);
+      showToast(`证据链成立：${link.title}`, "clue");
+      autoSave();
+    }
+    openEvidenceBoardModal();
+  }
+
+  function maybeConnectEvidenceFromHotspot(linkId) {
+    const link = getEvidenceLinks().find((item) => item.linkId === linkId);
+    if (!link || !canConnectEvidence(link) || hasEvidenceConnection(linkId)) return;
+    state.evidenceConnections ||= [];
+    state.evidenceConnections.push(linkId);
+    showToast(`证据链可用：${link.title}`, "clue");
+  }
+
+  function openEvidenceBoardModal() {
+    const links = getEvidenceLinks();
+    const rows = links.map((link) => {
+      const connected = hasEvidenceConnection(link.linkId);
+      const ready = canConnectEvidence(link);
+      const clueList = (link.clueIds || []).map((clueId) => {
+        const clue = DATA.clues[clueId];
+        const owned = state.clues.includes(clueId);
+        return `<span class="${owned ? "is-owned" : "is-locked"}">${escapeHTML(clue?.title || clueId)}</span>`;
+      }).join("");
+      return `
+        <article class="evidence-link-card ${connected ? "is-connected" : ""}">
+          <header>
+            <strong>${escapeHTML(link.title)}</strong>
+            <span>${connected ? "已连线" : ready ? "可连线" : "缺线索"}</span>
+          </header>
+          <div class="evidence-link-clues">${clueList}</div>
+          <p>${escapeHTML(connected ? link.result : "收齐两端线索后，可以把它们连成推理链。")}</p>
+          <button class="case-button" type="button" data-evidence-link="${escapeHTML(link.linkId)}" ${(!ready || connected) ? "disabled" : ""}>${connected ? "已成立" : "连接证据"}</button>
+        </article>
+      `;
+    }).join("");
+    openModal(
+      "证据板",
+      "EVIDENCE BOARD",
+      `
+      <section class="evidence-board-panel">
+        <div class="feedback-progress">
+          <span>证据链</span>
+          <strong>${(state.evidenceConnections || []).length}/${links.length}</strong>
+        </div>
+        <div class="evidence-link-grid">${rows}</div>
+      </section>
+      `
+    );
+    modalBody.querySelectorAll("[data-evidence-link]").forEach((button) => {
+      button.addEventListener("click", () => connectEvidence(button.dataset.evidenceLink));
+    });
+  }
+
+  function openArchiveModal() {
+    const collection = loadStoredCollection();
+    const endings = ["ending_a", "ending_b", "ending_c", "ending_d"].map((endingId) => {
+      const unlocked = (collection.endings || []).includes(endingId) || (state.endingCollection || []).includes(endingId);
+      const ending = DATA.endings[endingId];
+      return `<article class="archive-card ${unlocked ? "is-owned" : "is-locked"}"><strong>${unlocked ? escapeHTML(ending?.title || endingId) : "未解锁结局"}</strong><p>${unlocked ? "已收入人生档案。" : "继续调查不同分歧，解锁这条人生。"}</p></article>`;
+    }).join("");
+    const clues = Object.values(DATA.clues).map((clue) => {
+      const owned = state.clues.includes(clue.clueId);
+      return `<article class="archive-card ${owned ? "is-owned" : "is-locked"}"><strong>${owned ? escapeHTML(clue.title) : "未归档线索"}</strong><p>${owned ? escapeHTML(clue.description) : "这条记录还藏在雨声里。"}</p></article>`;
+    }).join("");
+    const gallery = Array.from(new Set([...(collection.gallery || []), ...(state.galleryUnlocks || [])]))
+      .slice(0, 18)
+      .map((id) => `<span>${escapeHTML(id)}</span>`)
+      .join("");
+    openModal(
+      "人生档案馆",
+      "LIFE ARCHIVE",
+      `
+      <section class="archive-panel">
+        <h3>结局收藏</h3>
+        <div class="archive-grid">${endings}</div>
+        <h3>线索收藏</h3>
+        <div class="archive-grid">${clues}</div>
+        <h3>已解锁 CG / 道具 / 录音</h3>
+        <div class="archive-token-list">${gallery || "<p>继续推进剧情，档案馆会自动记录关键画面和道具。</p>"}</div>
+      </section>
+      `
+    );
+  }
+
+  function renderRangeControl(id, label, value) {
+    return `
+      <label class="settings-row">
+        <span>${escapeHTML(label)}</span>
+        <input type="range" min="0" max="1" step="0.05" value="${escapeHTML(value)}" data-setting="${escapeHTML(id)}" />
+      </label>
+    `;
+  }
+
+  function openAudioSettingsModal() {
+    const settings = getAudioSettings();
+    openModal(
+      "声音设置",
+      "AUDIO MIX",
+      `
+      <section class="settings-panel">
+        <label class="settings-toggle"><input type="checkbox" data-setting="audioEnabled" ${settings.audioEnabled ? "checked" : ""} /> 启用声音</label>
+        <label class="settings-toggle"><input type="checkbox" data-setting="bgmEnabled" ${settings.bgmEnabled ? "checked" : ""} /> 背景音乐</label>
+        <label class="settings-toggle"><input type="checkbox" data-setting="ambienceEnabled" ${settings.ambienceEnabled ? "checked" : ""} /> 环境音</label>
+        <label class="settings-toggle"><input type="checkbox" data-setting="sfxEnabled" ${settings.sfxEnabled ? "checked" : ""} /> 音效</label>
+        <label class="settings-toggle"><input type="checkbox" data-setting="voiceEnabled" ${settings.voiceEnabled ? "checked" : ""} /> 人物非语言声音</label>
+        ${renderRangeControl("masterVolume", "总音量", settings.masterVolume)}
+        ${renderRangeControl("bgmVolume", "背景音乐", settings.bgmVolume)}
+        ${renderRangeControl("ambienceVolume", "环境音", settings.ambienceVolume)}
+        ${renderRangeControl("sfxVolume", "音效", settings.sfxVolume)}
+        ${renderRangeControl("stingerVolume", "人物非语言", settings.stingerVolume)}
+        <div class="modal-actions">
+          <button class="case-button" type="button" data-replay-node-audio>重播当前节点声音</button>
+          <button class="ghost-button" type="button" data-mute-audio>${settings.audioEnabled ? "静音" : "取消静音"}</button>
+        </div>
+      </section>
+      `
+    );
+    modalBody.querySelectorAll("[data-setting]").forEach((control) => {
+      control.addEventListener("input", () => {
+        const key = control.dataset.setting;
+        const value = control.type === "checkbox" ? control.checked : Number(control.value);
+        saveAudioSettings({ [key]: value });
+        if (["masterVolume", "bgmVolume"].includes(key) && audioState.realBgm) audioState.realBgm.volume = scaledVolume(0.10, "bgm");
+        if (["masterVolume", "ambienceVolume"].includes(key) && audioState.realAmbience) audioState.realAmbience.volume = scaledVolume(0.08, "ambience");
+        refreshGameMeta();
+      });
+    });
+    modalBody.querySelector("[data-replay-node-audio]").addEventListener("click", () => {
+      unlockAudio();
+      stopNodeTransientAudio("replay-node-audio");
+      const node = getNode();
+      if (node) prepareAudioCue(node);
+    });
+    modalBody.querySelector("[data-mute-audio]").addEventListener("click", () => {
+      const next = !getAudioSettings().audioEnabled;
+      saveAudioSettings({ audioEnabled: next });
+      if (!next) stopAllAudio();
+      else {
+        unlockAudio();
+        const node = getNode();
+        if (node) prepareAudioCue(node);
+      }
+      closeModal();
+      refreshGameMeta();
+    });
+  }
+
+  function openReadingSettingsModal() {
+    const settings = getReadingSettings();
+    openModal(
+      "阅读设置",
+      "READING",
+      `
+      <section class="settings-panel">
+        <label class="settings-row">
+          <span>文字速度</span>
+          <select data-reading-setting="textSpeed">
+            ${["slow", "normal", "fast", "instant"].map((value) => `<option value="${value}" ${settings.textSpeed === value ? "selected" : ""}>${value}</option>`).join("")}
+          </select>
+        </label>
+        <label class="settings-toggle"><input type="checkbox" data-reading-setting="instantText" ${settings.instantText ? "checked" : ""} /> 立即显示全文</label>
+        <label class="settings-toggle"><input type="checkbox" data-reading-setting="autoPlay" ${settings.autoPlay ? "checked" : ""} /> 自动播放</label>
+        <label class="settings-toggle"><input type="checkbox" data-reading-setting="skipRead" ${settings.skipRead ? "checked" : ""} /> 跳过已读</label>
+        <label class="settings-toggle"><input type="checkbox" data-reading-setting="deepDarkMode" ${settings.deepDarkMode ? "checked" : ""} /> 更深色阅读模式</label>
+        <label class="settings-toggle"><input type="checkbox" data-reading-setting="hideUi" ${settings.hideUi ? "checked" : ""} /> 隐藏部分 UI 看画面</label>
+        <label class="settings-row">
+          <span>字号</span>
+          <input type="range" min="0.9" max="1.22" step="0.04" value="${settings.fontScale}" data-reading-setting="fontScale" />
+        </label>
+      </section>
+      `
+    );
+    modalBody.querySelectorAll("[data-reading-setting]").forEach((control) => {
+      control.addEventListener("input", () => {
+        const key = control.dataset.readingSetting;
+        const value = control.type === "checkbox" ? control.checked : control.type === "range" ? Number(control.value) : control.value;
+        saveReadingSettings({ [key]: value });
+        if (currentView === "game") showGame();
+      });
+    });
+  }
+
   function bindSceneInteractions() {
     app.querySelectorAll("[data-scene-feedback]").forEach((element) => {
       element.addEventListener("click", () => {
@@ -1842,6 +2394,63 @@
         showToast(element.dataset.sceneFeedback || "已检查", "clue");
       });
     });
+    app.querySelectorAll("[data-hotspot-id]").forEach((button) => {
+      button.addEventListener("click", () => inspectHotspot(button.dataset.hotspotId));
+    });
+  }
+
+  function inspectHotspot(hotspotId) {
+    const node = getNode();
+    const hotspot = (node?.investigationHotspots || []).find((item) => item.hotspotId === hotspotId);
+    if (!node || !hotspot) return;
+    const key = getHotspotKey(node.nodeId, hotspot.hotspotId);
+    const firstInspect = !(state.checkedHotspots || []).includes(key);
+    state.checkedHotspots ||= [];
+    if (firstInspect) state.checkedHotspots.push(key);
+    (hotspot.sfxOnInspect || []).forEach((cue) => playSfx(cue));
+    gainClues(hotspot.gainClues || []);
+    setFlags(hotspot.setFlags || []);
+    applyRelationshipEffects(hotspot.relationshipEffects || []);
+    if (hotspot.evidenceLinkId) maybeConnectEvidenceFromHotspot(hotspot.evidenceLinkId);
+    autoSave();
+    openHotspotModal(hotspot, firstInspect);
+  }
+
+  function getZoomAsset(hotspot) {
+    const assetId = hotspot?.zoomAsset;
+    if (!assetId) return null;
+    return VISUALS.props?.[assetId] || VISUALS.clues?.[assetId] || VISUALS.scenes?.[assetId] || null;
+  }
+
+  function openHotspotModal(hotspot, firstInspect) {
+    const asset = getZoomAsset(hotspot);
+    const clueRows = (hotspot.gainClues || [])
+      .map((clueId) => DATA.clues[clueId])
+      .filter(Boolean)
+      .map((clue) => `<li>线索归档：${escapeHTML(clue.title)}</li>`)
+      .join("");
+    const relationRows = (hotspot.relationshipEffects || [])
+      .map((effect) => {
+        const def = getRelationshipDef(effect.id);
+        if (!def) return "";
+        return `<li>${escapeHTML(def.character)}${escapeHTML(def.label)} ${Number(effect.delta || 0) > 0 ? "+" : ""}${Number(effect.delta || 0)}</li>`;
+      })
+      .filter(Boolean)
+      .join("");
+    openModal(
+      hotspot.detailTitle || hotspot.label,
+      firstInspect ? "INVESTIGATION" : "REVIEWED",
+      `
+      <article class="feedback-card investigation-card">
+        ${asset?.image ? `<figure><img src="${escapeHTML(asset.image)}" alt="${escapeHTML(asset.label || hotspot.label)}" loading="lazy" /></figure>` : ""}
+        <span class="feedback-badge">${firstInspect ? "已调查" : "已复查"}</span>
+        <h3>${escapeHTML(hotspot.label)}</h3>
+        <p>${escapeHTML(hotspot.text)}</p>
+        ${(clueRows || relationRows) ? `<ul class="choice-impact-list">${clueRows}${relationRows}</ul>` : ""}
+        <button class="case-button" type="button" data-feedback-close>继续调查</button>
+      </article>`
+    );
+    modalBody.querySelector("[data-feedback-close]").addEventListener("click", closeModal);
   }
 
   function openClueModal() {
@@ -1947,7 +2556,7 @@
         const slot = slots[index];
         if (!slot) return;
         openConfirm("读取存档", "读取后会覆盖当前临时进度。确认继续吗？", () => {
-          stopAllDialogueAudio();
+          stopNodeTransientAudio("load-save");
           state = normalizeState(slot);
           closeModal();
           if (state.endingId && DATA.endings[state.endingId]) {
@@ -2004,6 +2613,40 @@
 
   function openNotice(title, text) {
     openModal(title, "NOTICE", `<p class="notice-text">${escapeHTML(text)}</p>`);
+  }
+
+  function openChoiceFeedback(item) {
+    const relationRows = (item.relationshipEffects || [])
+      .map((effect) => {
+        const def = getRelationshipDef(effect.id);
+        const delta = Number(effect.delta || 0);
+        if (!def || delta === 0) return "";
+        return `<li>${escapeHTML(def.character)}${escapeHTML(def.label)} ${delta > 0 ? "+" : ""}${delta}：${escapeHTML(effect.reason || "关键选择影响")}</li>`;
+      })
+      .filter(Boolean)
+      .join("");
+    const clueRows = (item.gainClues || [])
+      .map((clueId) => DATA.clues[clueId])
+      .filter(Boolean)
+      .map((clue) => `<li>线索归档：${escapeHTML(clue.title)}</li>`)
+      .join("");
+    const deduction = item.isDeduction
+      ? `<div class="feedback-progress"><span>推理进度</span><strong>${state.deductionScore}/5</strong></div>`
+      : "";
+    openModal(
+      item.title || "选择留下痕迹",
+      item.isDeduction ? "DEDUCTION TRACE" : "CHOICE TRACE",
+      `<article class="feedback-card choice-feedback-card tone-${escapeHTML(item.tone || "neutral")}">
+        <span class="feedback-badge">${item.isDeduction ? (item.tone === "correct" ? "推理成立" : "推理偏差") : "人生分歧"}</span>
+        <h3>${escapeHTML(item.choiceText || "")}</h3>
+        <p>${escapeHTML(item.text || "这个选择已被记录。")}</p>
+        ${(relationRows || clueRows) ? `<ul class="choice-impact-list">${relationRows}${clueRows}</ul>` : ""}
+        ${deduction}
+        <button class="case-button" type="button" data-feedback-close>继续</button>
+      </article>`,
+      continueFeedbackQueue
+    );
+    modalBody.querySelector("[data-feedback-close]").addEventListener("click", closeModal);
   }
 
   function openClueRevealFeedback(clueId) {
@@ -2064,6 +2707,16 @@
     const choices = item.choices.length
       ? item.choices.slice(-4).map((choice) => `<li>你选择了：${escapeHTML(choice.text)}</li>`).join("")
       : "<li>本章暂无关键选择记录</li>";
+    const recap = item.recap
+      ? `
+        <section class="chapter-recap-block">
+          <h3>本章复盘</h3>
+          <p><strong>完成：</strong>${escapeHTML(item.recap.completed || "你推进了案件。")}</p>
+          <p><strong>可能错过：</strong>${escapeHTML(item.recap.missed || "仍有细节可以二刷确认。")}</p>
+          <p><strong>下一章：</strong>${escapeHTML(item.recap.next || item.nextTitle)}</p>
+        </section>
+      `
+      : "";
     openModal(
       item.title,
       "CHAPTER CLEAR",
@@ -2078,6 +2731,7 @@
           <h3>本章关键选择</h3>
           <ul>${choices}</ul>
         </section>
+        ${recap}
         <div class="feedback-progress">
           <span>真相进度</span>
           <strong>${getCoreClueCount()} / ${CORE_CLUE_IDS.length}</strong>
@@ -2139,6 +2793,16 @@
     });
   }
 
+  function bindAssetFallbacks() {
+    document.addEventListener("error", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLImageElement)) return;
+      target.classList.add("is-missing");
+      target.alt ||= "资源暂未加载";
+      target.removeAttribute("src");
+    }, true);
+  }
+
   function showToast(message, type = "info") {
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
@@ -2148,30 +2812,97 @@
     window.setTimeout(() => toast.remove(), 3000);
   }
 
-  function renderSceneVisual(node) {
+  function renderFocusLabel(focus = "") {
+    const labels = {
+      "incoming-call": "来电",
+      "dead-call": "旧号",
+      "doorbell": "门外",
+      "door-chain": "门链",
+      "peephole": "猫眼",
+      "id-proof": "核验",
+      "wet-visitor": "湿痕",
+      "voice-record": "录音",
+      "chat-log": "聊天",
+      "loan-record": "借贷",
+      "timeline": "时间线",
+      "photo-box": "照片盒",
+      "group-photo": "合照",
+      "photo-inspect": "放大",
+      "background-shadow": "背景人影",
+      "old-phone": "旧手机",
+      "recording": "语音",
+      "voice-trigger": "触发记录",
+      "evidence-table": "证据桌",
+      "deduction-board": "推理板",
+      "evidence-chain": "证据链",
+      "archive-choice": "归档选择",
+      "rain-window": "雨窗",
+      message: "消息",
+    };
+    return labels[focus] || "现场";
+  }
+
+  function getSceneSnapshot(node) {
     const scene = node.scene || "rental_room_rain_night";
     const visual = VISUALS.scenes?.[scene] || VISUALS.scenes?.rental_room_rain_night;
+    return { scene, bg: visual?.bg || "", visual };
+  }
+
+  function renderSceneVisual(node, previousVisual = null) {
+    const snapshot = getSceneSnapshot(node);
+    const { scene, visual } = snapshot;
     const chapter = getChapter(node.chapterId);
     const stateClass = node.type ? `visual-state-${node.type}` : "visual-state-dialogue";
     const title = visual?.title || chapter?.title || "未知场景";
+    const focus = node.visualFocus || visual?.focus || "center";
+    const focusTarget = node.focusTarget || focus;
+    const shotTone = node.shotTone || node.visualMood || "normal";
+    const isHeld = node.sceneHold === true && previousVisual?.scene === scene;
+    const showPreviousBackground = !isHeld && node.transitionStyle === "dissolve" && previousVisual?.bg && previousVisual.bg !== snapshot.bg;
+    const highlightedProps = new Set(node.highlightProps || []);
     const overlays = (visual?.overlays || [])
       .map((src) => `<img class="scene-overlay" src="${escapeHTML(src)}" alt="" aria-hidden="true" loading="lazy" />`)
       .join("");
     const props = (visual?.props || [])
-      .map((id) => VISUALS.props?.[id])
+      .map((id) => ({ id, prop: VISUALS.props?.[id] }))
       .filter(Boolean)
-      .map((prop) => `<img class="scene-prop" src="${escapeHTML(prop.image)}" alt="${escapeHTML(prop.label)}" loading="lazy" />`)
+      .map(({ id, prop }) => `<img class="scene-prop ${highlightedProps.has(id) ? "is-highlighted" : ""}" data-prop-id="${escapeHTML(id)}" src="${escapeHTML(prop.image)}" alt="${escapeHTML(prop.label)}" loading="lazy" />`)
       .join("");
+    const hotspots = renderInvestigationHotspots(node);
     return `
-      <div class="scene-asset-shell ${stateClass} focus-${escapeHTML(visual?.focus || "center")}" data-scene-id="${escapeHTML(scene)}">
+      <div class="scene-asset-shell ${stateClass} focus-${escapeHTML(focus)} focus-target-${escapeHTML(focusTarget)} shot-${escapeHTML(shotTone)} ${isHeld ? "is-scene-held" : "is-scene-entering"}" data-scene-id="${escapeHTML(scene)}" data-visual-focus="${escapeHTML(focus)}" data-focus-target="${escapeHTML(focusTarget)}" data-transition-style="${escapeHTML(node.transitionStyle || "hold")}">
+        ${showPreviousBackground ? `<img class="scene-bg-previous" src="${escapeHTML(previousVisual.bg)}" alt="" aria-hidden="true" />` : ""}
         <img class="scene-bg-image" src="${escapeHTML(visual?.bg || "")}" alt="${escapeHTML(title)}" loading="lazy" />
         ${renderCharacterLayer(node.speaker, node)}
         <div class="scene-overlay-layer">${overlays}</div>
         <div class="scene-prop-layer">${props}</div>
+        ${hotspots}
+        <div class="scene-focus-tag">${escapeHTML(renderFocusLabel(focus))}</div>
         <div class="scene-asset-label">
           <span>${escapeHTML(title)}</span>
           <small>${escapeHTML(chapter?.title || node.chapterTitle || "")}</small>
         </div>
+      </div>
+    `;
+  }
+
+  function getHotspotKey(nodeId, hotspotId) {
+    return `${nodeId}:${hotspotId}`;
+  }
+
+  function renderInvestigationHotspots(node) {
+    const items = Array.isArray(node.investigationHotspots) ? node.investigationHotspots : [];
+    if (!items.length) return "";
+    return `
+      <div class="scene-hotspot-layer" aria-label="可调查区域">
+        ${items.map((item, index) => {
+          const checked = (state.checkedHotspots || []).includes(getHotspotKey(node.nodeId, item.hotspotId));
+          return `
+            <button class="scene-hotspot hotspot-${index + 1} ${checked ? "is-checked" : ""}" type="button" data-hotspot-id="${escapeHTML(item.hotspotId)}">
+              <span>${escapeHTML(item.label)}</span>
+            </button>
+          `;
+        }).join("")}
       </div>
     `;
   }

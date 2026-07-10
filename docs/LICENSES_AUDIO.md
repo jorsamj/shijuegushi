@@ -1,22 +1,16 @@
-# Audio License Register
+# Audio Licenses
 
-| File path | Runtime keys | Source website | Original link | Author | License | Commercial use | Attribution required | Notes |
-|---|---|---|---|---|---|---|---|---|
-| `assets/library/audio/external/processed/amb_air_conditioner_hum_real_01.wav` | `rain_night_loop`, `ending_archive`, `room_night_loop` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Air_conditioner_hum_(Gravity_Sound).wav | Gravity Sound | CC BY 4.0 | Yes | Yes | Low room tone / suspense bed. |
-| `assets/library/audio/external/processed/amb_air_conditioner_hum_2_real_01.wav` | `horror_corridor`, `corridor_hum`, `zhouyu_phone_silence` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Air_conditioner_hum_2_(Gravity_Sound).wav | Gravity Sound | CC BY 4.0 | Yes | Yes | Low corridor hum. |
-| `assets/library/audio/external/processed/amb_rain_drops_gravity_real_01.wav` | `rain_heavy_loop` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Rain_drops_(Gravity_Sound).wav | Gravity Sound | CC BY 4.0 | Yes | Yes | Real rain. |
-| `assets/library/audio/external/processed/amb_rain_window_real_01.ogg` | `rain_window_soft`, `footstep_corridor_wet`, `xuzhiwan_step_wet`, `xuzhiwan_sleeve_drip` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Rain_against_the_window.ogg | cori | Public domain | Yes | No | Rain/window wet texture. |
-| `assets/library/audio/external/processed/sfx_door_knock_wood_real_01.ogg` | `knock_soft` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Knocking_on_wood_or_door.ogg | stephan | Public domain | Yes | No | Real wood/door knock, currently not used after coverage simplification but retained. |
-| `assets/library/audio/external/processed/sfx_doorbell_old_tring_real_01.ogg` | `doorbell_rain_night` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Doorbell-old-tring.ogg | Unknown Wikimedia Commons contributor | Public domain | Yes | No | Apartment doorbell. |
-| `assets/library/audio/external/processed/sfx_door_metal_knocker_real_01.ogg` | retained source | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Door_knocker_audio.ogg | Mx. Granger | CC0 | Yes | No | Removed from active door-chain mapping; retained for future metal-door layer. |
-| `assets/library/audio/external/processed/sfx_door_lock_tight_real_01.wav` | `door_chain_close`, `door_lock_turn`, `archive_stamp` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Tight_door_lock_(Gravity_Sound).wav | Gravity Sound | CC BY 4.0 | Yes | Yes | Real lock / metal mechanism. |
-| `assets/library/audio/external/processed/sfx_open_door_gravity_real_01.mp3` | `door_open_slow` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Open_Door_(Gravity_Sound).mp3 | Gravity Sound | CC BY 4.0 | Yes | Yes | Real door movement. |
-| `assets/library/audio/external/processed/sfx_old_telephone_ring_real_01.ogg` | `phone_ring_dead_call` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:WWS_AutomatictelephoneIskraEta80ringing.ogg | Work With Sounds / Technical Museum of Slovenia | CC BY 4.0 | Yes | Yes | Dead-call ring demo source. |
-| `assets/library/audio/external/processed/sfx_clicking_gravity_real_01.wav` | `message_pop_cold`, `marker_circle`, `evidence_reveal`, `backup_success` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Clicking_(Gravity_Sound).wav | Gravity Sound | CC BY 4.0 | Yes | Yes | Real click source for restrained UI/evidence beats. |
-| `assets/library/audio/external/processed/sfx_click_switch_real_01.ogg` | `phone_screen_wake`, `phone_call_end`, `choice_confirm_soft` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Clickick_switch.ogg | stephan | Public domain | Yes | No | Dry switch click. |
-| `assets/library/audio/external/processed/sfx_dipswitch_real_01.ogg` | `corridor_light_flicker`, `old_phone_start` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Dipswitch_on_off.ogg | stephan | Public domain | Yes | No | Real switch. |
-| `assets/library/audio/external/processed/sfx_computer_keyboard_real_01.ogg` | `old_photo_pickup`, `backup_start`, `chat_typing_short` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Computer_keyboard.ogg | russiandoll | Public domain | Yes | No | Real keyboard/mechanical interaction. |
-| `assets/library/audio/external/processed/sfx_camera_canon_real_01.wav` | `photo_zoom`, `photo_reflection_find` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:261007_polecatz_camera-canon-5d-iii.wav | Polecatz | CC0 | Yes | No | Real camera mechanism. |
-| `assets/library/audio/external/processed/sfx_metal_bristles_real_01.ogg` | `recording_static_short`, `xuzhixia_recording_cut`, `xuzhixia_memory_fade` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Crackling_sound_of_short_metal_bristles.ogg | stephan | Public domain | Yes | No | Real crackle texture, not generated white noise. |
-| `assets/library/audio/external/processed/stinger_windy_breath_real_01.ogg` | breath/exhale stingers | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Windy_breath.ogg | stilgar | Public domain | Yes | No | Non-verbal breath-like stinger source. |
-| `assets/library/audio/external/processed/stinger_heartbeat_real_01.ogg` | `room_silence_drop`, `delete_warning`, `linzhou_heartbeat_soft` | Wikimedia Commons | https://commons.wikimedia.org/wiki/File:Heart_beats_sounds_-_Glaneur_de_sons.ogg | Glaneur de sons | CC BY 3.0 | Yes | Yes | Real heartbeat tension layer. |
+## Project sound library
+
+Selected files are copied from `D:\lab\gushi\音效` under Taira Komori's site terms. The project may embed the selected sounds in this game; it does not redistribute the raw source library or any duplicate source directory. `game01` and `openclose01 (1)` are excluded.
+
+## Approved exceptions
+
+| File | Use | License | Source |
+|---|---|---|---|
+| `ambience_rain_public_domain_cori_01.ogg` | Rain ambience and opening rain foreground | Public domain | https://commons.wikimedia.org/wiki/File:Rain_against_the_window.ogg |
+| `sfx_phone_ring_cc0_thezero_273540.mp3` | Modern incoming call | CC0 | https://freesound.org/people/TheZero/sounds/273540/ |
+| `sfx_phone_vibrate_cc0_breviceps_515295.mp3` | Modern phone vibration | CC0 | https://freesound.org/people/Breviceps/sounds/515295/ |
+| `sfx_message_notification_cc0_qubodup_782969.mp3` | Message arrival | CC0 | https://freesound.org/people/qubodup/sounds/782969/ |
+
+No other external source is active. A missing exact sound is intentionally silent.

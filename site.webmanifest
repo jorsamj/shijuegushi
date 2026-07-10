@@ -1,0 +1,10 @@
+{
+  "name": "第二人生",
+  "short_name": "第二人生",
+  "description": "进入一段尚未结束的人生。",
+  "lang": "zh-CN",
+  "display": "standalone",
+  "start_url": "./",
+  "background_color": "#090b10",
+  "theme_color": "#090b10"
+}

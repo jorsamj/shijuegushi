@@ -29,6 +29,7 @@
     mood: fields.mood || ["tense"],
     usage: fields.usage || [category],
     description: fields.description || id,
+    semanticQa: fields.semanticQa,
     source: fields.source || "image2-generated",
     license: fields.license || "project-generated",
     status: fields.status || "demo-usable",
@@ -195,8 +196,10 @@
         description: "Cracked old phone prop reusable for old-device evidence.",
       }),
       prop_polaroid_old_photo: image("prop_polaroid_old_photo", "prop", `${A}/props/prop_photo_polaroid.webp`, {
-        usage: ["photo", "memory", "evidence"],
-        description: "Old photo prop reusable for memory/evidence stories.",
+        usage: ["photo", "group-photo", "memory", "evidence"],
+        description: "Old group-photo / polaroid evidence prop with marked background silhouette.",
+        semanticQa: "manual-confirmed: last group photo, background shadow, evidence marker",
+        status: "final-candidate",
       }),
       prop_recording_file: image("prop_recording_file", "prop", `${A}/props/prop_recording_file.webp`, {
         usage: ["recording", "file", "evidence"],
@@ -209,6 +212,14 @@
       prop_door_chain: image("prop_door_chain", "prop", `${A}/props/prop_door_chain.webp`, {
         usage: ["door", "chain", "lock"],
         description: "Door chain prop reusable for apartment door scenes.",
+      }),
+    },
+    clues: {
+      clue_photo_background_evidence: image("clue_photo_background_evidence", "clue", `${A}/clues/clue_photo_background.webp`, {
+        usage: ["photo", "background_shadow", "deduction", "evidence_chain"],
+        description: "Photo-background clue image showing a marked suspicious silhouette and position conflict.",
+        semanticQa: "manual-confirmed: suspicious figure, red marker, position contradiction",
+        status: "final-candidate",
       }),
     },
     characters: {
