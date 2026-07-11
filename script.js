@@ -109,10 +109,14 @@
 
   let storageAvailable = true;
   let modalCloseHandler = null;
+  let modalMode = "notice";
   let currentView = "splash";
   let feedbackQueue = [];
   let visualState = { current: null };
   let nodeActionLocked = false;
+  let immersiveAttempted = false;
+  let dialoguePointerStart = null;
+  const preloadedVisuals = new Set();
   let state = createInitialState();
   let audioState = {
     context: null,
@@ -184,6 +188,7 @@
     }
     bindGlobalModalEvents();
     bindAssetFallbacks();
+    bindPageLifecycle();
     showSplash();
     if (!storageAvailable) {
       showToast("本地存储不可用，本次进度只会保留在当前页面。", "warn");
@@ -321,7 +326,7 @@
     return `
       <div class="vn-character-layer character-${escapeHTML(character.id)} variant-${escapeHTML(variant)} scale-${escapeHTML(scale)} position-${escapeHTML(position)} framing-${escapeHTML(framing)} focus-${escapeHTML(focus)} ${headSafe ? "head-safe" : ""} mood-${escapeHTML(mood)} ${mode}" data-speaker="${escapeHTML(character.name)}" data-scene="${escapeHTML(scene)}">
         <figure class="vn-character-standee">
-          <img src="${escapeHTML(image)}" alt="${escapeHTML(character.name)}" loading="lazy" />
+          <img src="${escapeHTML(image)}" alt="${escapeHTML(character.name)}" loading="eager" decoding="async" />
           <figcaption>
             <strong>${escapeHTML(character.name)}</strong>
             <span>${escapeHTML(character.role)}</span>
@@ -1351,6 +1356,42 @@
     window.requestAnimationFrame(() => app.classList.add("is-view-ready"));
   }
 
+  function isStandaloneMode() {
+    return window.matchMedia?.("(display-mode: standalone)").matches === true || window.navigator.standalone === true;
+  }
+
+  function isMobileViewport() {
+    return window.matchMedia?.("(max-width: 700px)").matches === true || window.matchMedia?.("(pointer: coarse)").matches === true;
+  }
+
+  function requestImmersiveMode() {
+    if (immersiveAttempted || isStandaloneMode() || !isMobileViewport()) return;
+    immersiveAttempted = true;
+    const root = document.documentElement;
+    if (!document.fullscreenEnabled || document.fullscreenElement || typeof root.requestFullscreen !== "function") return;
+    root.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+  }
+
+  function maybeOfferInstallGuide() {
+    const saved = readJSON(STORAGE_KEYS.settings, {});
+    if (!isMobileViewport() || isStandaloneMode() || saved.installGuideDismissed === true) return;
+    window.setTimeout(() => {
+      if (currentView !== "hall" || !modalRoot.classList.contains("hidden")) return;
+      openModal(
+        "更沉浸地阅读",
+        "MOBILE EXPERIENCE",
+        `<p class="notice-text">将《第二人生》添加到主屏幕后，可以像独立应用一样打开。iPhone 请在 Safari 的分享菜单中选择“添加到主屏幕”；安卓可在浏览器菜单中选择“安装应用”或“添加到主屏幕”。</p>`
+      );
+      saveAudioSettings({ installGuideDismissed: true });
+    }, 700);
+  }
+
+  function bindPageLifecycle() {
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stopNodeTransientAudio("backgrounded");
+    });
+  }
+
   function showSplash() {
     setView(
       "splash",
@@ -1374,6 +1415,7 @@
       `
     );
     app.querySelector("[data-action='enter-hall']").addEventListener("click", () => {
+      requestImmersiveMode();
       unlockAudio();
       showHall();
     });
@@ -1435,6 +1477,7 @@
         showSeries(series.seriesId);
       });
     });
+    maybeOfferInstallGuide();
   }
 
   function showSeries(seriesId) {
@@ -1491,6 +1534,7 @@
 
     app.querySelector("[data-action='back-hall']").addEventListener("click", showHall);
     app.querySelector("[data-action='start-script']").addEventListener("click", () => {
+      requestImmersiveMode();
       if (hasLocalProgress) {
         openConfirm("\u7ee7\u7eed\u4f53\u9a8c", "\u68c0\u6d4b\u5230\u672c\u5730\u8fdb\u5ea6\u3002\u8981\u4ece\u4e0a\u6b21\u4fdd\u5b58\u7684\u4eba\u751f\u8282\u70b9\u7ee7\u7eed\u5417\uff1f", () => {
           loadProgress();
@@ -1537,7 +1581,7 @@
     setView(
       "game",
       `
-      <section class="game-screen ${sceneClass} ${gameModeClass} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
+      <section class="game-screen mobile-story-root ${sceneClass} ${gameModeClass} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
         <header class="game-topbar">
           <div class="game-title">
             <span>${escapeHTML(getScript().title)}</span>
@@ -1565,7 +1609,7 @@
         <div class="scene-stage">
           ${sceneMarkup}
         </div>
-        <section class="dialogue-panel">
+        <section class="dialogue-panel" data-dialogue-advance tabindex="0" aria-label="剧情对话，点击此处继续阅读">
           <div class="speaker-tag">${escapeHTML(node.speaker || "旁白")}</div>
           <div class="dialogue-text">${formatText(node.text)}</div>
           <div id="choiceArea" class="choice-area"></div>
@@ -1581,6 +1625,9 @@
     bindGameToolbar();
     bindSceneInteractions();
     renderNodeControls(node);
+    bindDialogueAdvance(node);
+    bindSceneVisualReadiness();
+    preloadUpcomingVisuals(node);
     autoSave();
     processFeedbackQueue();
   }
@@ -1644,15 +1691,49 @@
       return;
     }
 
-    continueButton.addEventListener("click", () => {
-      if (!lockNodeAction(continueButton)) return;
-      stopNodeTransientAudio("continue");
-      if (node.nextNodeId) {
-        goToNode(node.nextNodeId);
-      } else {
-        state.endingId = resolveEnding();
-        showEnding(state.endingId);
+    continueButton.addEventListener("click", () => advanceStoryNode(node, continueButton));
+  }
+
+  function advanceStoryNode(node, control = null) {
+    if (!lockNodeAction(control)) return;
+    stopNodeTransientAudio("continue");
+    if (node.nextNodeId) {
+      goToNode(node.nextNodeId);
+    } else {
+      state.endingId = resolveEnding();
+      showEnding(state.endingId);
+    }
+  }
+
+  function bindDialogueAdvance(node) {
+    if (node.type === "choice" || node.type === "deduction" || node.resolveEnding === true || node.type === "ending") return;
+    const panel = app.querySelector("[data-dialogue-advance]");
+    const continueButton = document.getElementById("continueButton");
+    if (!panel || !continueButton) return;
+    const isInteractiveTarget = (target) => target instanceof Element && Boolean(target.closest("button, a, input, select, textarea, label, [data-tool], [data-hotspot-id]"));
+    const canAdvance = (event) => {
+      if (nodeActionLocked || !modalRoot.classList.contains("hidden") || isInteractiveTarget(event.target)) return false;
+      if (window.getSelection?.().toString().trim()) return false;
+      return true;
+    };
+    panel.addEventListener("pointerdown", (event) => {
+      if (!canAdvance(event)) {
+        dialoguePointerStart = null;
+        return;
       }
+      dialoguePointerStart = { x: event.clientX, y: event.clientY };
+    });
+    panel.addEventListener("pointerup", (event) => {
+      if (!dialoguePointerStart || !canAdvance(event)) return;
+      const distance = Math.hypot(event.clientX - dialoguePointerStart.x, event.clientY - dialoguePointerStart.y);
+      dialoguePointerStart = null;
+      if (distance > 10) return;
+      advanceStoryNode(node, continueButton);
+    });
+    panel.addEventListener("keydown", (event) => {
+      if ((event.key !== "Enter" && event.key !== " ") || !canAdvance(event)) return;
+      event.preventDefault();
+      advanceStoryNode(node, continueButton);
     });
   }
 
@@ -2464,7 +2545,7 @@
         <h3>${escapeHTML(hotspot.label)}</h3>
         <p>${escapeHTML(hotspot.text)}</p>
         ${(clueRows || relationRows) ? `<ul class="choice-impact-list">${clueRows}${relationRows}</ul>` : ""}
-        <button class="case-button" type="button" data-feedback-close>继续调查</button>
+        <button class="case-button" type="button" data-feedback-close>我知道啦</button>
       </article>`
     );
     modalBody.querySelector("[data-feedback-close]").addEventListener("click", closeModal);
@@ -2659,7 +2740,7 @@
         <p>${escapeHTML(item.text || "这个选择已被记录。")}</p>
         ${(relationRows || clueRows) ? `<ul class="choice-impact-list">${relationRows}${clueRows}</ul>` : ""}
         ${deduction}
-        <button class="case-button" type="button" data-feedback-close>继续</button>
+        <button class="case-button" type="button" data-feedback-close>我知道啦</button>
       </article>`,
       continueFeedbackQueue
     );
@@ -2687,7 +2768,7 @@
           <span>线索进度</span>
           <strong>${state.clues.length} / ${total}</strong>
         </div>
-        <button class="case-button" type="button" data-feedback-close>收入线索库</button>
+        <button class="case-button" type="button" data-feedback-close>我知道啦</button>
       </article>
       `,
       continueFeedbackQueue
@@ -2707,7 +2788,7 @@
           <span>真相进度</span>
           <strong>${getCoreClueCount()} / ${CORE_CLUE_IDS.length}</strong>
         </div>
-        <button class="case-button" type="button" data-feedback-close>继续</button>
+        <button class="case-button" type="button" data-feedback-close>我知道啦</button>
       </article>
       `,
       continueFeedbackQueue
@@ -2753,7 +2834,7 @@
           <span>真相进度</span>
           <strong>${getCoreClueCount()} / ${CORE_CLUE_IDS.length}</strong>
         </div>
-        <button class="case-button" type="button" data-feedback-close>进入${escapeHTML(item.nextTitle)}</button>
+        <button class="case-button" type="button" data-feedback-close>我知道啦</button>
       </article>
       `,
       continueFeedbackQueue
@@ -2771,7 +2852,9 @@
         <button class="case-button" type="button" data-confirm-yes>确认</button>
         <button class="ghost-button" type="button" data-confirm-no>取消</button>
       </div>
-      `
+      `,
+      null,
+      { mode: "confirm" }
     );
     modalBody.querySelector("[data-confirm-yes]").addEventListener("click", () => {
       closeModal();
@@ -2783,13 +2866,16 @@
     });
   }
 
-  function openModal(title, kicker, html, onClose) {
+  function openModal(title, kicker, html, onClose, options = {}) {
     modalTitle.textContent = title;
     modalKicker.textContent = kicker;
-    modalBody.innerHTML = html;
+    modalMode = options.mode || "notice";
+    const needsAcknowledgement = modalMode === "notice" && !/data-feedback-close/.test(html);
+    modalBody.innerHTML = `${html}${needsAcknowledgement ? '<div class="modal-actions modal-acknowledgement"><button class="case-button" type="button" data-modal-ack>我知道啦</button></div>' : ""}`;
     modalCloseHandler = onClose;
     modalRoot.classList.remove("hidden");
     modalRoot.setAttribute("aria-hidden", "false");
+    modalBody.querySelector("[data-modal-ack]")?.addEventListener("click", closeModal);
   }
 
   function closeModal() {
@@ -2797,17 +2883,13 @@
     modalRoot.setAttribute("aria-hidden", "true");
     const handler = modalCloseHandler;
     modalCloseHandler = null;
+    modalMode = "notice";
     if (typeof handler === "function") handler();
     window.setTimeout(processFeedbackQueue, 80);
   }
 
   function bindGlobalModalEvents() {
-    modalRoot.addEventListener("click", (event) => {
-      if (event.target.matches("[data-close-modal]")) closeModal();
-    });
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !modalRoot.classList.contains("hidden")) closeModal();
-    });
+    modalRoot.addEventListener("click", (event) => event.stopPropagation());
   }
 
   function bindAssetFallbacks() {
@@ -2865,6 +2947,57 @@
     return { scene, bg: visual?.bg || "", visual };
   }
 
+  function getNodeVisualSources(node) {
+    if (!node) return [];
+    const sources = [];
+    const snapshot = getSceneSnapshot(node);
+    if (snapshot.bg) sources.push(snapshot.bg);
+    const visualSpeaker = node.visualCharacter || node.speaker;
+    const character = getVisualCharacter(visualSpeaker);
+    if (character?.image && character.id !== "narrator") {
+      const variant = node.characterVariant && character.variants?.[node.characterVariant]
+        ? node.characterVariant
+        : resolveCharacterVariant(character, String(visualSpeaker || ""), node);
+      sources.push(character.variants?.[variant] || character.image);
+    }
+    return sources.filter(Boolean);
+  }
+
+  function preloadVisualSource(src) {
+    if (!src || preloadedVisuals.has(src)) return;
+    preloadedVisuals.add(src);
+    const image = new Image();
+    image.decoding = "async";
+    image.src = src;
+  }
+
+  function preloadUpcomingVisuals(node) {
+    const nextIds = [node?.nextNodeId, ...(node?.choices || []).map((choice) => choice.nextNodeId)].filter(Boolean);
+    getNodeVisualSources(node).forEach(preloadVisualSource);
+    nextIds.slice(0, 4).forEach((nodeId) => getNodeVisualSources(DATA.nodes?.[nodeId]).forEach(preloadVisualSource));
+  }
+
+  function bindSceneVisualReadiness() {
+    const shell = app.querySelector(".scene-asset-shell");
+    const images = [...app.querySelectorAll(".scene-bg-image, .vn-character-standee img")];
+    if (!shell || !images.length) return;
+    shell.classList.add("is-asset-pending");
+    let remaining = images.length;
+    const complete = () => {
+      remaining -= 1;
+      if (remaining > 0) return;
+      shell.classList.remove("is-asset-pending");
+      shell.classList.add("is-asset-ready");
+    };
+    images.forEach((image) => {
+      if (image.complete) complete();
+      else {
+        image.addEventListener("load", complete, { once: true });
+        image.addEventListener("error", complete, { once: true });
+      }
+    });
+  }
+
   function renderSceneVisual(node, previousVisual = null) {
     const snapshot = getSceneSnapshot(node);
     const { scene, visual } = snapshot;
@@ -2875,7 +3008,7 @@
     const focusTarget = node.focusTarget || focus;
     const shotTone = node.shotTone || node.visualMood || "normal";
     const isHeld = node.sceneHold === true && previousVisual?.scene === scene;
-    const showPreviousBackground = !isHeld && node.transitionStyle === "dissolve" && previousVisual?.bg && previousVisual.bg !== snapshot.bg;
+    const showPreviousBackground = !isHeld && previousVisual?.bg && previousVisual.bg !== snapshot.bg;
     const highlightedProps = new Set(node.highlightProps || []);
     const overlays = (visual?.overlays || [])
       .map((src) => `<img class="scene-overlay" src="${escapeHTML(src)}" alt="" aria-hidden="true" loading="lazy" />`)
@@ -2889,7 +3022,7 @@
     return `
       <div class="scene-asset-shell ${stateClass} focus-${escapeHTML(focus)} focus-target-${escapeHTML(focusTarget)} shot-${escapeHTML(shotTone)} ${isHeld ? "is-scene-held" : "is-scene-entering"}" data-scene-id="${escapeHTML(scene)}" data-visual-focus="${escapeHTML(focus)}" data-focus-target="${escapeHTML(focusTarget)}" data-transition-style="${escapeHTML(node.transitionStyle || "hold")}">
         ${showPreviousBackground ? `<img class="scene-bg-previous" src="${escapeHTML(previousVisual.bg)}" alt="" aria-hidden="true" />` : ""}
-        <img class="scene-bg-image" src="${escapeHTML(visual?.bg || "")}" alt="${escapeHTML(title)}" loading="lazy" />
+        <img class="scene-bg-image" src="${escapeHTML(visual?.bg || "")}" alt="${escapeHTML(title)}" loading="eager" decoding="async" />
         ${renderCharacterLayer(node.speaker, node)}
         <div class="scene-overlay-layer">${overlays}</div>
         <div class="scene-prop-layer">${props}</div>

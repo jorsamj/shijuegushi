@@ -1,71 +1,206 @@
-/* Mobile game viewport: loaded after legacy styles to keep the story one-screen. */
+/* The only mobile layout authority for the playable story viewport. */
 @media (max-width: 700px) {
-  body[data-view="game"] { overflow: hidden; overscroll-behavior: none; background: #050609; }
+  body[data-view="game"] {
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: #050609;
+  }
 
-  .game-screen { position: fixed; inset: 0; width: 100%; height: 100dvh; min-height: 100dvh; overflow: hidden; overscroll-behavior: none; }
-  .game-screen .scene-stage { position: absolute; inset: 0 !important; height: 100dvh; padding: 0 !important; }
-  .game-screen .scene-asset-shell { width: 100vw !important; height: 100dvh !important; min-height: 100dvh !important; border: 0; border-radius: 0; box-shadow: none; }
-  .game-screen .scene-bg-image { filter: saturate(0.82) contrast(1.06) brightness(0.76); }
+  .mobile-story-root {
+    --mobile-inline-safe: max(12px, env(safe-area-inset-left), env(safe-area-inset-right));
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100svh;
+    min-height: 100svh;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+    background: #050609;
+  }
 
-  .game-screen .game-topbar { top: max(8px, env(safe-area-inset-top)); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 0; }
-  .game-screen .game-title { min-width: 0; max-width: 72vw; padding: 7px 10px; border: 0; border-radius: 4px; background: rgba(4, 6, 10, 0.44); box-shadow: none; }
-  .game-screen .game-title span, .game-screen .truth-meter { display: none; }
-  .game-screen .game-title strong { display: block; overflow: hidden; color: rgba(248, 243, 232, 0.84); font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-  .game-screen .game-menu-button { min-width: 48px; min-height: 44px; border-radius: 4px; background: rgba(5, 7, 11, 0.72); box-shadow: none; }
-  .game-screen .toolbox { grid-column: 1 / -1; max-height: min(58dvh, 430px); overflow-y: auto; border-radius: 8px; }
-  .game-screen .toolbox button { min-height: 44px; }
+  .mobile-story-root .scene-stage,
+  .mobile-story-root .scene-asset-shell {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
 
-  .game-screen .objective-panel { position: fixed; top: calc(max(8px, env(safe-area-inset-top)) + 50px); left: 10px; z-index: 10; width: auto; max-width: calc(100vw - 76px); margin: 0; padding: 6px 9px; border: 0; border-radius: 4px; background: rgba(5, 7, 11, 0.5); box-shadow: none; backdrop-filter: blur(8px); }
-  .game-screen .objective-panel span { font-size: 10px; }
-  .game-screen .objective-panel strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-story-root .scene-bg-image {
+    filter: saturate(0.82) contrast(1.06) brightness(0.76);
+    transition: opacity 180ms ease-out;
+  }
 
-  .game-screen .vn-character-standee,
-  .game-screen .character-linzhou .vn-character-standee,
-  .game-screen .character-chenyan .vn-character-standee,
-  .game-screen .character-zhuwan .vn-character-standee,
-  .game-screen .character-zhouyu .vn-character-standee,
-  .game-screen .character-zhixia .vn-character-standee,
-  .game-screen .scale-normal .vn-character-standee,
-  .game-screen .scale-medium .vn-character-standee,
-  .game-screen .scale-large .vn-character-standee,
-  .game-screen .scale-impact .vn-character-standee,
-  .game-screen .scale-closeup .vn-character-standee,
-  .game-screen .scale-fullscreen .vn-character-standee,
-  .game-screen .variant-horror .vn-character-standee,
-  .game-screen .variant-pressure .vn-character-standee,
-  .game-screen .variant-closeup .vn-character-standee { top: calc(max(12px, env(safe-area-inset-top)) + 32px) !important; right: -8vw !important; bottom: 0 !important; left: auto !important; width: min(92vw, 560px); height: auto !important; max-height: none; transform: none !important; }
-  .game-screen .position-left .vn-character-standee, .game-screen .character-linzhou .vn-character-standee, .game-screen .character-chenyan .vn-character-standee { right: auto !important; left: -8vw !important; }
-  .game-screen .position-center .vn-character-standee, .game-screen .character-zhixia .vn-character-standee { right: auto !important; left: 50% !important; transform: translateX(-50%) !important; }
-  .game-screen .head-safe .vn-character-standee { top: calc(max(8px, env(safe-area-inset-top)) + 20px) !important; }
-  .game-screen .vn-character-standee img { width: auto; height: 100% !important; max-width: 100%; max-height: 100%; object-fit: contain; object-position: center top; }
-  .game-screen .framing-face .vn-character-standee img, .game-screen .focus-face .vn-character-standee img { transform: scale(1.035); transform-origin: center top; }
-  .game-screen .vn-character-standee figcaption, .game-screen .scene-asset-label { display: none; }
+  .mobile-story-root .scene-asset-shell.is-asset-pending .scene-bg-image,
+  .mobile-story-root .scene-asset-shell.is-asset-pending .vn-character-layer {
+    opacity: 0;
+  }
 
-  .game-screen .dialogue-panel { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); z-index: 14; width: auto; min-height: 0; height: clamp(198px, 33dvh, 248px); max-height: calc(100dvh - max(66px, env(safe-area-inset-top))); margin: 0; overflow: hidden; border: 1px solid rgba(238, 225, 191, 0.2); border-radius: 9px; padding: 28px 15px 12px; background: linear-gradient(180deg, rgba(10, 12, 18, 0.86), rgba(5, 7, 11, 0.96)); box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.28); backdrop-filter: blur(14px); transform: none; }
-  .game-screen .dialogue-panel::before { inset: 7px; border-radius: 4px; }
-  .game-screen .speaker-tag { top: 8px; left: 14px; min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--gold); font-size: 12px; letter-spacing: 0.08em; }
-  .game-screen .dialogue-text { min-height: 0; max-height: calc(100% - 60px); overflow-y: auto; padding-right: 2px; font-size: 15.5px; line-height: 1.68; -webkit-overflow-scrolling: touch; }
-  .game-screen .dialogue-actions { position: absolute; right: 12px; bottom: 10px; left: 12px; margin: 0; }
-  .game-screen .node-id { display: none; }
-  .game-screen .continue-button { width: 100%; min-height: 46px; border-radius: 5px; color: #fff4d7; background: rgba(216, 182, 106, 0.14); }
+  .mobile-story-root .scene-asset-shell.is-asset-ready .scene-bg-image,
+  .mobile-story-root .scene-asset-shell.is-asset-ready .vn-character-layer {
+    opacity: 1;
+  }
 
-  .game-screen.is-choice-node .dialogue-panel { height: auto; min-height: min(320px, calc(100dvh - 92px)); max-height: calc(100dvh - max(72px, env(safe-area-inset-top))); overflow-y: auto; padding-bottom: 16px; }
-  .game-screen.is-choice-node .dialogue-text { max-height: 96px; font-size: 14.5px; line-height: 1.55; }
-  .game-screen.is-choice-node .choice-area { gap: 8px; margin-top: 10px; }
-  .game-screen .choice-button { min-height: 52px; border-radius: 6px; padding: 10px 13px 10px 37px; background: rgba(15, 18, 25, 0.88); }
-  .game-screen .choice-button::after { left: 13px; width: 12px; height: 12px; }
-  .game-screen .choice-button small { margin-bottom: 2px; font-size: 10px; }
-  .game-screen .choice-button span { font-size: 14px; line-height: 1.45; }
-  .game-screen .choice-button:disabled, .game-screen .continue-button:disabled { cursor: wait; opacity: 0.58; }
+  .mobile-story-root .game-topbar {
+    top: max(8px, env(safe-area-inset-top));
+    left: var(--mobile-inline-safe);
+    right: var(--mobile-inline-safe);
+    z-index: 16;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+  }
 
-  .modal-root { padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); }
-  .modal-panel { width: 100%; max-height: calc(100dvh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom))); border-radius: 9px; }
+  .mobile-story-root .game-title {
+    min-width: 0;
+    max-width: 72vw;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 4px;
+    background: rgba(4, 6, 10, 0.44);
+    box-shadow: none;
+    backdrop-filter: blur(8px);
+  }
+
+  .mobile-story-root .game-title span,
+  .mobile-story-root .truth-meter,
+  .mobile-story-root .scene-asset-label,
+  .mobile-story-root .vn-character-standee figcaption {
+    display: none;
+  }
+
+  .mobile-story-root .game-title strong {
+    display: block;
+    overflow: hidden;
+    color: rgba(248, 243, 232, 0.84);
+    font-size: 12px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-story-root .game-menu-button,
+  .mobile-story-root .toolbox button {
+    min-height: 44px;
+  }
+
+  .mobile-story-root .toolbox {
+    grid-column: 1 / -1;
+    max-height: min(56dvh, 430px);
+    overflow-y: auto;
+    border-radius: 8px;
+  }
+
+  .mobile-story-root .objective-panel {
+    position: fixed;
+    top: calc(max(8px, env(safe-area-inset-top)) + 50px);
+    left: var(--mobile-inline-safe);
+    z-index: 15;
+    width: auto;
+    max-width: calc(100vw - (var(--mobile-inline-safe) * 2) - 54px);
+    margin: 0;
+    padding: 6px 9px;
+    border: 0;
+    border-radius: 4px;
+    background: rgba(5, 7, 11, 0.5);
+    box-shadow: none;
+    backdrop-filter: blur(8px);
+  }
+
+  .mobile-story-root .objective-panel span { font-size: 10px; }
+  .mobile-story-root .objective-panel strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+
+  .mobile-story-root .vn-character-layer { z-index: 4; transition: opacity 180ms ease-out; }
+  .mobile-story-root .vn-character-standee {
+    top: calc(max(8px, env(safe-area-inset-top)) + 28px);
+    right: -7vw;
+    bottom: 0;
+    left: auto;
+    width: min(92vw, 560px);
+    height: auto;
+    max-height: none;
+    margin: 0;
+    transform: none;
+  }
+
+  .mobile-story-root .position-left .vn-character-standee,
+  .mobile-story-root .character-linzhou .vn-character-standee,
+  .mobile-story-root .character-chenyan .vn-character-standee { right: auto; left: -7vw; }
+  .mobile-story-root .position-center .vn-character-standee,
+  .mobile-story-root .character-zhixia .vn-character-standee { right: auto; left: 50%; transform: translateX(-50%); }
+  .mobile-story-root .head-safe .vn-character-standee { top: calc(max(6px, env(safe-area-inset-top)) + 16px); }
+  .mobile-story-root .vn-character-standee img { width: auto; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; object-position: center top; }
+  .mobile-story-root .framing-face .vn-character-standee img,
+  .mobile-story-root .focus-face .vn-character-standee img { transform: scale(1.025); transform-origin: center top; }
+
+  .mobile-story-root .dialogue-panel {
+    position: fixed;
+    z-index: 18;
+    left: calc(50% + ((env(safe-area-inset-left) - env(safe-area-inset-right)) / 2));
+    right: auto;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: min(680px, calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 24px));
+    height: clamp(188px, 31dvh, 236px);
+    max-height: calc(100dvh - max(68px, env(safe-area-inset-top)));
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+    padding: 28px 15px 12px;
+    border: 1px solid rgba(238, 225, 191, 0.2);
+    border-radius: 9px;
+    background: linear-gradient(180deg, rgba(10, 12, 18, 0.86), rgba(5, 7, 11, 0.96));
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(14px);
+    transform: translateX(-50%);
+    touch-action: pan-y;
+  }
+
+  .mobile-story-root .dialogue-panel::before { inset: 7px; border-radius: 4px; }
+  .mobile-story-root .speaker-tag { top: 8px; left: 14px; min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--gold); font-size: 12px; letter-spacing: 0.08em; }
+  .mobile-story-root .dialogue-text { min-height: 0; max-height: calc(100% - 58px); overflow-y: auto; padding-right: 2px; font-size: 15.5px; line-height: 1.68; -webkit-overflow-scrolling: touch; }
+  .mobile-story-root .dialogue-actions { position: absolute; right: 12px; bottom: 10px; left: 12px; margin: 0; }
+  .mobile-story-root .node-id { display: none; }
+  .mobile-story-root .continue-button { width: 100%; min-height: 44px; border-radius: 5px; color: #fff4d7; background: rgba(216, 182, 106, 0.12); }
+  .mobile-story-root .continue-button::after { content: "轻触对话区继续"; margin-left: 8px; color: rgba(255, 244, 215, 0.54); font-size: 11px; }
+
+  .mobile-story-root.is-choice-node .dialogue-panel {
+    top: max(10px, env(safe-area-inset-top));
+    bottom: auto;
+    height: auto;
+    min-height: min(316px, calc(100dvh - 92px));
+    max-height: calc(100dvh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom)));
+    overflow-y: auto;
+    padding-bottom: 16px;
+  }
+
+  .mobile-story-root.is-choice-node .dialogue-text { max-height: 92px; font-size: 14.5px; line-height: 1.55; }
+  .mobile-story-root.is-choice-node .choice-area { gap: 8px; margin-top: 10px; }
+  .mobile-story-root .choice-button { min-height: 52px; border-radius: 6px; padding: 10px 13px 10px 37px; background: rgba(15, 18, 25, 0.9); }
+  .mobile-story-root .choice-button::after { left: 13px; width: 12px; height: 12px; }
+  .mobile-story-root .choice-button small { margin-bottom: 2px; font-size: 10px; }
+  .mobile-story-root .choice-button span { font-size: 14px; line-height: 1.45; }
+  .mobile-story-root .choice-button:disabled,
+  .mobile-story-root .continue-button:disabled { cursor: wait; opacity: 0.58; }
+
+  .modal-root { padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
+  .modal-panel { display: flex; width: 100%; max-height: calc(100dvh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom))); border-radius: 9px; flex-direction: column; }
   .modal-header { position: sticky; top: 0; z-index: 2; background: rgba(8, 10, 16, 0.96); }
-  .modal-body { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
-  .toast-host { top: max(64px, calc(env(safe-area-inset-top) + 54px)); right: 10px; left: 10px; }
+  .modal-body { padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+  .modal-acknowledgement { position: sticky; bottom: 0; margin: 16px -1px -1px; padding: 12px 0 max(2px, env(safe-area-inset-bottom)); background: rgba(8, 10, 16, 0.96); }
+  .modal-acknowledgement .case-button { width: 100%; min-height: 48px; justify-content: center; }
+  .toast-host { top: max(64px, calc(env(safe-area-inset-top) + 54px)); right: var(--mobile-inline-safe); left: var(--mobile-inline-safe); }
   .toast { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .game-screen, .game-screen * { scroll-behavior: auto; transition-duration: 0.01ms !important; }
+  .mobile-story-root,
+  .mobile-story-root * { scroll-behavior: auto; transition-duration: 0.01ms; }
 }

@@ -22,8 +22,7 @@ const checks = [
   ["node", ["scripts/check-mobile-ui.mjs"]],
   ["node", ["scripts/check-entry-experience.mjs"]],
   ["node", ["scripts/check-mobile-fullscreen.mjs"]],
-  ["node", ["scripts/check-entry-experience.mjs"]],
-  ["node", ["scripts/check-entry-experience.mjs"]],
+  ["node", ["scripts/check-mobile-release-experience.mjs"]],
 ];
 
 const requiredDocs = [
