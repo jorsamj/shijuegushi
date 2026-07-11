@@ -23,7 +23,7 @@ expect(script.includes("is-reading-node"), "Reading nodes must expose a dedicate
 expect(script.includes("lockNodeAction"), "Story controls must ignore rapid duplicate taps.");
 expect(index.includes("mobile-story.css"), "The final mobile story cascade must load after the legacy stylesheet.");
 expect(mobileCss.includes("overscroll-behavior: none"), "Mobile game viewport must not become a scrolling document.");
-expect(mobileCss.includes(".game-screen.is-choice-node .dialogue-panel"), "Choice panel needs a mobile-safe layout.");
+expect(mobileCss.includes(".mobile-story-root.is-choice-node .dialogue-panel"), "Choice panel needs a mobile-safe layout.");
 expect(mobileCss.includes(".head-safe .vn-character-standee"), "Character head-safe framing must be explicitly preserved on mobile.");
 expect(mobileCss.includes("env(safe-area-inset-bottom)"), "Dialogue panel must honor the mobile bottom safe area.");
 expect(bgm.urban_suspense_air, "A restrained urban suspense bed must exist.");

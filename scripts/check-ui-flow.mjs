@@ -52,7 +52,8 @@ const keyNodes = [
 ];
 
 assert(indexText.includes("<title>第二人生 | 互动视觉小说</title>"), "index.html title must identify 第二人生 as an interactive visual novel");
-assert(indexText.includes("aria-label=\"关闭弹窗\""), "modal close button must have readable Chinese aria-label");
+assert(!indexText.includes("aria-label=\"关闭弹窗\""), "ordinary modal chrome must not expose a close-X control");
+assert(!indexText.includes("data-close-modal"), "modal scrims must not dismiss the active feedback");
 
 assert(showSeriesBody, "showSeries function is missing");
 for (const forbidden of [

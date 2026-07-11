@@ -1096,6 +1096,73 @@ window.MIST_DATA = (() => {
     });
   });
 
+  function splitMobileText(text, budget = 60) {
+    const parts = String(text || "")
+      .trim()
+      .split(/\n{2,}/)
+      .flatMap((paragraph) => paragraph.match(/[^。！？；…]+[。！？；…]*/g) || [paragraph])
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const beats = [];
+    let current = "";
+    parts.forEach((part) => {
+      if (current && current.replace(/\s+/g, "").length + part.replace(/\s+/g, "").length > budget) {
+        beats.push(current);
+        current = part;
+        return;
+      }
+      current = current ? `${current}\n\n${part}` : part;
+    });
+    if (current) beats.push(current);
+    return beats;
+  }
+
+  function buildMobileStoryBeats() {
+    const expanded = {};
+    let count = 0;
+    Object.values(nodes).forEach((node) => {
+      const cannotSplit = node.type === "choice" || node.type === "deduction" || node.type === "ending" || node.resolveEnding === true;
+      const beats = cannotSplit ? [node.text] : splitMobileText(node.text);
+      if (beats.length < 2) {
+        expanded[node.nodeId] = node;
+        return;
+      }
+      count += beats.length - 1;
+      const beatIds = beats.slice(1).map((_, index) => `${node.nodeId}__m${String(index + 2).padStart(2, "0")}`);
+      const originalNext = node.nextNodeId;
+      expanded[node.nodeId] = { ...node, text: beats[0], nextNodeId: beatIds[0], mobileBeatCount: beats.length };
+      beatIds.forEach((beatId, index) => {
+        expanded[beatId] = {
+          ...node,
+          nodeId: beatId,
+          type: "dialogue",
+          text: beats[index + 1],
+          nextNodeId: beatIds[index + 1] || originalNext,
+          gainClues: [],
+          setFlags: [],
+          choices: [],
+          objectiveId: undefined,
+          objectiveText: undefined,
+          objectiveComplete: false,
+          investigationHotspots: [],
+          evidenceLinks: [],
+          chapterRecap: undefined,
+          sfxOnEnter: [],
+          sfxOnChoice: [],
+          voiceStinger: undefined,
+          mobileBeatOf: node.nodeId,
+          sceneHold: true,
+          transitionStyle: "hold",
+        };
+      });
+    });
+    Object.keys(nodes).forEach((nodeId) => delete nodes[nodeId]);
+    Object.assign(nodes, expanded);
+    return count;
+  }
+
+  const mobileTextBeatCount = buildMobileStoryBeats();
+
   return {
     schemaVersion: "0.6",
     product,
@@ -1106,5 +1173,6 @@ window.MIST_DATA = (() => {
     defaultFlags,
     nodes,
     endings,
+    mobileTextBeatCount,
   };
 })();
