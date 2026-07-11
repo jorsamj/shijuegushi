@@ -24,6 +24,9 @@ expect(mobileCss.includes(".mobile-story-root"), "Mobile game layout must be iso
 expect(mobileCss.includes("left: 50%") && mobileCss.includes("translateX(-50%)"), "The mobile dialogue panel must be centered from a single anchor.");
 expect(mobileCss.includes("env(safe-area-inset-left)") && mobileCss.includes("env(safe-area-inset-right)"), "The mobile dialogue panel must honor both horizontal safe areas.");
 expect(mobileCss.includes("svh") && mobileCss.includes("dvh"), "The mobile viewport needs stable and dynamic height fallbacks.");
+const choicePanelBlock = mobileCss.match(/\.mobile-story-root\.is-choice-node \.dialogue-panel\s*\{([\s\S]*?)\n\s*\}/)?.[1] || "";
+expect(/bottom:\s*max\(10px, env\(safe-area-inset-bottom\)\)/.test(choicePanelBlock), "Choice controls must remain fixed above the mobile bottom safe area.");
+expect(!/top:\s*max\(/.test(choicePanelBlock), "Choice controls must not move to the top of the mobile viewport.");
 expect(Number(data.mobileTextBeatCount || 0) >= 10, "Long narrative nodes must be split into mobile reading beats.");
 
 const longNodes = Object.values(data.nodes || {}).filter((node) => {

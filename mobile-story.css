@@ -172,11 +172,10 @@
   .mobile-story-root .continue-button::after { content: "轻触对话区继续"; margin-left: 8px; color: rgba(255, 244, 215, 0.54); font-size: 11px; }
 
   .mobile-story-root.is-choice-node .dialogue-panel {
-    top: max(10px, env(safe-area-inset-top));
-    bottom: auto;
+    bottom: max(10px, env(safe-area-inset-bottom));
     height: auto;
-    min-height: min(316px, calc(100dvh - 92px));
-    max-height: calc(100dvh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom)));
+    min-height: 0;
+    max-height: min(64dvh, calc(100dvh - max(72px, env(safe-area-inset-top))));
     overflow-y: auto;
     padding-bottom: 16px;
   }
