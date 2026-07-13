@@ -1530,15 +1530,24 @@
     startEntryMusic("life_archive_theme");
     const availableSeries = STORY_CATALOG.series.filter((series) => series.status === "open");
     const openSeries = availableSeries[0];
-    const ledgerSeries = STORY_CATALOG.series.filter((series) => series !== openSeries);
-    const lockedRows = ledgerSeries.map((series, index) => `
+    const ledgerSeries = STORY_CATALOG.series
+      .filter((series) => series !== openSeries)
+      .sort((left, right) => {
+        const leftOrder = Number(getScript(left.scriptIds?.[0])?.order || 99);
+        const rightOrder = Number(getScript(right.scriptIds?.[0])?.order || 99);
+        return leftOrder - rightOrder;
+      });
+    const lockedRows = ledgerSeries.map((series, index) => {
+      const storyOrder = Number(getScript(series.scriptIds?.[0])?.order || index + 2);
+      return `
       <button class="archive-ledger-row" type="button" data-series-id="${series.seriesId}">
-        <span class="archive-ledger-index">0${index + 2}</span>
+        <span class="archive-ledger-index">${String(storyOrder).padStart(2, "0")}</span>
         <strong>${escapeHTML(series.title)}</strong>
         <span>${series.status === "open" ? "可读取" : "档案封存中"}</span>
         <i aria-hidden="true">&#8594;</i>
       </button>
-    `).join("");
+    `;
+    }).join("");
 
     setView(
       "hall",

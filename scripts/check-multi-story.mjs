@@ -46,6 +46,7 @@ for (const token of ["STORY_DATASETS", "STORY_CATALOG", "getStoryStorageKeys", "
   if (!engine.includes(token)) failures.push(`Shared engine lacks multi-story integration token: ${token}.`);
 }
 if (!engine.includes('series.status === "open" ? "可读取" : "档案封存中"')) failures.push("Archive must expose the open dormitory story rather than mark it sealed.");
+if (!engine.includes('String(storyOrder).padStart(2, "0")')) failures.push("Archive must use each story's real order rather than a sealed-row index.");
 
 if (failures.length) {
   console.error("Multi-story check failed:");
