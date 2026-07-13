@@ -37,6 +37,19 @@ Status: `not started`. Enter factual results only. Blank, failed, or inconclusiv
 
 | Audio ID | Licence and distribution checked | Headphones | Desktop speakers | Phone speakers | Lifecycle checked | Signer / date |
 |---|---|---|---|---|---|---|
-| All broadcast slots in `broadcast-audio-contract.js` |  |  |  |  |  |  |
+| `dorm_broadcast_rollcall_start` |  |  |  |  |  |  |
+| `dorm_broadcast_public_rules` |  |  |  |  |  |  |
+| `dorm_broadcast_current_count` |  |  |  |  |  |  |
+| `dorm_broadcast_bed_call` |  |  |  |  |  |  |
+| `dorm_broadcast_unlisted_person` |  |  |  |  |  |  |
+| `dorm_broadcast_deadline_0113` |  |  |  |  |  |  |
+| `dorm_broadcast_correction_prompt` |  |  |  |  |  |  |
+| `dorm_broadcast_restore_zhou` |  |  |  |  |  |  |
+| `dorm_broadcast_restore_xutang` |  |  |  |  |  |  |
+| `dorm_broadcast_rollcall_complete` |  |  |  |  |  |  |
+| `dorm_broadcast_ending_a` |  |  |  |  |  |  |
+| `dorm_broadcast_ending_b` |  |  |  |  |  |  |
+| `dorm_broadcast_ending_c` |  |  |  |  |  |  |
+| `dorm_broadcast_ending_d` |  |  |  |  |  |  |
 
 Do not set `audioProduction.manualDeviceSignoff`, `crossStorySaveSignoff`, or `mobilePlaythroughSignoff` to `complete` until this record has real, reviewable results.

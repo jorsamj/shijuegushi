@@ -4,19 +4,22 @@ Status: `awaiting-authorised-human-recording`. These are delivery slots, not run
 
 Canonical structured mapping: `assets/stories/dormitory-rollcall/broadcast-audio-contract.js`.
 
-| Audio ID | Nodes | Required content | Delivery state |
+| Audio ID | Chapters / nodes | Recommended file | Delivery state |
 |---|---|---|---|
-| `dorm_broadcast_rollcall_start` | `dorm_01_002` | 00:17 roll-call start | Awaiting file |
-| `dorm_broadcast_public_rules` | `dorm_01_002` | Six public rules | Awaiting file |
-| `dorm_broadcast_current_count` | `dorm_01_006` | Four registered occupants | Awaiting file |
-| `dorm_broadcast_bed_call` | `dorm_02_002` | Bed call | Awaiting file |
-| `dorm_broadcast_unlisted_person` | `dorm_04_012`, `dorm_05_009` | Unregistered-person prompt | Awaiting file |
-| `dorm_broadcast_deadline_0113` | `dorm_04_012` | 01:13 reminder | Awaiting file |
-| `dorm_broadcast_correction_prompt` | `dorm_06_007` | Submit final roster | Awaiting file |
-| `dorm_broadcast_restore_zhou` | `dorm_06_009` | Restore Zhou Wanning / 320 | Awaiting file |
-| `dorm_broadcast_restore_xutang` | `dorm_06_009` | Restore Xu Tang / five occupants | Awaiting file |
-| `dorm_broadcast_rollcall_complete` | `dorm_06_011` | Roll call complete | Awaiting file |
-| `dorm_broadcast_ending_a` to `_d` | Ending screens | Outcome-specific broadcast | Awaiting files |
+| `dorm_broadcast_rollcall_start` | Chapter 1 / `dorm_01_002` | `dorm_broadcast_rollcall_start_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_public_rules` | Chapter 1 / `dorm_01_002` | `dorm_broadcast_public_rules_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_current_count` | Chapter 1 / `dorm_01_006` | `dorm_broadcast_current_count_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_bed_call` | Chapter 2 / `dorm_02_002` | `dorm_broadcast_bed_call_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_unlisted_person` | Chapters 4-5 / `dorm_04_012`, `dorm_05_009` | `dorm_broadcast_unlisted_person_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_deadline_0113` | Chapter 4 / `dorm_04_012` | `dorm_broadcast_deadline_0113_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_correction_prompt` | Chapter 6 / `dorm_06_007` | `dorm_broadcast_correction_prompt_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_restore_zhou` | Chapter 6 / `dorm_06_009` | `dorm_broadcast_restore_zhou_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_restore_xutang` | Chapter 6 / `dorm_06_009` | `dorm_broadcast_restore_xutang_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_rollcall_complete` | Chapter 6 / `dorm_06_011` | `dorm_broadcast_rollcall_complete_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_ending_a` | Ending A / `dorm_ending_a` | `dorm_broadcast_ending_a_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_ending_b` | Ending B / `dorm_ending_b` | `dorm_broadcast_ending_b_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_ending_c` | Ending C / `dorm_ending_c` | `dorm_broadcast_ending_c_zh-CN.mp3` | Awaiting file |
+| `dorm_broadcast_ending_d` | Ending D / `dorm_ending_d` | `dorm_broadcast_ending_d_zh-CN.mp3` | Awaiting file |
 
 ## Intake Rules
 
