@@ -1,8 +1,9 @@
 (() => {
   "use strict";
 
-  const DATA = window.MIST_DATA;
-  const VISUALS = window.SECOND_LIFE_VISUALS || {
+  const RAIN_DATA = window.MIST_DATA;
+  let DATA = RAIN_DATA;
+  const RAIN_VISUALS = window.SECOND_LIFE_VISUALS || {
     scenes: {},
     characters: {},
     characterAliases: {},
@@ -10,6 +11,37 @@
     chapters: {},
     props: {},
   };
+  let VISUALS = RAIN_VISUALS;
+  const DORMITORY_DATA = window.MIST_DORMITORY_DATA;
+  const DORMITORY_VISUALS = window.DORMITORY_ROLLCALL_ASSET_MAP || {};
+  const STORY_DATASETS = {
+    script_rain_call: RAIN_DATA,
+    ...(DORMITORY_DATA ? { script_dormitory_rollcall: DORMITORY_DATA } : {}),
+  };
+  const STORY_CATALOG = {
+    series: [...(RAIN_DATA?.series || []), ...(DORMITORY_DATA?.series ? [DORMITORY_DATA.series] : [])],
+    scripts: [...(RAIN_DATA?.scripts || []), ...(DORMITORY_DATA?.script ? [DORMITORY_DATA.script] : [])],
+  };
+
+  function createDormitoryVisualAdapter(map) {
+    const archiveImage = map?.endings?.sharedArchive || "";
+    return {
+      scenes: map?.scenes || {},
+      characters: map?.characters || {},
+      characterAliases: {},
+      clues: map?.clues || {},
+      chapters: {},
+      props: {},
+      covers: { home: map?.covers?.story || "" },
+      endings: Object.fromEntries(["dorm_ending_a", "dorm_ending_b", "dorm_ending_c", "dorm_ending_d"].map((id) => [id, { image: archiveImage }])),
+    };
+  }
+
+  const STORY_VISUALS = {
+    script_rain_call: RAIN_VISUALS,
+    ...(DORMITORY_DATA ? { script_dormitory_rollcall: createDormitoryVisualAdapter(DORMITORY_VISUALS) } : {}),
+  };
+
   const STORAGE_KEYS = {
     progress: "mist.currentProgress",
     saves: "mist.saveSlots",
@@ -20,7 +52,7 @@
     collection: "secondLife.collection",
   };
 
-  const CORE_CLUE_IDS = [
+  let CORE_CLUE_IDS = [
     "clue_dead_call",
     "clue_sister_mark",
     "clue_gray_loan",
@@ -28,11 +60,11 @@
     "clue_photo_background",
     "clue_timed_voice",
   ];
-  const FOCUSED_CLUE_REVEALS = new Set(["clue_dead_call", "clue_photo_background", "clue_timed_voice"]);
+  let FOCUSED_CLUE_REVEALS = new Set(["clue_dead_call", "clue_photo_background", "clue_timed_voice"]);
 
-  const CLUE_FILTERS = ["全部", "关键线索", "通话", "人物", "照片", "旧案"];
+  let CLUE_FILTERS = ["全部", "关键线索", "通话", "人物", "照片", "旧案"];
 
-  const MILESTONES = [
+  let MILESTONES = [
     {
       milestoneId: "dead_call",
       title: "命运节点开启",
@@ -59,7 +91,7 @@
     },
   ];
 
-  const ACHIEVEMENTS = [
+  let ACHIEVEMENTS = [
     { achievementId: "rain_line", title: "雨夜接线人", test: () => state.clues.includes("clue_dead_call") },
     { achievementId: "careful_one", title: "谨慎的人", test: () => state.flags.kept_door_closed === true },
     { achievementId: "first_trust", title: "第一次相信", test: () => state.flags.trusted_zhuwan_early === true },
@@ -71,7 +103,7 @@
     { achievementId: "no_answer", title: "无人接听", test: () => state.endingId === "ending_d" },
   ];
 
-  const ENDING_REPORT = {
+  let ENDING_REPORT = {
     ending_a: {
       label: "结局 A：真相重启",
       type: "最佳进展",
@@ -94,12 +126,57 @@
     },
   };
 
-  const RELATIONSHIP_DEFS = [
+  let RELATIONSHIP_DEFS = [
     { id: "trust_zhuwan", character: "许知晚", label: "信任", levels: ["疏离", "试探", "信任", "托付"] },
     { id: "support_chenyan", character: "陈妍", label: "协助", levels: ["微弱", "有限协助", "积极协助", "全力协助"] },
     { id: "suspicion_zhou", character: "周屿", label: "警觉", levels: ["未察觉", "警觉", "高度警觉", "失控施压"] },
     { id: "courage_linzou", character: "林舟", label: "直面", levels: ["逃避", "动摇", "面对", "直面真相"] },
   ];
+  const RAIN_PROFILE = {
+    coreClueIds: [...CORE_CLUE_IDS],
+    focusedClueReveals: new Set(FOCUSED_CLUE_REVEALS),
+    clueFilters: [...CLUE_FILTERS],
+    milestones: MILESTONES,
+    achievements: ACHIEVEMENTS,
+    endingReport: ENDING_REPORT,
+    relationshipDefs: RELATIONSHIP_DEFS,
+  };
+  const DORMITORY_PROFILE = DORMITORY_DATA?.profile
+    ? {
+        coreClueIds: [...DORMITORY_DATA.profile.coreClueIds],
+        focusedClueReveals: new Set(DORMITORY_DATA.profile.coreClueIds),
+        clueFilters: ["全部", "关键线索", "广播", "登记", "视频", "镜面", "旧案"],
+        milestones: [],
+        achievements: [],
+        endingReport: Object.fromEntries(Object.values(DORMITORY_DATA.endings).map((ending) => [ending.endingId, { label: ending.title, type: "Dormitory record", comment: "Your final count decides whose name survives the night." }])),
+        relationshipDefs: DORMITORY_DATA.profile.relationshipDefs || [],
+        evidenceLinks: DORMITORY_DATA.profile.evidenceLinks || [],
+        endingResolver: DORMITORY_DATA.profile.endingResolver,
+      }
+    : null;
+  let activeProfile = RAIN_PROFILE;
+
+  function getDataset(scriptId = "script_rain_call") {
+    return STORY_DATASETS[scriptId] || RAIN_DATA;
+  }
+
+  function getProfile(scriptId = "script_rain_call") {
+    return scriptId === "script_dormitory_rollcall" && DORMITORY_PROFILE ? DORMITORY_PROFILE : RAIN_PROFILE;
+  }
+
+  function activateStory(scriptId = "script_rain_call") {
+    DATA = getDataset(scriptId);
+    VISUALS = STORY_VISUALS[scriptId] || RAIN_VISUALS;
+    activeProfile = getProfile(scriptId);
+    CORE_CLUE_IDS = [...(activeProfile.coreClueIds || [])];
+    FOCUSED_CLUE_REVEALS = new Set(activeProfile.focusedClueReveals || []);
+    CLUE_FILTERS = [...(activeProfile.clueFilters || [])];
+    MILESTONES = activeProfile.milestones || [];
+    ACHIEVEMENTS = activeProfile.achievements || [];
+    ENDING_REPORT = activeProfile.endingReport || {};
+    RELATIONSHIP_DEFS = activeProfile.relationshipDefs || [];
+  }
+
   const app = document.getElementById("app");
   const toastHost = document.getElementById("toastHost");
   const modalRoot = document.getElementById("modalRoot");
@@ -148,10 +225,23 @@
     debugLog: [],
   };
 
-  function createInitialState() {
+  function getStoryStorageKeys(scriptId = state?.scriptId || "script_rain_call") {
+    if (scriptId === "script_rain_call") return STORAGE_KEYS;
+    const prefix = `mist.story.${scriptId}`;
     return {
-      scriptId: "script_rain_call",
-      nodeId: "ch01_001",
+      ...STORAGE_KEYS,
+      progress: `${prefix}.currentProgress`,
+      saves: `${prefix}.saveSlots`,
+      history: `${prefix}.history`,
+    };
+  }
+
+  function createInitialState(scriptId = "script_rain_call") {
+    activateStory(scriptId);
+    const startNodeId = DATA.script?.startNodeId || getScript(scriptId)?.startNodeId || "ch01_001";
+    return {
+      scriptId,
+      nodeId: startNodeId,
       clues: [],
       flags: { ...DATA.defaultFlags },
       history: [],
@@ -170,6 +260,7 @@
       completedObjectives: [],
       checkedHotspots: [],
       evidenceConnections: [],
+      ruleStatuses: {},
       endingCollection: loadStoredCollection().endings,
       galleryUnlocks: loadStoredCollection().gallery,
       readNodes: [],
@@ -258,12 +349,12 @@
     });
   }
 
-  function getScript(scriptId = "script_rain_call") {
-    return DATA.scripts.find((item) => item.scriptId === scriptId);
+  function getScript(scriptId = state?.scriptId || "script_rain_call") {
+    return STORY_CATALOG.scripts.find((item) => item.scriptId === scriptId);
   }
 
   function getSeries(seriesId = "series_rain_call") {
-    return DATA.series.find((item) => item.seriesId === seriesId);
+    return STORY_CATALOG.series.find((item) => item.seriesId === seriesId);
   }
 
   function getNode(nodeId = state.nodeId) {
@@ -1272,19 +1363,23 @@
     return state.chapterStats[chapterId];
   }
 
-  function hasProgress() {
-    const progress = readJSON(STORAGE_KEYS.progress, null);
-    return Boolean(progress && progress.scriptId === "script_rain_call" && progress.nodeId);
+  function hasProgress(scriptId = state?.scriptId || "script_rain_call") {
+    const progress = readJSON(getStoryStorageKeys(scriptId).progress, null);
+    return Boolean(progress && progress.scriptId === scriptId && progress.nodeId);
   }
 
-  function loadProgress() {
-    const progress = readJSON(STORAGE_KEYS.progress, null);
-    if (!progress || progress.scriptId !== "script_rain_call") return false;
+  function loadProgress(scriptId = state?.scriptId || "script_rain_call") {
+    const progress = readJSON(getStoryStorageKeys(scriptId).progress, null);
+    if (!progress || progress.scriptId !== scriptId) return false;
     state = normalizeState(progress);
     return true;
   }
 
   function normalizeState(input) {
+    const scriptId = getDataset(input?.scriptId) === RAIN_DATA && input?.scriptId !== "script_rain_call"
+      ? "script_rain_call"
+      : input?.scriptId || "script_rain_call";
+    activateStory(scriptId);
     const validClueIds = new Set(Object.keys(DATA.clues));
     const normalizedClues = Array.isArray(input.clues)
       ? input.clues.filter((clueId) => validClueIds.has(clueId))
@@ -1292,10 +1387,10 @@
     const normalizedUnreadClues = Array.isArray(input.unreadClues)
       ? input.unreadClues.filter((clueId) => validClueIds.has(clueId))
       : [];
-    const normalizedNodeId = DATA.nodes[input.nodeId] ? input.nodeId : "ch01_001";
+    const normalizedNodeId = DATA.nodes[input.nodeId] ? input.nodeId : (DATA.script?.startNodeId || getScript(scriptId)?.startNodeId || "ch01_001");
     const normalizedEndingId = input.endingId && DATA.endings[input.endingId] ? input.endingId : null;
     return {
-      ...createInitialState(),
+      ...createInitialState(scriptId),
       ...input,
       nodeId: normalizedNodeId,
       endingId: normalizedEndingId,
@@ -1316,6 +1411,7 @@
       completedObjectives: Array.isArray(input.completedObjectives) ? input.completedObjectives : [],
       checkedHotspots: Array.isArray(input.checkedHotspots) ? input.checkedHotspots : [],
       evidenceConnections: Array.isArray(input.evidenceConnections) ? input.evidenceConnections : [],
+      ruleStatuses: input.ruleStatuses && typeof input.ruleStatuses === "object" ? input.ruleStatuses : {},
       endingCollection: Array.from(new Set([...(loadStoredCollection().endings || []), ...((Array.isArray(input.endingCollection) && input.endingCollection) || [])])),
       galleryUnlocks: Array.from(new Set([...(loadStoredCollection().gallery || []), ...((Array.isArray(input.galleryUnlocks) && input.galleryUnlocks) || [])])),
       readNodes: Array.isArray(input.readNodes) ? input.readNodes : [],
@@ -1334,6 +1430,7 @@
       completedObjectives: [...(state.completedObjectives || [])],
       checkedHotspots: [...(state.checkedHotspots || [])],
       evidenceConnections: [...(state.evidenceConnections || [])],
+      ruleStatuses: { ...(state.ruleStatuses || {}) },
       endingCollection: [...(state.endingCollection || [])],
       galleryUnlocks: [...(state.galleryUnlocks || [])],
       readNodes: [...(state.readNodes || [])],
@@ -1343,8 +1440,9 @@
 
   function autoSave() {
     state.updatedAt = new Date().toISOString();
-    saveJSON(STORAGE_KEYS.progress, snapshotState());
-    saveJSON(STORAGE_KEYS.history, state.history);
+    const keys = getStoryStorageKeys(state.scriptId);
+    saveJSON(keys.progress, snapshotState());
+    saveJSON(keys.history, state.history);
   }
 
   function setView(name, html) {
@@ -1426,9 +1524,10 @@
     stopBgm("return-to-archive");
     stopAmbience("return-to-archive");
     startEntryMusic("life_archive_theme");
-    const openSeries = DATA.series.find((series) => series.status === "open");
-    const lockedSeries = DATA.series.filter((series) => series !== openSeries);
-    const lockedRows = lockedSeries.map((series, index) => `
+    const availableSeries = STORY_CATALOG.series.filter((series) => series.status === "open");
+    const openSeries = availableSeries[0];
+    const ledgerSeries = STORY_CATALOG.series.filter((series) => series !== openSeries);
+    const lockedRows = ledgerSeries.map((series, index) => `
       <button class="archive-ledger-row" type="button" data-series-id="${series.seriesId}">
         <span class="archive-ledger-index">0${index + 2}</span>
         <strong>${escapeHTML(series.title)}</strong>
@@ -1460,7 +1559,7 @@
           </article>
         ` : `<div class="archive-empty-state"><p>暂时没有可读取的档案。</p></div>`}
         <section class="archive-ledger" aria-label="封存档案">
-          <div class="archive-ledger-head"><p>后续人生</p><span>${lockedSeries.length} 份档案仍在封存</span></div>
+          <div class="archive-ledger-head"><p>后续人生</p><span>${ledgerSeries.length} 份档案仍在等待</span></div>
           ${lockedRows}
         </section>
       </section>
@@ -1485,7 +1584,9 @@
     const scripts = series.scriptIds.map((id) => getScript(id)).filter(Boolean);
     const openScript = scripts.find((script) => script.status === "open") || scripts[0];
     const sealedScripts = scripts.filter((script) => script.scriptId !== openScript.scriptId);
-    const hasLocalProgress = hasProgress();
+    const hasLocalProgress = hasProgress(openScript.scriptId);
+    const previewData = getDataset(openScript.scriptId);
+    const previewVisuals = STORY_VISUALS[openScript.scriptId] || RAIN_VISUALS;
     const sealedRows = sealedScripts
       .map((script) => `
         <article class="sealed-story-note">
@@ -1503,19 +1604,14 @@
       <section class="series-screen story-file-screen">
         <button class="back-link" type="button" data-action="back-hall">\u2190 \u8fd4\u56de\u4eba\u751f\u6863\u6848</button>
         <header class="series-brief story-file-brief">
-          <img class="story-file-cover" src="${escapeHTML(VISUALS.covers?.home || "")}" alt="" aria-hidden="true" />
+          <img class="story-file-cover" src="${escapeHTML(previewVisuals.covers?.home || "")}" alt="" aria-hidden="true" />
           <div class="story-file-cover-scrim" aria-hidden="true"></div>
           <div class="story-file-copy">
             <p class="eyebrow">LIFE FILE</p>
-            <p class="story-file-number">ARCHIVE / 01 / AVAILABLE</p>
+            <p class="story-file-number">ARCHIVE / ${String(openScript.order || 1).padStart(2, "0")} / AVAILABLE</p>
             <h1>${escapeHTML(openScript.title)}</h1>
-            <p>\u66b4\u96e8\u591c\uff0c\u6797\u821f\u63a5\u5230\u6765\u81ea\u5df2\u6545\u5ba4\u53cb\u8bb8\u77e5\u590f\u7684\u7535\u8bdd\uff1b\u95e8\u5916\u5374\u7ad9\u7740\u4e00\u4e2a\u548c\u5979\u6781\u50cf\u7684\u5973\u4eba\u3002</p>
-            <div class="story-file-tags"><span>\u60ac\u7591\u4eba\u751f</span><span>\u90fd\u5e02\u96e8\u591c</span><span>\u4f2a\u7075\u5f02\u65e7\u6848</span></div>
-            ${renderPropStrip([
-              "prop_phone_old_cracked",
-              "prop_photo_polaroid",
-              "prop_recording_file",
-            ])}
+            <p>${escapeHTML(previewData.script?.summary || openScript.summary || "")}</p>
+            <div class="story-file-tags"><span>互动悬疑</span><span>${escapeHTML(openScript.seriesId === "series_dormitory_rollcall" ? "校园规则" : "都市雨夜")}</span><span>多结局</span></div>
             <p class="story-file-intro">${escapeHTML(openScript.summary)}</p>
             <div class="story-file-actions">
               <button class="case-button" type="button" data-action="start-script">${primaryActionText}</button>
@@ -1537,31 +1633,32 @@
       requestImmersiveMode();
       if (hasLocalProgress) {
         openConfirm("\u7ee7\u7eed\u4f53\u9a8c", "\u68c0\u6d4b\u5230\u672c\u5730\u8fdb\u5ea6\u3002\u8981\u4ece\u4e0a\u6b21\u4fdd\u5b58\u7684\u4eba\u751f\u8282\u70b9\u7ee7\u7eed\u5417\uff1f", () => {
-          loadProgress();
+          loadProgress(openScript.scriptId);
           showGame();
-        }, () => startNewGame());
+        }, () => startNewGame(openScript.scriptId));
       } else {
-        startNewGame();
+        startNewGame(openScript.scriptId);
       }
     });
     app.querySelector("[data-action='restart-script']")?.addEventListener("click", () => {
-      openConfirm("\u91cd\u65b0\u5f00\u59cb", "\u5c06\u4ece\u300a\u96e8\u591c\u6765\u7535\u300b\u7684\u7b2c\u4e00\u4e2a\u8282\u70b9\u91cd\u65b0\u8fdb\u5165\u3002", startNewGame);
+      openConfirm("重新开始", `将从《${openScript.title}》的第一个节点重新进入。`, () => startNewGame(openScript.scriptId));
     });
   }
 
 
-  function startNewGame() {
+  function startNewGame(scriptId = state?.scriptId || "script_rain_call") {
     stopNodeTransientAudio("restart");
     stopEntryMusic("story-start");
     visualState = { current: null };
     unlockAudio();
-    state = createInitialState();
+    state = createInitialState(scriptId);
     autoSave();
     showGame();
   }
 
   function showGame() {
     stopEntryMusic("story-enter");
+    activateStory(state.scriptId || "script_rain_call");
     const node = getNode();
     if (!node) {
       showToast("剧情节点缺失，已返回人生档案。", "warn");
@@ -1590,6 +1687,7 @@
           ${renderTruthMeter()}
           <button class="game-menu-button" type="button" data-tool="menu" aria-expanded="false">菜单</button>
           <nav class="toolbox" aria-label="游戏工具栏">
+            ${state.scriptId === "script_dormitory_rollcall" ? `<button type="button" data-tool="rules">规则</button>` : ""}
             <button type="button" data-tool="clues" class="clue-tool ${state.unreadClues.length ? "has-unread" : ""}">
               线索 <span>${state.clues.length}/${getTotalClueCount()}</span>
             </button>
@@ -1638,6 +1736,7 @@
     unlockGalleryForNode(node);
     gainClues(node.gainClues || []);
     setFlags(node.setFlags || []);
+    applyRuleUpdates(node.ruleUpdates || []);
     if (node.type !== "choice" && node.type !== "deduction") {
       addHistory({
         type: node.type === "ending" ? "system" : "dialogue",
@@ -1667,7 +1766,8 @@
 
     if (node.type === "choice" || node.type === "deduction") {
       continueButton.classList.add("hidden");
-      choiceArea.innerHTML = (node.choices || [])
+      const nodeChoices = (node.choices && node.choices.length ? node.choices : node.question?.choices || []);
+      choiceArea.innerHTML = nodeChoices
         .map((choice) => `
           <button class="choice-button" type="button" data-choice-id="${choice.choiceId}">
             ${choice.choiceIntent ? `<small>${escapeHTML(choice.choiceIntent)}</small>` : ""}
@@ -1749,7 +1849,7 @@
 
   function handleChoice(node, choiceId) {
     if (!lockNodeAction()) return;
-    const choice = (node.choices || []).find((item) => item.choiceId === choiceId);
+    const choice = (node.choices && node.choices.length ? node.choices : node.question?.choices || []).find((item) => item.choiceId === choiceId);
     if (!choice) return;
     stopNodeTransientAudio("choice");
     recordChoice(node, choice);
@@ -1761,6 +1861,7 @@
     });
     gainClues(choice.gainClues || []);
     setFlags(choice.setFlags || []);
+    applyRuleUpdates(choice.ruleUpdates || []);
     applyRelationshipEffects(choice.relationshipEffects || []);
     recordEndingPathTags(choice.endingPathTags || []);
     if (node.type === "deduction" && choice.isCorrect === true) {
@@ -1790,6 +1891,14 @@
       showEnding(state.endingId);
     }
     choiceSfx.forEach((item) => playSfx(item));
+  }
+
+  function applyRuleUpdates(updates) {
+    if (!Array.isArray(updates) || updates.length === 0) return;
+    state.ruleStatuses ||= {};
+    updates.forEach((update) => {
+      if (update?.ruleId && update.status) state.ruleStatuses[update.ruleId] = update.status;
+    });
   }
 
   function applyRelationshipEffects(effects) {
@@ -1981,6 +2090,9 @@
   }
 
   function resolveEnding() {
+    if (typeof activeProfile.endingResolver === "function") {
+      return activeProfile.endingResolver(state);
+    }
     const clues = new Set(state.clues);
     const flags = state.flags;
     if (flags.deleted_evidence === true && flags.backed_up_photo !== true) {
@@ -2013,7 +2125,7 @@
 
   function showEnding(endingId) {
     stopNodeTransientAudio("ending");
-    const ending = DATA.endings[endingId] || DATA.endings.ending_d;
+    const ending = DATA.endings[endingId] || DATA.endings.ending_d || Object.values(DATA.endings)[0];
     state.endingId = ending.endingId;
     state.nodeId = ending.endingId;
     state.endingCollection ||= [];
@@ -2059,7 +2171,7 @@
   }
 
   function renderEndingReport(ending) {
-    const report = ENDING_REPORT[ending.endingId] || ENDING_REPORT.ending_d;
+    const report = ENDING_REPORT[ending.endingId] || ENDING_REPORT.ending_d || Object.values(ENDING_REPORT)[0] || { label: ending.title, type: "Ending", comment: "This life has been archived." };
     const coreCount = getCoreClueCount();
     const keyClues = Object.values(DATA.clues).filter((clue) => clue.isKey && state.clues.includes(clue.clueId)).length;
     const auxClues = Object.values(DATA.clues).filter((clue) => !clue.isKey && state.clues.includes(clue.clueId)).length;
@@ -2112,7 +2224,7 @@
       return `<li class="${connected ? "is-connected" : "is-missing"}"><span>${escapeHTML(link.title)}</span><strong>${connected ? "已连线" : "未连线"}</strong></li>`;
     }).join("");
     const collection = loadStoredCollection();
-    const endingRows = ["ending_a", "ending_b", "ending_c", "ending_d"].map((endingId) => {
+    const endingRows = Object.keys(DATA.endings || {}).map((endingId) => {
       const unlocked = endingId === currentEndingId || (collection.endings || []).includes(endingId) || (state.endingCollection || []).includes(endingId);
       const title = unlocked ? DATA.endings[endingId]?.title || endingId : "未解锁结局";
       return `<li class="${unlocked ? "is-unlocked" : "is-locked"}">${escapeHTML(title)}</li>`;
@@ -2148,6 +2260,18 @@
     return `<section class="relationship-report"><h3>人物关系</h3><div class="relationship-report-grid">${cards}</div></section>`;
   }
   function buildEndingPathReport(endingId) {
+    if (state.scriptId === "script_dormitory_rollcall") {
+      const missing = CORE_CLUE_IDS.filter((id) => !state.clues.includes(id));
+      const rows = [
+        `You restored ${getCoreClueCount()} of ${CORE_CLUE_IDS.length} core records.`,
+        state.flags.understood_rule_eight_forged ? "You identified rule eight as a forged instruction." : "You did not fully identify rule eight as forged.",
+        state.flags.named_xutang ? "Xu Tang was named in the final count." : "Xu Tang remained exposed to the system's blank line.",
+        state.flags.named_zhouwanning ? "Zhou Wanning was restored to the old record." : "Zhou Wanning's erasure remained unresolved.",
+      ];
+      if (missing.length) rows.push(`Missing records: ${missing.map((id) => DATA.clues[id]?.title || id).join(", ")}.`);
+      rows.push(`This led to ${DATA.endings[endingId]?.title || endingId}.`);
+      return rows;
+    }
     const has = (clueId) => state.clues.includes(clueId);
     const rows = [];
     if (endingId === "ending_c") {
@@ -2186,6 +2310,10 @@
     return rows;
   }
   function renderKeyChoiceReport() {
+    if (state.scriptId === "script_dormitory_rollcall") {
+      const rows = (state.importantChoices || []).slice(-6).map((entry) => entry.text || entry.choiceText).filter(Boolean);
+      return (rows.length ? rows : ["No critical decision was recorded."]).map((row) => `<li>${escapeHTML(row)}</li>`).join("");
+    }
     const rows = [
       `许知晚：${state.flags.trusted_zhuwan_early || state.flags.verified_zhuwan_identity ? "选择接近并核验她" : "保持距离或尚未完全确认"}`,
       `照片备份：${state.flags.backed_up_photo ? "已备份关键照片" : "未形成稳定备份"}`,
@@ -2213,6 +2341,7 @@
       });
     };
     bindTool("clues", openClueModal);
+    bindTool("rules", openRulesModal);
     bindTool("evidence", openEvidenceBoardModal);
     bindTool("relationships", openRelationshipModal);
     bindTool("audio", openAudioSettingsModal);
@@ -2228,6 +2357,27 @@
         showHall();
       });
     });
+  }
+
+  function openRulesModal() {
+    const rules = DATA.rules || [];
+    const labels = {
+      "unverified": "Unverified",
+      "partly-credible": "Partly credible",
+      "verified": "Verified",
+      "contradiction": "Contradiction",
+      "forged": "Forged",
+    };
+    const rows = rules.map((rule) => {
+      const status = state.ruleStatuses?.[rule.ruleId] || rule.status || "unverified";
+      return `
+        <article class="rule-board-row rule-status-${escapeHTML(status)}">
+          <span>${String(rule.number).padStart(2, "0")}</span>
+          <div><strong>${escapeHTML(rule.text)}</strong><small>${escapeHTML(labels[status] || status)}</small></div>
+        </article>
+      `;
+    }).join("");
+    openModal("Dormitory rules", "RULE BOARD", `<section class="rule-board"><p class="panel-note">Rules are evidence, not orders. Their status changes only when the night gives you proof.</p>${rows}</section>`);
   }
 
   function openRelationshipModal() {
@@ -2280,6 +2430,9 @@
   }
 
   function getEvidenceLinks() {
+    if (Array.isArray(activeProfile.evidenceLinks) && activeProfile.evidenceLinks.length) {
+      return activeProfile.evidenceLinks;
+    }
     const nodeLinks = Object.values(DATA.nodes || {}).flatMap((node) => node.evidenceLinks || []);
     const byId = {};
     nodeLinks.forEach((link) => {
@@ -2358,7 +2511,7 @@
 
   function openArchiveModal() {
     const collection = loadStoredCollection();
-    const endings = ["ending_a", "ending_b", "ending_c", "ending_d"].map((endingId) => {
+    const endings = Object.keys(DATA.endings || {}).map((endingId) => {
       const unlocked = (collection.endings || []).includes(endingId) || (state.endingCollection || []).includes(endingId);
       const ending = DATA.endings[endingId];
       return `<article class="archive-card ${unlocked ? "is-owned" : "is-locked"}"><strong>${unlocked ? escapeHTML(ending?.title || endingId) : "未解锁结局"}</strong><p>${unlocked ? "已收入人生档案。" : "继续调查不同分歧，解锁这条人生。"}</p></article>`;
@@ -2611,7 +2764,8 @@
   }
 
   function openSaveModal() {
-    const slots = readJSON(STORAGE_KEYS.saves, [null, null, null]);
+    const saveKeys = getStoryStorageKeys(state.scriptId);
+    const slots = readJSON(saveKeys.saves, [null, null, null]);
     const html = `
       <div class="save-grid">
         ${slots.map((slot, index) => renderSaveSlot(slot, index, "save")).join("")}
@@ -2622,12 +2776,12 @@
       button.addEventListener("click", () => {
         const index = Number(button.dataset.saveSlot);
         const writeSlot = () => {
-          const nextSlots = readJSON(STORAGE_KEYS.saves, [null, null, null]);
+          const nextSlots = readJSON(saveKeys.saves, [null, null, null]);
           nextSlots[index] = {
             ...snapshotState(),
             savedAt: new Date().toISOString(),
           };
-          saveJSON(STORAGE_KEYS.saves, nextSlots);
+          saveJSON(saveKeys.saves, nextSlots);
           showToast(`已保存到人生节点 ${index + 1}`, "clue");
           openSaveModal();
         };
@@ -2641,7 +2795,8 @@
   }
 
   function openLoadModal() {
-    const slots = readJSON(STORAGE_KEYS.saves, [null, null, null]);
+    const saveKeys = getStoryStorageKeys(state.scriptId);
+    const slots = readJSON(saveKeys.saves, [null, null, null]);
     const html = `
       <div class="save-grid">
         ${slots.map((slot, index) => renderSaveSlot(slot, index, "load")).join("")}
