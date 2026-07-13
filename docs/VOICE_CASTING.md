@@ -1,6 +1,8 @@
 # 剧情配音选角
 
-提供商：科大讯飞超拟人语音合成 WebAPI。每个角色通过短文本探测后使用独立授权 vcn。
+提供商：科大讯飞超拟人语音合成 WebAPI。每个角色通过短文本探测后使用独立授权 vcn；不同故事的主要角色不复用音色。
+
+## script_dormitory_rollcall
 
 - 旁白: `x6_pangbainv1_pro`，语速 45，语调 47，音量 48。
 - 宿舍广播: `x6_zhuanyenvzhuchi_pro`，语速 43，语调 48，音量 48。
@@ -11,3 +13,14 @@
 - 许棠: `x6_lingxiaoxuan_pro`，语速 48，语调 55，音量 50。
 - 赵晴: `x6_lingyufei_pro`，语速 48，语调 46，音量 50。
 - 林穗: `x6_lingxiaoyu_pro`，语速 49，语调 52，音量 50。
+
+## script_rain_call
+
+- 旁白: `x6_pangbainan1_pro`，语速 45，语调 47，音量 48。
+- 林舟: `x6_lingxiaowan_pro`，语速 47，语调 49，音量 49。
+- 许知夏: `x6_tianjingshaonv_pro`，语速 44，语调 53，音量 47。
+- 门外女人: `x6_lingxiaoshu_pro`，语速 43，语调 48，音量 47。
+- 陈妍: `x6_lingxiaoluo_pro`，语速 49，语调 50，音量 50。
+- 许知晚: `x6_lingxiaoxi_pro`，语速 44，语调 45，音量 48。
+- 周屿: `x6_lingfeiyi_pro`，语速 44，语调 42，音量 48。
+- 房东老太: `x6_huifangnv_pro`，语速 44，语调 40，音量 49。
