@@ -27,6 +27,7 @@ const checks = [
   ["node", ["scripts/check-dormitory-ending-routes.mjs"]],
   ["node", ["scripts/check-dormitory-rule-board.mjs"]],
   ["node", ["scripts/check-dormitory-audio.mjs"]],
+  ["node", ["scripts/check-dormitory-release-gates.mjs"]],
   ["node", ["scripts/check-dormitory-asset-library.mjs"]],
   ["node", ["scripts/check-multi-story.mjs"]],
 ];

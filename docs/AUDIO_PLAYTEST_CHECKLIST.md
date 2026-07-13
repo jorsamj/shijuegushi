@@ -17,3 +17,5 @@ Status: `demo` until all three listening passes are signed off.
 10. Compare the opening false knock (four evenly spaced knocks) with the washroom verified knock (three knocks, a pause, then one knock). The written rule and the heard rhythm must agree.
 11. Check the video, archive paper, keys, dual-console signal, and final-record tension only appear with their matching on-screen action and stop when the node changes.
 12. The rules broadcast and final corrected-rollcall broadcast require an authorised human recording before release. Do not approve the story for public launch until that recording has been supplied, licensed, mixed, and heard on headphones, desktop speakers, and phone speakers.
+
+Release gate: `node scripts/check-dormitory-release-gates.mjs` must remain failing until the licensed voice source, distribution permission, three-device listening sign-off, cross-story save/load sign-off, and mobile playthrough sign-off are recorded in `audioProduction`. It is deliberately included in the production-readiness aggregate so a Draft build cannot be mistaken for a release candidate.
