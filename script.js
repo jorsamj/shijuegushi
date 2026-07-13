@@ -2365,22 +2365,66 @@
       ...(state.clues.includes("dorm_clue_handwritten_rule") ? (DATA.hiddenRules || []) : []),
     ];
     const labels = {
-      "unverified": "Unverified",
-      "partly-credible": "Partly credible",
-      "verified": "Verified",
-      "contradiction": "Contradiction",
-      "forged": "Forged",
+      "unverified": "未验证",
+      "partly-credible": "基本可信",
+      "verified": "已验证",
+      "contradiction": "存在矛盾",
+      "forged": "确认伪造",
+      "hidden-correction": "隐藏修正",
     };
     const rows = rules.map((rule) => {
       const status = state.ruleStatuses?.[rule.ruleId] || rule.status || "unverified";
       return `
-        <article class="rule-board-row rule-status-${escapeHTML(status)}">
+        <button class="rule-board-row rule-status-${escapeHTML(status)}" type="button" data-rule-detail="${escapeHTML(rule.ruleId)}">
           <span>${String(rule.number).padStart(2, "0")}</span>
-          <div><strong>${escapeHTML(rule.text)}</strong><small>${escapeHTML(labels[status] || status)}</small></div>
-        </article>
+          <div><strong>${escapeHTML(rule.text)}</strong><small>规则状态：${escapeHTML(labels[status] || status)}</small></div>
+          <i aria-hidden="true">查看</i>
+        </button>
       `;
     }).join("");
-    openModal("Dormitory rules", "RULE BOARD", `<section class="rule-board"><p class="panel-note">Rules are evidence, not orders. Their status changes only when the night gives you proof.</p>${rows}</section>`);
+    openModal("417 夜间规则", "规则板", `<section class="rule-board"><p class="panel-note">规则是证据，不是命令。只有经过现场验证，它们才值得相信。</p>${rows}</section>`);
+    modalBody.querySelectorAll("[data-rule-detail]").forEach((button) => {
+      button.addEventListener("click", () => openRuleDetail(button.dataset.ruleDetail));
+    });
+  }
+
+  function openRuleDetail(ruleId) {
+    const rule = [...(DATA.rules || []), ...(DATA.hiddenRules || [])].find((item) => item.ruleId === ruleId);
+    const detail = DATA.rulePlaybook?.[ruleId];
+    if (!rule || !detail) return;
+    const statusLabels = {
+      "unverified": "未验证",
+      "partly-credible": "基本可信",
+      "verified": "已验证",
+      "contradiction": "存在矛盾",
+      "forged": "确认伪造",
+      "hidden-correction": "隐藏修正",
+    };
+    const status = state.ruleStatuses?.[rule.ruleId] || rule.status || "unverified";
+    const clueRows = (detail.clueIds || [])
+      .map((clueId) => DATA.clues?.[clueId])
+      .filter(Boolean)
+      .map((clue) => `<li class="${state.clues.includes(clue.clueId) ? "is-owned" : "is-locked"}">${escapeHTML(state.clues.includes(clue.clueId) ? clue.title : "尚未获得的证据")}</li>`)
+      .join("");
+    const nodeLabel = (nodeId) => DATA.nodes?.[nodeId]?.text || "尚未发生";
+    openModal(
+      `规则 ${rule.number}`,
+      "规则详情",
+      `<section class="rule-detail">
+        <p class="rule-detail-status">规则状态：<strong>${escapeHTML(statusLabels[status] || status)}</strong></p>
+        <blockquote>${escapeHTML(rule.text)}</blockquote>
+        <dl>
+          <div><dt>相关证据</dt><dd><ul>${clueRows || "<li>暂无</li>"}</ul></dd></div>
+          <div><dt>验证事件</dt><dd>${escapeHTML(nodeLabel(detail.verificationNodeId))}</dd></div>
+          <div><dt>矛盾事件</dt><dd>${escapeHTML(nodeLabel(detail.contradictionNodeId))}</dd></div>
+          <div><dt>当前判断</dt><dd>${escapeHTML(detail.playerJudgment || "尚待判断")}</dd></div>
+          <div><dt>最终真实性</dt><dd>${escapeHTML(detail.finalTruth || "尚待确认")}</dd></div>
+          <div><dt>最终推理</dt><dd>${escapeHTML(detail.endingImpact || "尚未影响结局")}</dd></div>
+        </dl>
+        <button class="case-button" type="button" data-rule-detail-close>我知道啦</button>
+      </section>`
+    );
+    modalBody.querySelector("[data-rule-detail-close]")?.addEventListener("click", closeModal);
   }
 
   function openRelationshipModal() {

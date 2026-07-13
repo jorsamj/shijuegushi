@@ -36,7 +36,7 @@ for (const node of Object.values(nodes)) {
 
 const correctionRule = data?.hiddenRules?.find((rule) => rule.ruleId === "dorm_rule_correction");
 if (!correctionRule) failures.push("Hidden correction rule is missing.");
-if (!Object.values(nodes).some((node) => (node.ruleUpdates || []).some((update) => update.ruleId === "dorm_rule_correction" && update.status === "hidden-correction"))) {
+if (!Object.values(nodes).some((node) => [node, ...(node.investigationHotspots || [])].some((source) => (source.ruleUpdates || []).some((update) => update.ruleId === "dorm_rule_correction" && update.status === "hidden-correction")))) {
   failures.push("Hidden correction rule never becomes discoverable in the story flow.");
 }
 

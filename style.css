@@ -1248,6 +1248,135 @@ button {
   margin-top: 22px;
 }
 
+.rule-board {
+  display: grid;
+  gap: 10px;
+}
+
+.rule-board .panel-note {
+  margin: 0 0 6px;
+  color: var(--soft);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.rule-board-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 16px;
+  border: 1px solid rgba(244, 231, 198, 0.14);
+  border-radius: 7px;
+  color: var(--paper);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.025);
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.rule-board-row:hover,
+.rule-board-row:focus-visible {
+  border-color: rgba(216, 182, 106, 0.52);
+  background: rgba(216, 182, 106, 0.08);
+  transform: translateY(-1px);
+}
+
+.rule-board-row > span {
+  color: var(--gold);
+  font-family: var(--serif);
+  font-size: 18px;
+}
+
+.rule-board-row strong,
+.rule-board-row small,
+.rule-board-row i {
+  display: block;
+}
+
+.rule-board-row strong {
+  font-weight: 600;
+  line-height: 1.58;
+}
+
+.rule-board-row small {
+  margin-top: 5px;
+  color: var(--soft);
+  font-size: 12px;
+}
+
+.rule-board-row i {
+  color: rgba(244, 231, 198, 0.62);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.rule-status-verified { border-left-color: rgba(125, 191, 160, 0.82); }
+.rule-status-contradiction { border-left-color: rgba(201, 136, 103, 0.82); }
+.rule-status-forged { border-left-color: rgba(193, 86, 90, 0.84); }
+.rule-status-hidden-correction { border-left-color: rgba(216, 182, 106, 0.92); }
+
+.rule-detail {
+  display: grid;
+  gap: 16px;
+}
+
+.rule-detail-status {
+  margin: 0;
+  color: var(--soft);
+  font-size: 13px;
+}
+
+.rule-detail-status strong { color: var(--gold); }
+
+.rule-detail blockquote {
+  margin: 0;
+  padding: 15px 17px;
+  border-left: 2px solid var(--gold);
+  color: var(--paper);
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.65;
+  background: rgba(216, 182, 106, 0.06);
+}
+
+.rule-detail dl {
+  display: grid;
+  gap: 11px;
+  margin: 0;
+}
+
+.rule-detail dl > div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid rgba(244, 231, 198, 0.09);
+}
+
+.rule-detail dt {
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.rule-detail dd {
+  margin: 0;
+  color: var(--soft);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.rule-detail dd ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rule-detail li.is-owned { color: rgba(189, 218, 195, 0.95); }
+.rule-detail li.is-locked { color: rgba(244, 231, 198, 0.46); }
+
 .clue-category + .clue-category {
   margin-top: 28px;
 }

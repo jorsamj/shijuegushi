@@ -195,6 +195,15 @@
   .modal-body { padding-bottom: max(18px, env(safe-area-inset-bottom)); }
   .modal-acknowledgement { position: sticky; bottom: 0; margin: 16px -1px -1px; padding: 12px 0 max(2px, env(safe-area-inset-bottom)); background: rgba(8, 10, 16, 0.96); }
   .modal-acknowledgement .case-button { width: 100%; min-height: 48px; justify-content: center; }
+  .rule-board-row { grid-template-columns: 28px minmax(0, 1fr) auto; gap: 9px; min-height: 62px; padding: 12px; }
+  .rule-board-row > span { font-size: 16px; }
+  .rule-board-row strong { font-size: 13px; line-height: 1.48; }
+  .rule-board-row small { font-size: 11px; }
+  .rule-detail { gap: 13px; }
+  .rule-detail blockquote { padding: 13px; font-size: 16px; }
+  .rule-detail dl > div { grid-template-columns: 72px minmax(0, 1fr); gap: 9px; }
+  .rule-detail dt, .rule-detail dd { font-size: 12px; }
+  .rule-detail .case-button { width: 100%; min-height: 48px; }
   .toast-host { top: max(64px, calc(env(safe-area-inset-top) + 54px)); right: var(--mobile-inline-safe); left: var(--mobile-inline-safe); }
   .toast { width: 100%; }
 }
