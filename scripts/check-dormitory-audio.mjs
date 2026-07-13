@@ -10,6 +10,7 @@ vm.runInNewContext(fs.readFileSync(path.join(root, "assets/stories/dormitory-rol
 const manifest = context.window.SECOND_LIFE_EXTERNAL_AUDIO;
 const map = context.window.DORMITORY_ROLLCALL_ASSET_MAP;
 const data = context.window.MIST_DORMITORY_DATA;
+const voiceManifest = JSON.parse(fs.readFileSync(path.join(root, "assets/stories/dormitory-rollcall/audio/voice-manifest.json"), "utf8"));
 const failures = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 
@@ -42,7 +43,10 @@ for (const entry of usedKeys) {
 const broadcastNodes = Object.values(data?.nodes || {}).filter((node) => node.speaker === "广播");
 assert(broadcastNodes.length > 0, "Dormitory story must retain broadcast nodes.");
 assert(broadcastNodes.every((node) => !node.voiceAudio && !node.narrationAudio && !node.voiceStinger), "Broadcast must never fall back to browser or role-play voice audio.");
-assert(data?.audioProduction?.broadcastVoiceStatus === "requires-licensed-recording", "Broadcast voice must be explicitly held for a licensed formal recording.");
+assert(data?.audioProduction?.broadcastVoiceStatus === "xfyun-generated-awaiting-listening-signoff", "Broadcast voice must be generated through the authorised XFYUN pipeline and remain awaiting listening sign-off.");
+const broadcastEntries = Object.values(voiceManifest.entries || {}).filter((entry) => entry.kind === "broadcast-cue");
+assert(broadcastEntries.length === 14, `Broadcast delivery must contain 14 independent generated cues; got ${broadcastEntries.length}.`);
+assert(broadcastEntries.every((entry) => entry.status === "generated" && entry.provider === "xfyun-super-smart-tts-webapi"), "Every broadcast cue must use the authorised XFYUN source.");
 assert(!/creepy_breath|heartbeats|gasp|scream|white_noise|game01/.test(JSON.stringify({ map, data })), "Dormitory audio must not reintroduce breath, heartbeat, scream, white-noise, or game UI cues.");
 
 const knockDelays = (data?.nodes?.dorm_03_003?.sfxOnEnter || []).map((cue) => Number(cue.delayMs || 0));

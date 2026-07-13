@@ -533,6 +533,7 @@
       bgmVolume: clampNumber(saved.bgmVolume ?? 0.4, 0, 1),
       ambienceVolume: clampNumber(saved.ambienceVolume ?? 0.5, 0, 1),
       sfxVolume: clampNumber(saved.sfxVolume ?? 0.68, 0, 1),
+      voiceVolume: clampNumber(saved.voiceVolume ?? 0.72, 0, 1),
       stingerVolume: clampNumber(saved.stingerVolume ?? 0.58, 0, 1),
       devAudioDebug: saved.devAudioDebug === true,
     };
@@ -572,8 +573,8 @@
       ambience: settings.ambienceVolume,
       sfx: settings.sfxVolume,
       stingers: settings.stingerVolume,
-      voice: settings.stingerVolume,
-      narration: settings.stingerVolume,
+      voice: settings.voiceVolume,
+      narration: settings.voiceVolume,
     };
     return clampNumber((Number(base) || 0) * settings.masterVolume * (channelMap[channel] ?? 1), 0, 1);
   }
@@ -1004,17 +1005,24 @@
     }
   }
 
-  function speakNode(node) {
+  function getStoryVoiceEntry(entryId, kind = "nodes") {
+    return window.SECOND_LIFE_VOICE_MANIFEST?.stories?.[state?.scriptId || "script_rain_call"]?.[kind]?.[entryId] || null;
+  }
+
+  function speakNode(node, kind = "nodes") {
     const settings = getAudioSettings();
     if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked) return;
     if (audioState.lastVoiceNodeId === node.nodeId) return;
     stopAllDialogueAudio();
     const token = audioState.dialogueToken;
     const sessionId = audioState.dialogueSessionId;
-    const realVoiceKey = node.voiceStinger || "";
-    const realVoiceCategory = node.voiceStinger ? "stingers" : "";
+    const generatedVoice = getStoryVoiceEntry(node.nodeId, kind);
+    const realVoiceKey = generatedVoice ? node.nodeId : (node.voiceStinger || "");
+    const realVoiceCategory = generatedVoice ? "voice" : (node.voiceStinger ? "stingers" : "");
     if (!realVoiceKey || !realVoiceCategory) return;
-    const realVoiceSrc = getAudioSource(realVoiceCategory, realVoiceKey);
+    const realVoiceSrc = generatedVoice
+      ? { src: generatedVoice.path, sourceType: "xfyun-tts" }
+      : getAudioSource(realVoiceCategory, realVoiceKey);
     if (realVoiceCategory !== "stingers" && realVoiceSrc && isPlaceholderDialogueAsset(node) && !settings.allowPlaceholderVoices) {
       if (!audioState.placeholderVoiceNoticeShown) {
         showToast("当前语音仍是临时 TTS，占位音已默认关闭，避免破坏体验。", "warn");
@@ -1070,14 +1078,6 @@
   }
 
   function handleMissingRealVoice(node, settings = getAudioSettings()) {
-    if (settings.voiceMode === "fallback") {
-      if (!audioState.voiceFallbackNoticeShown) {
-        showToast("当前为开发用临时合成语音，正式体验不会自动朗读普通文本。", "warn");
-        audioState.voiceFallbackNoticeShown = true;
-      }
-      speakSyntheticNode(node);
-      return;
-    }
     if ((node.voiceAudio || node.narrationAudio || node.voiceStinger) && !audioState.voiceMissingNoticeShown) {
       showToast("当前关键声音缺少真实音频，已跳过机械朗读。", "warn");
       audioState.voiceMissingNoticeShown = true;
@@ -2155,6 +2155,7 @@
       nodeId: ending.endingId,
     });
     autoSave();
+    speakNode({ nodeId: ending.endingId }, "endings");
 
     setView(
       "ending",
@@ -2623,11 +2624,12 @@
         <label class="settings-toggle"><input type="checkbox" data-setting="bgmEnabled" ${settings.bgmEnabled ? "checked" : ""} /> 背景音乐</label>
         <label class="settings-toggle"><input type="checkbox" data-setting="ambienceEnabled" ${settings.ambienceEnabled ? "checked" : ""} /> 环境音</label>
         <label class="settings-toggle"><input type="checkbox" data-setting="sfxEnabled" ${settings.sfxEnabled ? "checked" : ""} /> 音效</label>
-        <label class="settings-toggle"><input type="checkbox" data-setting="voiceEnabled" ${settings.voiceEnabled ? "checked" : ""} /> 人物非语言声音</label>
+        <label class="settings-toggle"><input type="checkbox" data-setting="voiceEnabled" ${settings.voiceEnabled ? "checked" : ""} /> 剧情配音</label>
         ${renderRangeControl("masterVolume", "总音量", settings.masterVolume)}
         ${renderRangeControl("bgmVolume", "背景音乐", settings.bgmVolume)}
         ${renderRangeControl("ambienceVolume", "环境音", settings.ambienceVolume)}
         ${renderRangeControl("sfxVolume", "音效", settings.sfxVolume)}
+        ${renderRangeControl("voiceVolume", "剧情配音", settings.voiceVolume)}
         ${renderRangeControl("stingerVolume", "人物非语言", settings.stingerVolume)}
         <div class="modal-actions">
           <button class="case-button" type="button" data-replay-node-audio>重播当前节点声音</button>

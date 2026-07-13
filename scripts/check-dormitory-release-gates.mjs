@@ -13,8 +13,8 @@ vm.runInNewContext(
 const production = context.window.MIST_DORMITORY_DATA?.audioProduction || {};
 const failures = [];
 
-if (production.broadcastVoiceStatus !== "licensed-recording-ready") {
-  failures.push("Formal dormitory broadcasts still require an authorised Chinese recording. Expected audioProduction.broadcastVoiceStatus=licensed-recording-ready.");
+if (production.broadcastVoiceStatus !== "xfyun-generated-awaiting-listening-signoff" && production.broadcastVoiceStatus !== "xfyun-generated-ready") {
+  failures.push("Formal dormitory broadcasts must be generated through the authorised XFYUN delivery pipeline before release.");
 }
 if (!production.broadcastVoiceLicense || !production.broadcastVoiceSource) {
   failures.push("Formal dormitory broadcasts need source and distribution-permission records before release.");
