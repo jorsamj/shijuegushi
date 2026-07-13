@@ -12,7 +12,8 @@ const failures = [];
 if (!data || data.script?.scriptId !== "script_dormitory_rollcall") failures.push("Dormitory story data lacks the independent script id.");
 if (data?.series?.seriesId !== "series_dormitory_rollcall") failures.push("Dormitory story data lacks the independent series id.");
 if ((data?.chapters || []).length !== 6) failures.push("Dormitory story must contain six chapters.");
-if ((data?.rules || []).length !== 8) failures.push("Dormitory story must contain all eight rules.");
+if ((data?.rules || []).length !== 6) failures.push("Dormitory story must contain six public rules.");
+if ((data?.hiddenRules || []).length !== 1 || data.hiddenRules[0]?.ruleId !== "dorm_rule_correction") failures.push("Dormitory story must contain one hidden correction rule.");
 if (Object.keys(data?.clues || {}).length !== 6) failures.push("Dormitory story must contain six core clues.");
 if (Object.keys(data?.endings || {}).length !== 4) failures.push("Dormitory story must contain four endings.");
 
@@ -33,10 +34,10 @@ for (const node of Object.values(nodes)) {
   }
 }
 
-const ruleEight = data?.rules?.find((rule) => rule.ruleId === "dorm_rule_08");
-if (!ruleEight) failures.push("Rule eight is missing.");
-if (!Object.values(nodes).some((node) => (node.ruleUpdates || []).some((update) => update.ruleId === "dorm_rule_08" && update.status === "forged"))) {
-  failures.push("Rule eight never becomes forged in the story flow.");
+const correctionRule = data?.hiddenRules?.find((rule) => rule.ruleId === "dorm_rule_correction");
+if (!correctionRule) failures.push("Hidden correction rule is missing.");
+if (!Object.values(nodes).some((node) => (node.ruleUpdates || []).some((update) => update.ruleId === "dorm_rule_correction" && update.status === "hidden-correction"))) {
+  failures.push("Hidden correction rule never becomes discoverable in the story flow.");
 }
 
 const engine = fs.readFileSync(path.join(root, "script.js"), "utf8");

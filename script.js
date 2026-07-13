@@ -2360,7 +2360,10 @@
   }
 
   function openRulesModal() {
-    const rules = DATA.rules || [];
+    const rules = [
+      ...(DATA.rules || []),
+      ...(state.clues.includes("dorm_clue_handwritten_rule") ? (DATA.hiddenRules || []) : []),
+    ];
     const labels = {
       "unverified": "Unverified",
       "partly-credible": "Partly credible",

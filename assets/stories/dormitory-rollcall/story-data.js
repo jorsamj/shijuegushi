@@ -13,13 +13,14 @@
 
   const rules = [
     { ruleId: "dorm_rule_01", number: 1, text: "00:17 后，点名结束前不得离开宿舍。", status: "unverified" },
-    { ruleId: "dorm_rule_02", number: 2, text: "每间宿舍的官方人数为四人。不得说出或追问未登记者的名字。", status: "unverified" },
-    { ruleId: "dorm_rule_03", number: 3, text: "真正的查寝者会敲三下，停两秒，再敲一下。", status: "unverified" },
-    { ruleId: "dorm_rule_04", number: 4, text: "床号被叫到时，当事人保持安静，由另一人回答“已经休息”。", status: "unverified" },
-    { ruleId: "dorm_rule_05", number: 5, text: "00:44 红灯亮起时闭眼十秒，不得使用手机照明。", status: "unverified" },
-    { ruleId: "dorm_rule_06", number: 6, text: "有人从洗手间回来时，先查看她原来的床位；若床上有人，不得开门。", status: "unverified" },
-    { ruleId: "dorm_rule_07", number: 7, text: "镜中出现陌生姓名时，不得擦去，也不得念出。", status: "unverified" },
-    { ruleId: "dorm_rule_08", number: 8, text: "01:13 前，未登记者必须独自前往一楼值班室。", status: "unverified" },
+    { ruleId: "dorm_rule_02", number: 2, text: "真正的查寝者会敲三下，停两秒，再敲一下。", status: "unverified" },
+    { ruleId: "dorm_rule_03", number: 3, text: "床号被叫到时，当事人保持安静，由另一人回答“已经休息”。", status: "unverified" },
+    { ruleId: "dorm_rule_04", number: 4, text: "00:44 红灯亮起时闭眼十秒，不得使用手机照明。", status: "unverified" },
+    { ruleId: "dorm_rule_05", number: 5, text: "有人从洗手间回来时，先查看她原来的床位；若床上有人，不得开门。", status: "unverified" },
+    { ruleId: "dorm_rule_06", number: 6, text: "镜中出现陌生姓名时，不得擦去，也不得念出。", status: "unverified" },
+  ];
+  const hiddenRules = [
+    { ruleId: "dorm_rule_correction", number: "修正", text: "以上规则只能让你活到 01:13。不要减少人数。让广播承认被删除的人，纠正名单。", status: "hidden-correction" },
   ];
 
   const clues = {
@@ -104,41 +105,41 @@
   }
 
   add("dorm_01_001", { chapterId: "dorm_chapter_01", text: "00:17。417 的灯同时熄灭。天花板扬声器发出一声干涩的轻响。", objectiveId: "hear-the-rules", objectiveText: "确认广播究竟要宿舍做什么。", visualFocus: "speaker", sceneHold: false, transitionStyle: "fade" });
-  add("dorm_01_002", { chapterId: "dorm_chapter_01", speaker: "Broadcast", text: "校园女声平静地念完八条规则。第八条说：01:13 前，未登记者必须独自下楼。", nextNodeId: "dorm_01_003", setFlags: ["heard_broadcast"], gainClues: ["dorm_clue_broadcast_recording"], ruleUpdates: [{ ruleId: "dorm_rule_01", status: "partly-credible" }, { ruleId: "dorm_rule_02", status: "partly-credible" }, { ruleId: "dorm_rule_08", status: "unverified" }] });
+  add("dorm_01_002", { chapterId: "dorm_chapter_01", speaker: "Broadcast", text: "校园女声平静地念完六条规则。她没有提到名单，也没有提到必须交出谁。", nextNodeId: "dorm_01_003", setFlags: ["heard_broadcast"], gainClues: ["dorm_clue_broadcast_recording"], ruleUpdates: [{ ruleId: "dorm_rule_01", status: "partly-credible" }, { ruleId: "dorm_rule_02", status: "unverified" }] });
   add("dorm_01_003", { chapterId: "dorm_chapter_01", speaker: "Chen Lu", visualCharacter: "Chen Lu", text: "陈露数了一遍屋里的人，在第五个数字上停住。没有人念出那个数字。", nextNodeId: "dorm_01_004", visualFocus: "temporary-bed" });
   add("dorm_01_004", { chapterId: "dorm_chapter_01", text: "门外响起三下敲门声。停顿开始了。最后一下还没落下，木门上先擦过第四道声音。", nextNodeId: "dorm_01_005", visualFocus: "door" });
   add("dorm_01_005", { chapterId: "dorm_chapter_01", type: "choice", text: "敲门节奏不对。你怎么做？", choices: [
-    choice("listen", "保持安静，数清间隔。", "dorm_01_006", { setFlags: ["checked_knock_pattern"], choiceImpactText: "你记下矛盾，没有回应门外。", ruleUpdates: [{ ruleId: "dorm_rule_03", status: "verified" }] }),
-    choice("answer", "隔着门问外面是谁。", "dorm_01_006", { choiceImpactText: "走廊只用沉默回答。屋里的人听见你给了它一个声音。", ruleUpdates: [{ ruleId: "dorm_rule_03", status: "partly-credible" }] }),
+    choice("listen", "保持安静，数清间隔。", "dorm_01_006", { setFlags: ["checked_knock_pattern"], choiceImpactText: "你记下矛盾，没有回应门外。", ruleUpdates: [{ ruleId: "dorm_rule_02", status: "verified" }] }),
+    choice("answer", "隔着门问外面是谁。", "dorm_01_006", { choiceImpactText: "走廊只用沉默回答。屋里的人听见你给了它一个声音。", ruleUpdates: [{ ruleId: "dorm_rule_02", status: "partly-credible" }] }),
   ] });
   add("dorm_01_006", { chapterId: "dorm_chapter_01", text: "扬声器开始第一次点名。林穗抓紧床栏，指节白得没有血色。", nextNodeId: "dorm_02_001", visualCharacter: "Lin Sui", objectiveComplete: true, chapterRecap: { title: "广播有规则，但门外已经违背了一条。", next: "查清宿舍的第四张床究竟藏着什么。" } });
 
   add("dorm_02_001", { chapterId: "dorm_chapter_02", text: "床位编号从一到四。书桌和窗之间，却摆着一张没有编号的折叠床。", objectiveId: "verify-the-count", objectiveText: "找出宿舍漏登的是谁。", visualFocus: "temporary-bed", sceneHold: false, transitionStyle: "hold" });
-  add("dorm_02_002", { chapterId: "dorm_chapter_02", text: "二号床被叫到时，当事人没有出声。赵晴从黑暗里回答：已经休息。", nextNodeId: "dorm_02_003", visualCharacter: "Zhao Qing", ruleUpdates: [{ ruleId: "dorm_rule_04", status: "verified" }] });
+  add("dorm_02_002", { chapterId: "dorm_chapter_02", text: "二号床被叫到时，当事人没有出声。赵晴从黑暗里回答：已经休息。", nextNodeId: "dorm_02_003", visualCharacter: "Zhao Qing", ruleUpdates: [{ ruleId: "dorm_rule_03", status: "verified" }] });
   add("dorm_02_003", { chapterId: "dorm_chapter_02", text: "夹在门上的官方名册有四个名字。折叠床上却多出一条被子。", nextNodeId: "dorm_02_004", gainClues: ["dorm_clue_417_roster"], visualFocus: "roster" });
   add("dorm_02_004", { chapterId: "dorm_chapter_02", type: "choice", text: "门外的声音自称吴阿姨。全屋都在等你决定。", choices: [
-    choice("protect", "不开门，让大家继续藏好折叠床。", "dorm_02_005", { setFlags: ["protected_fourth_bed"], choiceImpactText: "无编号的床还留在宿舍的人数里。", ruleUpdates: [{ ruleId: "dorm_rule_06", status: "partly-credible" }] }),
-    choice("check", "不解门链，只从猫眼确认。", "dorm_02_005", { choiceImpactText: "猫眼里只有一串钥匙，没有脸。", ruleUpdates: [{ ruleId: "dorm_rule_03", status: "contradiction" }] }),
+    choice("protect", "不开门，让大家继续藏好折叠床。", "dorm_02_005", { setFlags: ["protected_fourth_bed"], choiceImpactText: "无编号的床还留在宿舍的人数里。", ruleUpdates: [{ ruleId: "dorm_rule_05", status: "partly-credible" }] }),
+    choice("check", "不解门链，只从猫眼确认。", "dorm_02_005", { choiceImpactText: "猫眼里只有一串钥匙，没有脸。", ruleUpdates: [{ ruleId: "dorm_rule_02", status: "contradiction" }] }),
   ] });
   add("dorm_02_005", { chapterId: "dorm_chapter_02", text: "走廊监控明明是黑的，镜头指示灯却闪了一下，正对着 417。", nextNodeId: "dorm_02_006", scene: "dorm_floor4_corridor", sceneHold: false, transitionStyle: "fade", visualFocus: "peephole" });
   add("dorm_02_006", { chapterId: "dorm_chapter_02", text: "没有人开门。屋里的第五个人依旧没有说出自己的名字。", nextNodeId: "dorm_03_001", objectiveComplete: true, chapterRecap: { title: "名册错了，但宿舍并没有空。", next: "镜子知道一个 417 没人愿意念出的名字。" } });
 
   add("dorm_03_001", { chapterId: "dorm_chapter_03", scene: "dorm_washroom_mirror", text: "00:44，应急灯变成红色。没人放水，洗手间的镜子却先蒙上了雾。", objectiveId: "read-the-mirror", objectiveText: "判断镜中的名字是警告，还是陷阱。", sceneHold: false, transitionStyle: "fade", visualFocus: "mirror" });
-  add("dorm_03_002", { chapterId: "dorm_chapter_03", text: "雾气里浮出一个名字：周婉宁。它比周围的玻璃更旧。", nextNodeId: "dorm_03_003", gainClues: ["dorm_clue_mirror_name"], setFlags: ["saw_mirror_name"], ruleUpdates: [{ ruleId: "dorm_rule_07", status: "verified" }] });
+  add("dorm_03_002", { chapterId: "dorm_chapter_03", text: "雾气里浮出一个名字：周婉宁。它比周围的玻璃更旧。", nextNodeId: "dorm_03_003", gainClues: ["dorm_clue_mirror_name"], setFlags: ["saw_mirror_name"], ruleUpdates: [{ ruleId: "dorm_rule_06", status: "verified" }] });
   add("dorm_03_003", { chapterId: "dorm_chapter_03", speaker: "Shen Yan", visualCharacter: "Shen Yan", text: "沈妍本该躺在四号床。她的床是空的。紧接着，洗手间门外有人轻轻敲门。", nextNodeId: "dorm_03_004" });
   add("dorm_03_004", { chapterId: "dorm_chapter_03", type: "choice", text: "门外的人说自己是沈妍。半开的宿舍门外，能看到她原来的床。", choices: [
-    choice("verify-bed", "先确认床位，再决定要不要开门。", "dorm_03_005", { choiceImpactText: "床上有一道熟睡的人影。你没有打开洗手间门。", ruleUpdates: [{ ruleId: "dorm_rule_06", status: "verified" }] }),
-    choice("open-door", "替她打开洗手间门。", "dorm_03_005", { choiceImpactText: "冷气涌进来。镜雾散开，门外却没有任何人。", ruleUpdates: [{ ruleId: "dorm_rule_06", status: "contradiction" }] }),
+    choice("verify-bed", "先确认床位，再决定要不要开门。", "dorm_03_005", { choiceImpactText: "床上有一道熟睡的人影。你没有打开洗手间门。", ruleUpdates: [{ ruleId: "dorm_rule_05", status: "verified" }] }),
+    choice("open-door", "替她打开洗手间门。", "dorm_03_005", { choiceImpactText: "冷气涌进来。镜雾散开，门外却没有任何人。", ruleUpdates: [{ ruleId: "dorm_rule_05", status: "contradiction" }] }),
   ] });
   add("dorm_03_005", { chapterId: "dorm_chapter_03", text: "十秒后红灯熄灭。沈妍回到了 417，盯着一个她说从未听过的名字。", nextNodeId: "dorm_03_006", visualCharacter: "Shen Yan" });
   add("dorm_03_006", { chapterId: "dorm_chapter_03", text: "这条规则不是用来保护宿舍里的人。它只是让某个名字永远说不出口。", nextNodeId: "dorm_04_001", objectiveComplete: true, chapterRecap: { title: "周婉宁曾经被抹去过。", next: "一段视频和旧火灾记录，会告诉你抹除从哪里开始。" } });
 
   add("dorm_04_001", { chapterId: "dorm_chapter_04", scene: "dorm_manager_office", text: "陈露在手机缓存里找到断电前的视频。灯灭之前，417 已经站着五道身影。", objectiveId: "trace-the-old-case", objectiveText: "把今晚的第五人和 2014 年的记录对照。", sceneHold: false, transitionStyle: "fade", gainClues: ["dorm_clue_pre_blackout_video"], setFlags: ["reviewed_video"], visualFocus: "phone" });
   add("dorm_04_002", { chapterId: "dorm_chapter_04", text: "吴阿姨办公室的 2014 年档案写着，火灾起于 319。楼层图标出的受损房间却是 320。", nextNodeId: "dorm_04_003", gainClues: ["dorm_clue_2014_fire_record"], setFlags: ["found_fire_discrepancy"], visualFocus: "fire-record" });
-  add("dorm_04_003", { chapterId: "dorm_chapter_04", text: "文件夹背后压着一张手写纸：从名单上消失的人，必须写回名单。绝不能被交出去。", nextNodeId: "dorm_04_004", gainClues: ["dorm_clue_handwritten_rule"], ruleUpdates: [{ ruleId: "dorm_rule_08", status: "forged" }] });
+  add("dorm_04_003", { chapterId: "dorm_chapter_04", text: "文件夹背后压着一张手写纸：以上规则只能让你活到 01:13。不要减少人数。让广播承认被删除的人，纠正名单。", nextNodeId: "dorm_04_004", gainClues: ["dorm_clue_handwritten_rule"], ruleUpdates: [{ ruleId: "dorm_rule_correction", status: "hidden-correction" }] });
   add("dorm_04_004", { chapterId: "dorm_chapter_04", type: "choice", text: "The broadcast calls the handwritten note an unauthorized modification. Who do you trust?", choices: [
-    choice("note", "Trust the note and preserve the six records.", "dorm_04_005", { setFlags: ["understood_rule_eight_forged"], choiceImpactText: "Rule eight is no longer a threat. It is evidence of who wrote the system.", ruleUpdates: [{ ruleId: "dorm_rule_08", status: "forged" }] }),
-    choice("broadcast", "Treat the note as another trap.", "dorm_04_005", { choiceImpactText: "The broadcast grows calmer, as if it has won a small argument.", ruleUpdates: [{ ruleId: "dorm_rule_08", status: "contradiction" }] }),
+    choice("note", "相信手写修正规则，保留六条证据。", "dorm_04_005", { setFlags: ["understood_rule_eight_forged"], choiceImpactText: "所谓“交出第五人”的命令从未出现在公开规则中。", ruleUpdates: [{ ruleId: "dorm_rule_correction", status: "hidden-correction" }] }),
+    choice("broadcast", "把手写纸也当成陷阱。", "dorm_04_005", { choiceImpactText: "广播平静下来，像是赢得了一场很小的争论。", ruleUpdates: [{ ruleId: "dorm_rule_correction", status: "contradiction" }] }),
   ] });
   add("dorm_04_005", { chapterId: "dorm_chapter_04", scene: "dorm_fire_memory_2014", text: "The old corridor does not show flames. It shows a girl waiting beside room 320 while the report insists she was never there.", nextNodeId: "dorm_04_006", visualCharacter: "Zhou Wanning", sceneHold: false, transitionStyle: "fade" });
   add("dorm_04_006", { chapterId: "dorm_chapter_04", text: "Tonight's fifth person may not be a ghost. The danger is the system that turns unregistered people into missing ones.", nextNodeId: "dorm_05_001", objectiveComplete: true, chapterRecap: { title: "The fire record erased Zhou Wanning. Rule eight repeats the same crime.", next: "The room must decide whom the record is trying to take tonight." } });
@@ -194,6 +195,7 @@
     },
     chapters,
     rules,
+    hiddenRules,
     clues,
     defaultFlags,
     endings,
