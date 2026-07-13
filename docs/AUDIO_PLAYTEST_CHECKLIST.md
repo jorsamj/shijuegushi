@@ -10,3 +10,10 @@ Status: `demo` until all three listening passes are signed off.
 6. Toggle each audio channel and mute; story progression must never block, and the saved sound preference must be honored after refresh.
 7. Reject any cue that is too loud, sounds like cheap horror, creates an unexplained action, or repeats after a node transition.
 8. Mobile story bed: on phone speakers, play the rain room, corridor, photo, and old-phone scenes for at least one minute each. The music must feel like a cold, continuous space with no audible kick, heartbeat, or repeating thump.
+
+## Dormitory Rules Story
+
+9. Start `熄灯后，请勿点名` and confirm the dormitory bed remains low and non-percussive through normal reading. It must never play like a heartbeat or a countdown.
+10. Compare the opening false knock (four evenly spaced knocks) with the washroom verified knock (three knocks, a pause, then one knock). The written rule and the heard rhythm must agree.
+11. Check the video, archive paper, keys, dual-console signal, and final-record tension only appear with their matching on-screen action and stop when the node changes.
+12. The rules broadcast and final corrected-rollcall broadcast require an authorised human recording before release. Do not approve the story for public launch until that recording has been supplied, licensed, mixed, and heard on headphones, desktop speakers, and phone speakers.

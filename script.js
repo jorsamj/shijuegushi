@@ -28,12 +28,13 @@
     return {
       scenes: map?.scenes || {},
       characters: map?.characters || {},
-      characterAliases: {},
+      characterAliases: map?.characterAliases || {},
       clues: map?.clues || {},
       chapters: {},
       props: {},
+      audio: map?.audio || { scenes: {} },
       covers: { home: map?.covers?.story || "" },
-      endings: Object.fromEntries(["dorm_ending_a", "dorm_ending_b", "dorm_ending_c", "dorm_ending_d"].map((id) => [id, { image: archiveImage }])),
+      endings: Object.fromEntries(["dorm_ending_a", "dorm_ending_b", "dorm_ending_c", "dorm_ending_d"].map((id) => [id, { image: map?.endings?.[id] || archiveImage }])),
     };
   }
 
@@ -148,10 +149,11 @@
         clueFilters: ["全部", "关键线索", "广播", "登记", "视频", "镜面", "旧案"],
         milestones: [],
         achievements: [],
-        endingReport: Object.fromEntries(Object.values(DORMITORY_DATA.endings).map((ending) => [ending.endingId, { label: ending.title, type: "Dormitory record", comment: "Your final count decides whose name survives the night." }])),
+        endingReport: Object.fromEntries(Object.values(DORMITORY_DATA.endings).map((ending) => [ending.endingId, { label: ending.title, type: ending.report?.type || "宿舍记录", comment: ending.report?.pathSummary || "这份名单决定谁会被保留下来。" }])),
         relationshipDefs: DORMITORY_DATA.profile.relationshipDefs || [],
         evidenceLinks: DORMITORY_DATA.profile.evidenceLinks || [],
         endingResolver: DORMITORY_DATA.profile.endingResolver,
+        deductionTotal: DORMITORY_DATA.profile.deductionTotal || 2,
       }
     : null;
   let activeProfile = RAIN_PROFILE;
@@ -233,6 +235,8 @@
       progress: `${prefix}.currentProgress`,
       saves: `${prefix}.saveSlots`,
       history: `${prefix}.history`,
+      achievements: `${prefix}.achievements`,
+      collection: `${prefix}.collection`,
     };
   }
 
@@ -250,7 +254,7 @@
       unreadClues: [],
       chapterStats: {},
       triggeredMilestones: [],
-      achievements: loadStoredAchievements(),
+      achievements: loadStoredAchievements(scriptId),
       sessionAchievements: [],
       importantChoices: [],
       truthNotices: [],
@@ -261,8 +265,8 @@
       checkedHotspots: [],
       evidenceConnections: [],
       ruleStatuses: {},
-      endingCollection: loadStoredCollection().endings,
-      galleryUnlocks: loadStoredCollection().gallery,
+      endingCollection: loadStoredCollection(scriptId).endings,
+      galleryUnlocks: loadStoredCollection(scriptId).gallery,
       readNodes: [],
       startedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -316,9 +320,9 @@
     }
   }
 
-  function loadStoredAchievements() {
+  function loadStoredAchievements(scriptId = state?.scriptId || "script_rain_call") {
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.achievements);
+      const raw = localStorage.getItem(getStoryStorageKeys(scriptId).achievements);
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
@@ -326,9 +330,9 @@
     }
   }
 
-  function loadStoredCollection() {
+  function loadStoredCollection(scriptId = state?.scriptId || "script_rain_call") {
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.collection);
+      const raw = localStorage.getItem(getStoryStorageKeys(scriptId).collection);
       const parsed = raw ? JSON.parse(raw) : {};
       return {
         endings: Array.isArray(parsed.endings) ? parsed.endings : [],
@@ -340,9 +344,9 @@
     }
   }
 
-  function saveStoredCollection(collection = {}) {
-    const current = loadStoredCollection();
-    saveJSON(STORAGE_KEYS.collection, {
+  function saveStoredCollection(collection = {}, scriptId = state?.scriptId || "script_rain_call") {
+    const current = loadStoredCollection(scriptId);
+    saveJSON(getStoryStorageKeys(scriptId).collection, {
       endings: Array.from(new Set([...(current.endings || []), ...(collection.endings || [])])),
       gallery: Array.from(new Set([...(current.gallery || []), ...(collection.gallery || [])])),
       recordings: Array.from(new Set([...(current.recordings || []), ...(collection.recordings || [])])),
@@ -1401,7 +1405,7 @@
       unreadClues: normalizedUnreadClues,
       chapterStats: input.chapterStats && typeof input.chapterStats === "object" ? input.chapterStats : {},
       triggeredMilestones: Array.isArray(input.triggeredMilestones) ? input.triggeredMilestones : [],
-      achievements: Array.from(new Set([...(loadStoredAchievements() || []), ...((Array.isArray(input.achievements) && input.achievements) || [])])),
+      achievements: Array.from(new Set([...(loadStoredAchievements(scriptId) || []), ...((Array.isArray(input.achievements) && input.achievements) || [])])),
       sessionAchievements: Array.isArray(input.sessionAchievements) ? input.sessionAchievements : [],
       importantChoices: Array.isArray(input.importantChoices) ? input.importantChoices : [],
       truthNotices: Array.isArray(input.truthNotices) ? input.truthNotices : [],
@@ -1412,8 +1416,8 @@
       checkedHotspots: Array.isArray(input.checkedHotspots) ? input.checkedHotspots : [],
       evidenceConnections: Array.isArray(input.evidenceConnections) ? input.evidenceConnections : [],
       ruleStatuses: input.ruleStatuses && typeof input.ruleStatuses === "object" ? input.ruleStatuses : {},
-      endingCollection: Array.from(new Set([...(loadStoredCollection().endings || []), ...((Array.isArray(input.endingCollection) && input.endingCollection) || [])])),
-      galleryUnlocks: Array.from(new Set([...(loadStoredCollection().gallery || []), ...((Array.isArray(input.galleryUnlocks) && input.galleryUnlocks) || [])])),
+      endingCollection: Array.from(new Set([...(loadStoredCollection(scriptId).endings || []), ...((Array.isArray(input.endingCollection) && input.endingCollection) || [])])),
+      galleryUnlocks: Array.from(new Set([...(loadStoredCollection(scriptId).gallery || []), ...((Array.isArray(input.galleryUnlocks) && input.galleryUnlocks) || [])])),
       readNodes: Array.isArray(input.readNodes) ? input.readNodes : [],
     };
   }
@@ -1531,7 +1535,7 @@
       <button class="archive-ledger-row" type="button" data-series-id="${series.seriesId}">
         <span class="archive-ledger-index">0${index + 2}</span>
         <strong>${escapeHTML(series.title)}</strong>
-        <span>档案封存中</span>
+        <span>${series.status === "open" ? "可读取" : "档案封存中"}</span>
         <i aria-hidden="true">&#8594;</i>
       </button>
     `).join("");
@@ -1558,8 +1562,8 @@
             </div>
           </article>
         ` : `<div class="archive-empty-state"><p>暂时没有可读取的档案。</p></div>`}
-        <section class="archive-ledger" aria-label="封存档案">
-          <div class="archive-ledger-head"><p>后续人生</p><span>${ledgerSeries.length} 份档案仍在等待</span></div>
+        <section class="archive-ledger" aria-label="更多档案">
+          <div class="archive-ledger-head"><p>更多人生</p><span>${ledgerSeries.filter((series) => series.status === "open").length} 份可读取，${ledgerSeries.filter((series) => series.status !== "open").length} 份仍在等待</span></div>
           ${lockedRows}
         </section>
       </section>
@@ -2031,7 +2035,7 @@
       if (!achievement.test()) return;
       state.achievements.push(achievement.achievementId);
       state.sessionAchievements.push(achievement.achievementId);
-      saveJSON(STORAGE_KEYS.achievements, state.achievements);
+      saveJSON(getStoryStorageKeys(state.scriptId).achievements, state.achievements);
       showToast(`成就解锁：${achievement.title}`, "achievement");
     });
   }
@@ -2162,7 +2166,7 @@
     );
 
     app.querySelector("[data-action='restart']").addEventListener("click", () => {
-      openConfirm("重新开始", "会从《雨夜来电》开头重新进入。当前自动进度会被覆盖。", startNewGame);
+      openConfirm("重新开始", `会从《${getScript(state.scriptId)?.title || "当前故事"}》开头重新进入。当前自动进度会被覆盖。`, () => startNewGame(state.scriptId));
     });
     app.querySelector("[data-action='load']").addEventListener("click", () => openLoadModal());
     app.querySelector("[data-action='clues']").addEventListener("click", () => openClueModal());
@@ -2191,7 +2195,7 @@
         </div>
         <div class="report-metrics">
           <article><span>核心线索</span><strong>${coreCount}/${CORE_CLUE_IDS.length}</strong></article>
-          <article><span>最终推理</span><strong>${state.deductionScore}/5</strong></article>
+          <article><span>最终推理</span><strong>${state.deductionScore}/${activeProfile.deductionTotal || 5}</strong></article>
           <article><span>关键线索</span><strong>${keyClues}</strong></article>
           <article><span>辅助线索</span><strong>${auxClues}</strong></article>
           <article><span>缺失线索</span><strong>${Math.max(missing, 0)}</strong></article>

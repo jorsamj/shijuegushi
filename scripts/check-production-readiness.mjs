@@ -23,6 +23,12 @@ const checks = [
   ["node", ["scripts/check-entry-experience.mjs"]],
   ["node", ["scripts/check-mobile-fullscreen.mjs"]],
   ["node", ["scripts/check-mobile-release-experience.mjs"]],
+  ["node", ["scripts/check-dormitory-story-flow.mjs"]],
+  ["node", ["scripts/check-dormitory-ending-routes.mjs"]],
+  ["node", ["scripts/check-dormitory-rule-board.mjs"]],
+  ["node", ["scripts/check-dormitory-audio.mjs"]],
+  ["node", ["scripts/check-dormitory-asset-library.mjs"]],
+  ["node", ["scripts/check-multi-story.mjs"]],
 ];
 
 const requiredDocs = [

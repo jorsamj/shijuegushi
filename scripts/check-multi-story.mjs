@@ -12,6 +12,7 @@ const failures = [];
 if (!data || data.script?.scriptId !== "script_dormitory_rollcall") failures.push("Dormitory story data lacks the independent script id.");
 if (data?.series?.seriesId !== "series_dormitory_rollcall") failures.push("Dormitory story data lacks the independent series id.");
 if ((data?.chapters || []).length !== 6) failures.push("Dormitory story must contain six chapters.");
+if (data?.series?.status !== "open" || data?.script?.status !== "open") failures.push("Dormitory story must be accessible from the public archive.");
 if ((data?.rules || []).length !== 6) failures.push("Dormitory story must contain six public rules.");
 if ((data?.hiddenRules || []).length !== 1 || data.hiddenRules[0]?.ruleId !== "dorm_rule_correction") failures.push("Dormitory story must contain one hidden correction rule.");
 if (Object.keys(data?.clues || {}).length !== 6) failures.push("Dormitory story must contain six core clues.");
@@ -41,9 +42,10 @@ if (!Object.values(nodes).some((node) => [node, ...(node.investigationHotspots |
 }
 
 const engine = fs.readFileSync(path.join(root, "script.js"), "utf8");
-for (const token of ["STORY_DATASETS", "STORY_CATALOG", "getStoryStorageKeys", "activateStory", "script_dormitory_rollcall"]) {
+for (const token of ["STORY_DATASETS", "STORY_CATALOG", "getStoryStorageKeys", "activateStory", "script_dormitory_rollcall", "achievements: `${prefix}.achievements`", "collection: `${prefix}.collection`"]) {
   if (!engine.includes(token)) failures.push(`Shared engine lacks multi-story integration token: ${token}.`);
 }
+if (!engine.includes('series.status === "open" ? "可读取" : "档案封存中"')) failures.push("Archive must expose the open dormitory story rather than mark it sealed.");
 
 if (failures.length) {
   console.error("Multi-story check failed:");

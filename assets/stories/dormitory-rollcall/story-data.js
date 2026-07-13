@@ -88,6 +88,8 @@
       nextNodeId: data.nextNodeId,
       choices: data.choices || [],
       question: data.question,
+      bgm: data.bgm,
+      ambience: data.ambience,
       gainClues: data.gainClues || [],
       setFlags: data.setFlags || [],
       ruleUpdates: data.ruleUpdates || [],
@@ -105,16 +107,16 @@
       investigationHotspots: data.investigationHotspots || [],
       chapterRecap: data.chapterRecap,
       resolveEnding: data.resolveEnding === true,
-      audioPolicy: { bgmMode: "keep", ambienceMode: "keep" },
+      audioPolicy: data.audioPolicy || { bgmMode: "keep", ambienceMode: "keep" },
       sfxOnEnter: data.sfxOnEnter || [],
     };
     if (data.nextNodeId === null) delete nodes[nodeId].nextNodeId;
   }
 
-  add("dorm_01_001", { chapterId: "dorm_chapter_01", text: "00:17。417 的灯同时熄灭。天花板扬声器发出一声干涩的轻响。", nextNodeId: "dorm_01_002", objectiveId: "hear-the-rules", objectiveText: "确认广播究竟要宿舍做什么。", visualFocus: "speaker", sceneHold: false, transitionStyle: "fade", investigationHotspots: [{ hotspotId: "speaker-grille", label: "扬声器", detailTitle: "广播孔", text: "灰尘堵住了孔眼，声音却像刚有人擦过一样清楚。规则来自这里，但不一定都该被服从。" }] });
+  add("dorm_01_001", { chapterId: "dorm_chapter_01", text: "00:17。417 的灯同时熄灭。天花板扬声器发出一声干涩的轻响。", nextNodeId: "dorm_01_002", objectiveId: "hear-the-rules", objectiveText: "确认广播究竟要宿舍做什么。", visualFocus: "speaker", sceneHold: false, transitionStyle: "fade", sfxOnEnter: [{ key: "dorm_broadcast_start", volume: 0.18, fadeInMs: 80, duckBgmMs: 260 }], investigationHotspots: [{ hotspotId: "speaker-grille", label: "扬声器", detailTitle: "广播孔", text: "灰尘堵住了孔眼，声音却像刚有人擦过一样清楚。规则来自这里，但不一定都该被服从。" }] });
   add("dorm_01_002", { chapterId: "dorm_chapter_01", speaker: "Broadcast", text: "校园女声平静地念完六条规则。她没有提到名单，也没有提到必须交出谁。", nextNodeId: "dorm_01_003", setFlags: ["heard_broadcast"], gainClues: ["dorm_clue_broadcast_recording"], ruleUpdates: [{ ruleId: "dorm_rule_01", status: "partly-credible" }, { ruleId: "dorm_rule_02", status: "unverified" }] });
   add("dorm_01_003", { chapterId: "dorm_chapter_01", speaker: "Chen Lu", visualCharacter: "Chen Lu", text: "陈露数了一遍屋里的人，在第五个数字上停住。没有人念出那个数字。", nextNodeId: "dorm_01_004", visualFocus: "temporary-bed" });
-  add("dorm_01_004", { chapterId: "dorm_chapter_01", text: "门外响起三下敲门声。停顿开始了。最后一下还没落下，木门上先擦过第四道声音。", nextNodeId: "dorm_01_005", visualFocus: "door" });
+  add("dorm_01_004", { chapterId: "dorm_chapter_01", text: "门外响起三下敲门声。停顿开始了。最后一下还没落下，木门上先擦过第四道声音。", nextNodeId: "dorm_01_005", visualFocus: "door", sfxOnEnter: [{ key: "dorm_knock_wood", volume: 0.26, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.26, delayMs: 240, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.26, delayMs: 480, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.26, delayMs: 720, suppressMs: 0, duckBgmMs: 650 }] });
   add("dorm_01_005", { chapterId: "dorm_chapter_01", type: "choice", text: "敲门节奏不对。你怎么做？", choices: [
     choice("listen", "保持安静，数清间隔。", "dorm_01_006", { setFlags: ["checked_knock_pattern"], choiceImpactText: "你记下矛盾，没有回应门外。", ruleUpdates: [{ ruleId: "dorm_rule_02", status: "verified" }] }),
     choice("answer", "隔着门问外面是谁。", "dorm_01_006", { choiceImpactText: "走廊只用沉默回答。屋里的人听见你给了它一个声音。", ruleUpdates: [{ ruleId: "dorm_rule_02", status: "partly-credible" }] }),
@@ -133,7 +135,7 @@
 
   add("dorm_03_001", { chapterId: "dorm_chapter_03", scene: "dorm_washroom_mirror", text: "00:44，应急灯变成红色。没人放水，洗手间的镜子却先蒙上了雾。", nextNodeId: "dorm_03_002", objectiveId: "read-the-mirror", objectiveText: "判断镜中的名字是警告，还是陷阱。", sceneHold: false, transitionStyle: "fade", visualFocus: "mirror", setFlags: ["saw_red_light"], ruleUpdates: [{ ruleId: "dorm_rule_04", status: "verified" }], investigationHotspots: [{ hotspotId: "red-light", label: "应急灯", detailTitle: "十秒红灯", text: "红灯亮起时，走廊的广播停了十秒。它不是催促你逃，而是在等谁先暴露。" }] });
   add("dorm_03_002", { chapterId: "dorm_chapter_03", text: "雾气里浮出一个名字：周婉宁。它比周围的玻璃更旧。", nextNodeId: "dorm_03_003", gainClues: ["dorm_clue_mirror_name"], setFlags: ["saw_mirror_name"], ruleUpdates: [{ ruleId: "dorm_rule_06", status: "verified" }] });
-  add("dorm_03_003", { chapterId: "dorm_chapter_03", speaker: "Shen Yan", visualCharacter: "Shen Yan", text: "沈妍本该躺在四号床。她的床是空的。紧接着，洗手间门外有人轻轻敲门。", nextNodeId: "dorm_03_004" });
+  add("dorm_03_003", { chapterId: "dorm_chapter_03", speaker: "Shen Yan", visualCharacter: "Shen Yan", text: "沈妍本该躺在四号床。她的床是空的。洗手间门外先敲三下，停两秒，最后一下落在门缝旁。", nextNodeId: "dorm_03_004", sfxOnEnter: [{ key: "dorm_knock_wood", volume: 0.22, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.22, delayMs: 240, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.22, delayMs: 480, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.22, delayMs: 1500, suppressMs: 0, duckBgmMs: 500 }] });
   add("dorm_03_004", { chapterId: "dorm_chapter_03", type: "choice", text: "门外的人说自己是沈妍。半开的宿舍门外，能看到她原来的床。", choices: [
     choice("verify-bed", "先确认床位，再决定要不要开门。", "dorm_03_005", { choiceImpactText: "床上有一道熟睡的人影。你没有打开洗手间门。", ruleUpdates: [{ ruleId: "dorm_rule_05", status: "verified" }] }),
     choice("open-door", "替她打开洗手间门。", "dorm_03_005", { choiceImpactText: "冷气涌进来。镜雾散开，门外却没有任何人。", ruleUpdates: [{ ruleId: "dorm_rule_05", status: "contradiction" }] }),
@@ -141,13 +143,13 @@
   add("dorm_03_005", { chapterId: "dorm_chapter_03", text: "十秒后红灯熄灭。沈妍回到了 417，盯着一个她说从未听过的名字。", nextNodeId: "dorm_03_006", visualCharacter: "Shen Yan" });
   add("dorm_03_006", { chapterId: "dorm_chapter_03", text: "这条规则不是用来保护宿舍里的人。它只是让某个名字永远说不出口。", nextNodeId: "dorm_04_001", objectiveComplete: true, chapterRecap: { title: "周婉宁曾经被抹去过。", next: "一段视频和旧火灾记录，会告诉你抹除从哪里开始。" } });
 
-  add("dorm_04_001", { chapterId: "dorm_chapter_04", scene: "dorm_manager_office", text: "陈露把手机贴到桌灯下。断电前的视频还停在 00:16:52。", nextNodeId: "dorm_04_002", objectiveId: "trace-the-old-case", objectiveText: "把今晚的第五人和 2014 年的记录对照。", sceneHold: false, transitionStyle: "fade", visualFocus: "phone", investigationHotspots: [{ hotspotId: "video-timeline", label: "视频时间轴", detailTitle: "断电前的视频", text: "画面冻结前，417 里已经有五道身影。许棠不是断电后才出现的。", gainClues: ["dorm_clue_pre_blackout_video"], setFlags: ["reviewed_video"], relationshipEffects: [{ id: "support_chenlu", delta: 12, reason: "你相信陈露留下的视频。" }] }] });
+  add("dorm_04_001", { chapterId: "dorm_chapter_04", scene: "dorm_manager_office", text: "陈露把手机贴到桌灯下。断电前的视频还停在 00:16:52。", nextNodeId: "dorm_04_002", objectiveId: "trace-the-old-case", objectiveText: "把今晚的第五人和 2014 年的记录对照。", sceneHold: false, transitionStyle: "fade", visualFocus: "phone", sfxOnEnter: [{ key: "dorm_video_phone", volume: 0.2, duckBgmMs: 220 }], investigationHotspots: [{ hotspotId: "video-timeline", label: "视频时间轴", detailTitle: "断电前的视频", text: "画面冻结前，417 里已经有五道身影。许棠不是断电后才出现的。", gainClues: ["dorm_clue_pre_blackout_video"], setFlags: ["reviewed_video"], relationshipEffects: [{ id: "support_chenlu", delta: 12, reason: "你相信陈露留下的视频。" }] }] });
   add("dorm_04_002", { chapterId: "dorm_chapter_04", speaker: "陈露", visualCharacter: "Chen Lu", text: "“我没拍到奇怪的东西。”她把进度条往前推了一格，“我拍到的是我们五个人。”", nextNodeId: "dorm_04_003" });
   add("dorm_04_003", { chapterId: "dorm_chapter_04", text: "吴阿姨的办公室没有锁。门里没有灯，档案柜最下层却漏出一条白纸边。", nextNodeId: "dorm_04_004", visualFocus: "archive" });
   add("dorm_04_004", { chapterId: "dorm_chapter_04", text: "文件夹封面写着：2014 年女生宿舍火灾。统计人数：319。", nextNodeId: "dorm_04_005", investigationHotspots: [{ hotspotId: "fire-floorplan", label: "楼层图", detailTitle: "2014 年楼层图", text: "受损房间从 319 一路标到 320。最后一间被红笔圈过，名单上却没有对应的人。", gainClues: ["dorm_clue_2014_fire_record"], setFlags: ["found_fire_discrepancy"], evidenceLinkId: "dorm_link_erasure" }] });
   add("dorm_04_005", { chapterId: "dorm_chapter_04", speaker: "吴阿姨", visualCharacter: "Manager Wu", text: "“当年报上去就是 319。”吴阿姨站在门口，钥匙串垂在手里，“少一张表，不代表少一个人。”", nextNodeId: "dorm_04_006" });
   add("dorm_04_006", { chapterId: "dorm_chapter_04", text: "她没有解释为什么档案柜里还留着一张被撕过的点名表。", nextNodeId: "dorm_04_007", visualFocus: "torn-roster" });
-  add("dorm_04_007", { chapterId: "dorm_chapter_04", text: "点名表背面有一行铅笔字，笔迹被反复擦过。", nextNodeId: "dorm_04_008", investigationHotspots: [{ hotspotId: "handwritten-correction", label: "手写修正", detailTitle: "被留下的修正", text: "以上规则只能让你活到 01:13。不要减少人数。让广播承认被删除的人，纠正名单。", gainClues: ["dorm_clue_handwritten_rule"], setFlags: ["understood_rule_eight_forged"], ruleUpdates: [{ ruleId: "dorm_rule_correction", status: "hidden-correction" }], evidenceLinkId: "dorm_link_forged_rule" }] });
+  add("dorm_04_007", { chapterId: "dorm_chapter_04", text: "点名表背面有一行铅笔字，笔迹被反复擦过。", nextNodeId: "dorm_04_008", sfxOnEnter: [{ key: "dorm_archive_paper", volume: 0.16 }], investigationHotspots: [{ hotspotId: "handwritten-correction", label: "手写修正", detailTitle: "被留下的修正", text: "以上规则只能让你活到 01:13。不要减少人数。让广播承认被删除的人，纠正名单。", gainClues: ["dorm_clue_handwritten_rule"], setFlags: ["understood_rule_eight_forged"], ruleUpdates: [{ ruleId: "dorm_rule_correction", status: "hidden-correction" }], evidenceLinkId: "dorm_link_forged_rule" }] });
   add("dorm_04_008", { chapterId: "dorm_chapter_04", type: "choice", text: "广播把那行字称作“未经授权的修改”。你信谁？", choices: [
     choice("trust-correction", "相信修正规则，先保住纸和视频。", "dorm_04_009", { setFlags: ["trusted_correction", "refused_reduction"], choiceIntent: "保全证据", choiceImpactText: "你拒绝把“减少人数”当成解决办法。", relationshipEffects: [{ id: "trust_linsui", delta: 16, reason: "你没有让恐惧替大家做决定。" }, { id: "support_chenlu", delta: 8, reason: "陈露把视频备份到了你的手机。" }], ruleUpdates: [{ ruleId: "dorm_rule_correction", status: "hidden-correction" }] }),
     choice("doubt-correction", "先不表态，把纸放回原处。", "dorm_04_009", { choiceIntent: "暂缓判断", choiceImpactText: "广播没有催促，像是早就知道你会犹豫。", relationshipEffects: [{ id: "trust_linsui", delta: -6, reason: "林穗不确定你会不会站在她们这一边。" }], ruleUpdates: [{ ruleId: "dorm_rule_correction", status: "contradiction" }] }),
@@ -173,10 +175,10 @@
   ] });
   add("dorm_05_009", { chapterId: "dorm_chapter_05", speaker: "广播", text: "请未登记人员，重复姓名。", nextNodeId: "dorm_05_010", visualFocus: "speaker" });
   add("dorm_05_010", { chapterId: "dorm_chapter_05", text: "许棠的声音从扬声器里传出，又从她身边传出。两个声音没有一个在发抖。", nextNodeId: "dorm_05_011" });
-  add("dorm_05_011", { chapterId: "dorm_chapter_05", text: "赵晴的钥匙背面刻着一行很浅的字：广播室，四楼尽头。", nextNodeId: "dorm_05_012", investigationHotspots: [{ hotspotId: "key-engraving", label: "钥匙背面", detailTitle: "广播室钥匙", text: "钥匙不是用来打开值班室的。它一直在等有人去改那台机器。", relationshipEffects: [{ id: "support_chenlu", delta: 6, reason: "陈露决定带着视频一起去。" }] }] });
+  add("dorm_05_011", { chapterId: "dorm_chapter_05", text: "赵晴的钥匙背面刻着一行很浅的字：广播室，四楼尽头。", nextNodeId: "dorm_05_012", sfxOnEnter: [{ key: "dorm_keys", volume: 0.16 }], investigationHotspots: [{ hotspotId: "key-engraving", label: "钥匙背面", detailTitle: "广播室钥匙", text: "钥匙不是用来打开值班室的。它一直在等有人去改那台机器。", relationshipEffects: [{ id: "support_chenlu", delta: 6, reason: "陈露决定带着视频一起去。" }] }] });
   add("dorm_05_012", { chapterId: "dorm_chapter_05", scene: "dorm_floor4_corridor", text: "走廊尽头的红灯熄灭。广播室的门自己亮了起来。", nextNodeId: "dorm_06_001", objectiveComplete: true, chapterRecap: { title: "广播想让你减少人数；证据指向了另一件事：改回名单。", next: "广播室里有两套主机，等着你决定要承认哪一份记录。" } });
 
-  add("dorm_06_001", { chapterId: "dorm_chapter_06", scene: "dorm_broadcast_room", text: "广播室的门没有锁。桌上有两套主机，一台亮着四盏房间灯，一台亮着五盏。", nextNodeId: "dorm_06_002", objectiveId: "correct-the-roll-call", objectiveText: "让广播承认被删除的人，纠正两份名单。", sceneHold: false, transitionStyle: "fade", visualFocus: "microphone" });
+  add("dorm_06_001", { chapterId: "dorm_chapter_06", scene: "dorm_broadcast_room", text: "广播室的门没有锁。桌上有两套主机，一台亮着四盏房间灯，一台亮着五盏。", nextNodeId: "dorm_06_002", objectiveId: "correct-the-roll-call", objectiveText: "让广播承认被删除的人，纠正两份名单。", sceneHold: false, transitionStyle: "fade", visualFocus: "microphone", sfxOnEnter: [{ key: "dorm_console_signal", volume: 0.16, fadeInMs: 80 }] });
   add("dorm_06_002", { chapterId: "dorm_chapter_06", text: "旧主机的卡槽里压着 2014 年的磁带，新主机的屏幕上只有 417 的四个编号。", nextNodeId: "dorm_06_003", investigationHotspots: [{ hotspotId: "dual-console", label: "两套主机", detailTitle: "两份名单", text: "旧主机缺的是周婉宁；新主机缺的是许棠。它们用同一种方式，把多出来的人变成空白。", setFlags: ["witnessed_double_roster"], relationshipEffects: [{ id: "support_chenlu", delta: 5, reason: "陈露把两段记录并排放了出来。" }] }] });
   add("dorm_06_003", { chapterId: "dorm_chapter_06", type: "deduction", text: "第一步：那条“交出第五人”的命令，真正想做什么？", nextNodeId: "dorm_06_004", question: { prompt: "伪造命令的作用是？", choices: [
     choice("rule-delete", "把未登记的人单独送走，再从名单和记忆里删掉。", "dorm_06_004", { isCorrect: true, choiceIntent: "识别机制", choiceImpactText: "你看见了广播真正保护的不是人，而是整齐的表格。" }),
@@ -190,7 +192,7 @@
   ] } });
   add("dorm_06_005", { chapterId: "dorm_chapter_06", speaker: "沈妍", visualCharacter: "Shen Yan", text: "“念名字之前，”沈妍说，“先决定我们是不是每个人都愿意站在这里。”", nextNodeId: "dorm_06_006" });
   add("dorm_06_006", { chapterId: "dorm_chapter_06", text: "林穗握住许棠的手。赵晴站到麦克风另一边。陈露把视频的音量调到最大。", nextNodeId: "dorm_06_007", visualCharacter: "Lin Sui" });
-  add("dorm_06_007", { chapterId: "dorm_chapter_06", type: "choice", text: "麦克风接通。你要提交哪一份名单？", choices: [
+  add("dorm_06_007", { chapterId: "dorm_chapter_06", type: "choice", text: "麦克风接通。你要提交哪一份名单？", sfxOnEnter: [{ key: "dorm_record_tension", volume: 0.14, duckBgmMs: 380 }], choices: [
     choice("submit-correction", "补录周婉宁与许棠，提交 320 人与 417 五人。", "dorm_06_008", { setFlags: ["corrected_417_count", "named_xutang", "named_zhouwanning"], choiceIntent: "补录名单", choiceImpactText: "你没有要求任何人离开。两份名单第一次同时出现了空白以外的答案。", endingPathTags: ["correct-record"] }),
     choice("submit-four", "确认 417 只有四名登记住户。", "dorm_06_008", { setFlags: ["sent_unregistered_downstairs"], choiceIntent: "缩减人数", choiceImpactText: "新主机先给出通过提示，旧主机却沉默得更久。", endingPathTags: ["confirm-four"] }),
     choice("submit-cut", "拔掉主机电源，谁的名字都不再念。", "dorm_06_008", { setFlags: ["cut_broadcast"], choiceIntent: "切断广播", choiceImpactText: "黑暗吞掉了灯，也吞掉了还没来得及被纠正的名字。", endingPathTags: ["cut-broadcast"] }),
@@ -266,6 +268,12 @@
     chapterBeats,
     rulePlaybook,
     routePlans,
+    audioProduction: {
+      status: "foley-demo-ready",
+      broadcastVoiceStatus: "requires-licensed-recording",
+      broadcastVoiceNote: "规则广播和最终补录广播必须由授权演员录制；当前版本不使用浏览器朗读、生成式回退或不具语义的短人声替代。",
+      approvedCuePolicy: "只有明确动作使用拟音；无准确来源时保持静默。",
+    },
     clues,
     defaultFlags,
     endings,
@@ -278,6 +286,7 @@
         { id: "support_chenlu", character: "陈露", label: "协作", levels: ["犹豫", "帮忙", "投入", "共同承担"] },
         { id: "protect_xutang", character: "许棠", label: "保护", levels: ["不确定", "被看见", "被保护", "被补录"] },
       ],
+      deductionTotal: 2,
       evidenceLinks: [
         { linkId: "dorm_link_count", title: "417 名册 + 断电前视频", clueIds: ["dorm_clue_417_roster", "dorm_clue_pre_blackout_video"] },
         { linkId: "dorm_link_erasure", title: "镜中姓名 + 2014 火灾记录", clueIds: ["dorm_clue_mirror_name", "dorm_clue_2014_fire_record"] },
