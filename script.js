@@ -1533,12 +1533,15 @@
     const ledgerSeries = STORY_CATALOG.series
       .filter((series) => series !== openSeries)
       .sort((left, right) => {
-        const leftOrder = Number(getScript(left.scriptIds?.[0])?.order || 99);
-        const rightOrder = Number(getScript(right.scriptIds?.[0])?.order || 99);
+        const leftScript = left.scriptIds?.[0] ? getScript(left.scriptIds[0]) : null;
+        const rightScript = right.scriptIds?.[0] ? getScript(right.scriptIds[0]) : null;
+        const leftOrder = Number(leftScript?.order || 99);
+        const rightOrder = Number(rightScript?.order || 99);
         return leftOrder - rightOrder;
       });
     const lockedRows = ledgerSeries.map((series, index) => {
-      const storyOrder = Number(getScript(series.scriptIds?.[0])?.order || index + 2);
+      const seriesScript = series.scriptIds?.[0] ? getScript(series.scriptIds[0]) : null;
+      const storyOrder = Number(seriesScript?.order || index + 2);
       return `
       <button class="archive-ledger-row" type="button" data-series-id="${series.seriesId}">
         <span class="archive-ledger-index">${String(storyOrder).padStart(2, "0")}</span>
