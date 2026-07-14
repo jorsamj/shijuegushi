@@ -19,14 +19,20 @@ if (production.broadcastVoiceStatus !== "xfyun-generated-awaiting-listening-sign
 if (!production.broadcastVoiceLicense || !production.broadcastVoiceSource) {
   failures.push("Formal dormitory broadcasts need source and distribution-permission records before release.");
 }
-if (production.manualDeviceSignoff !== "complete") {
-  failures.push("Headphones, desktop speakers, and phone-speaker listening sign-off is incomplete.");
-}
-if (production.crossStorySaveSignoff !== "complete") {
-  failures.push("Manual cross-story save/load isolation sign-off is incomplete.");
-}
-if (production.mobilePlaythroughSignoff !== "complete") {
-  failures.push("Manual mobile six-chapter and ending-route playthrough sign-off is incomplete.");
+const manualGates = [
+  ["headphoneListeningSignoff", "Headphone listening sign-off is incomplete."],
+  ["desktopSpeakerListeningSignoff", "Desktop-speaker listening sign-off is incomplete."],
+  ["phoneSpeakerListeningSignoff", "Phone-speaker listening sign-off is incomplete."],
+  ["broadcastCadenceSignoff", "All 14 institutional-broadcast order and cadence sign-off is incomplete."],
+  ["crossStorySaveSignoff", "Manual cross-story save/load isolation sign-off is incomplete."],
+  ["dormitoryMobilePlaythroughSignoff", "Dormitory mobile six-chapter and four-ending playthrough sign-off is incomplete."],
+  ["rainCallRegressionSignoff", "Rain Call full manual regression sign-off is incomplete."],
+  ["mobileBackgroundRestoreSignoff", "Mobile background-restore sign-off is incomplete."],
+  ["consoleErrorSignoff", "Console no-error verification sign-off is incomplete."],
+];
+
+for (const [field, message] of manualGates) {
+  if (production[field] !== "complete") failures.push(message);
 }
 
 if (failures.length) {

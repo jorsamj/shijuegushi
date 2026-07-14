@@ -7,7 +7,7 @@ const root = path.resolve(import.meta.dirname, "..");
 const voiceDirectory = path.join(root, "assets/stories/rain-call/audio/voice-original");
 const manifestPath = path.join(root, "assets/stories/rain-call/audio/voice-manifest.json");
 const runtimeManifestPath = path.join(root, "assets/voice-runtime-manifest.js");
-const outputPath = path.join(root, "docs/UNREFERENCED_VOICE_AUDIT.md");
+const outputPath = path.join(root, "docs/M02_VOICE_ASSET_AUDIT.md");
 const checkOnly = process.argv.includes("--check");
 
 const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex");

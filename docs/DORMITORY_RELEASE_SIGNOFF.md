@@ -29,7 +29,7 @@ Status: `not started`. Enter factual results only. Blank, failed, or inconclusiv
 | Rules board: status, detail and mobile close action |  |  |  |  |  |
 | Investigation, choices and dialogue-area advance |  |  |  |  |  |
 | Correct and incorrect knock rhythms match text |  |  |  |  |  |
-| Broadcast begins once, stops on node exit, and does not repeat after background restore |  |  |  |  |  |
+| All 14 institutional broadcasts: order, pause cadence, node-exit stop, and no repeat after background restore |  |  |  |  |  |
 | Rain Call full route, clues, evidence board, saves and endings |  |  |  |  |  |
 | Console has no errors after both stories and background restore |  |  |  |  |  |
 
@@ -52,4 +52,4 @@ Status: `not started`. Enter factual results only. Blank, failed, or inconclusiv
 | `dorm_broadcast_ending_c` |  |  |  |  |  |  |
 | `dorm_broadcast_ending_d` |  |  |  |  |  |  |
 
-Do not set `audioProduction.manualDeviceSignoff`, `crossStorySaveSignoff`, or `mobilePlaythroughSignoff` to `complete` until this record has real, reviewable results.
+Do not set any `audioProduction` sign-off field to `complete` until this record has real, reviewable results. Production readiness remains blocked until all nine manual gates are completed: headphones, desktop speakers, phone speakers, 14-broadcast cadence, cross-story save/load, Dormitory mobile six-chapter and four-ending playthrough, Rain Call regression, mobile background restore, and console no-error verification.
