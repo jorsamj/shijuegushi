@@ -1015,18 +1015,17 @@
 
   function speakNode(node, kind = "nodes") {
     const settings = getAudioSettings();
+    if (node?.voiceEnabled !== true) return;
     if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked) return;
     if (audioState.lastVoiceNodeId === node.nodeId) return;
     stopAllDialogueAudio();
     const token = audioState.dialogueToken;
     const sessionId = audioState.dialogueSessionId;
     const generatedVoice = getStoryVoiceEntry(node.nodeId, kind);
-    const realVoiceKey = generatedVoice ? node.nodeId : (node.voiceStinger || "");
-    const realVoiceCategory = generatedVoice ? "voice" : (node.voiceStinger ? "stingers" : "");
-    if (!realVoiceKey || !realVoiceCategory) return;
-    const realVoiceSrc = generatedVoice
-      ? { src: generatedVoice.path, sourceType: "xfyun-tts" }
-      : getAudioSource(realVoiceCategory, realVoiceKey);
+    if (!generatedVoice) return;
+    const realVoiceKey = node.nodeId;
+    const realVoiceCategory = "voice";
+    const realVoiceSrc = { src: generatedVoice.path, sourceType: "generated-story-voice" };
     if (realVoiceCategory !== "stingers" && realVoiceSrc && isPlaceholderDialogueAsset(node) && !settings.allowPlaceholderVoices) {
       if (!audioState.placeholderVoiceNoticeShown) {
         showToast("当前语音仍是临时 TTS，占位音已默认关闭，避免破坏体验。", "warn");
@@ -1758,7 +1757,7 @@
           ${sceneMarkup}
         </div>
         <section class="dialogue-panel" data-dialogue-advance tabindex="0" aria-label="剧情对话，点击此处继续阅读">
-          <div class="speaker-tag">${escapeHTML(node.speaker || "旁白")}</div>
+          <div class="speaker-tag">${escapeHTML(getDialogueSpeakerLabel(node))}</div>
           <div class="dialogue-text">${formatText(node.text)}</div>
           <div id="choiceArea" class="choice-area"></div>
           <div class="dialogue-actions">
@@ -1778,6 +1777,12 @@
     preloadUpcomingVisuals(node);
     autoSave();
     processFeedbackQueue();
+  }
+
+  function getDialogueSpeakerLabel(node) {
+    if (node?.contentType === "system") return "系统提示";
+    if (node?.contentType === "broadcast") return "宿舍广播";
+    return node?.speaker || "旁白";
   }
 
   function applyNodeEffects(node) {
@@ -2189,8 +2194,6 @@
       nodeId: ending.endingId,
     });
     autoSave();
-    speakNode({ nodeId: ending.endingId }, "endings");
-
     setView(
       "ending",
       `

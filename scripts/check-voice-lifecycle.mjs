@@ -6,7 +6,8 @@ const source = fs.readFileSync(path.join(root, "script.js"), "utf8");
 const failures = [];
 if (!source.includes("function getStoryVoiceEntry")) failures.push("Runtime does not resolve the generated story-voice manifest.");
 if (!source.includes("stopAllDialogueAudio();\n    const token")) failures.push("A new node must stop its previous dialogue voice before starting another.");
-if (!source.includes('speakNode({ nodeId: ending.endingId }, "endings")')) failures.push("Ending narration is not connected to the voice lifecycle.");
+if (source.includes('speakNode({ nodeId: ending.endingId }, "endings")')) failures.push("Pure ending narration must not be sent to the voice lifecycle.");
+if (!source.includes("node?.voiceEnabled !== true")) failures.push("Runtime must refuse a voice mapping unless the current node explicitly enables voice.");
 if (source.includes("speakSyntheticNode(node);")) failures.push("Browser speech synthesis must not be a formal voice fallback.");
 if (failures.length) { console.error("Voice lifecycle check failed:"); failures.forEach((failure) => console.error(`- ${failure}`)); process.exit(1); }
 console.log("Voice lifecycle check passed. Node changes, ending entry, and browser-TTS exclusion are covered.");

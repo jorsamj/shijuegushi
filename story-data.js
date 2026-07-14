@@ -225,6 +225,9 @@ window.MIST_DATA = (() => {
       voiceDirection: data.voiceDirection,
       voiceSpeed: data.voiceSpeed,
       voicePitch: data.voicePitch,
+      contentType: data.contentType,
+      voiceEnabled: data.voiceEnabled,
+      spokenText: data.spokenText,
       audioMood: data.audioMood,
       audioPolicy: data.audioPolicy,
       resolveEnding: data.resolveEnding || false,
@@ -325,7 +328,7 @@ window.MIST_DATA = (() => {
   // 第 2 章：门外的许知晚
   add(2, 1, { speaker: "许知晚", text: "他给你发消息了，对不对？\n\n许知晚没有问是谁。她的眼睛越过猫眼，像能看见林舟握着手机的手。那种确定，比她刚才说自己是许知夏妹妹更让人不安。", scene: "corridor_door", voiceStinger: "xuzhiwan_cold_exhale" });
   add(2, 2, { speaker: "林舟", text: "你怎么知道？\n\n林舟没有把手机贴近猫眼。她忽然害怕门外的女人不是在猜，而是在等这条消息出现。", scene: "corridor_door" });
-  add(2, 3, { speaker: "许知晚", text: "因为三年前，他也是这样先让所有人闭嘴。\n\n他说“别让事情变难看”。他说“知夏只是太累了”。他说到最后，所有人都开始替他重复那句话。", scene: "corridor_door", visualCharacter: "许知晚", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "rain_heavy_loop", sfxOnEnter: ["corridor_light_flicker"], voiceStinger: "xuzhiwan_low_breath", audioMood: "tense" });
+  add(2, 3, { speaker: "许知晚", text: "三年前，他也是这样让所有人闭嘴。\n\n他说，别让事情变难看。\n\n又说，知夏只是太累了。\n\n后来，所有人都替他重复这句话。", scene: "corridor_door", visualCharacter: "许知晚", visualMood: "tense", characterVariant: "pressure", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "rain_heavy_loop", sfxOnEnter: ["corridor_light_flicker"], voiceStinger: "xuzhiwan_low_breath", audioMood: "tense" });
   add(2, 4, {
     type: "choice",
     scene: "corridor_door",
@@ -629,7 +632,7 @@ window.MIST_DATA = (() => {
       }),
     ],
   });
-  add(5, 11, { speaker: "许知夏的声音", text: "周屿他……如果我出事，不要相信他说那晚不在。照片——\n\n录音在“照片”两个字后突然断掉，像有人从她手里夺走了手机。", scene: "old_phone_view", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "fear", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "room_night_loop", sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_weak_static_exhale", audioMood: "horror" });
+  add(5, 11, { speaker: "许知夏的声音", text: "周屿他……如果我出事，别信他说那晚不在。\n\n照片……", scene: "old_phone_view", contentType: "recording", visualCharacter: "许知夏", visualMood: "horror", characterVariant: "fear", characterScale: "closeup", characterPosition: "center", characterFraming: "bust", characterHeadSafe: true, characterFocus: "face", bgm: "horror_corridor", ambience: "room_night_loop", sfxOnEnter: ["old_phone_start", "recording_static_short"], voiceStinger: "xuzhixia_weak_static_exhale", audioMood: "horror" });
   add(5, 12, { speaker: "陈妍", text: "备份到了。\n\n林舟，这段足够说明她生前在防一个熟人。别再让任何人单独拿走原件。", scene: "old_chat_memory", sfxOnEnter: ["backup_success"] });
   add(5, 13, { speaker: "旁白", text: "猫眼外一片黑。\n\n只有楼梯间传来第二个人的脚步声，慢，不急，像故意让屋里的人听见。林舟忽然明白，恐惧不是不知道外面有什么，是知道它正在靠近。", scene: "corridor_door", sfxOnEnter: ["footstep_corridor_wet"] });
   add(5, 14, { speaker: "许知晚", text: "他来了。\n\n别开门。哪怕他说自己是来帮你的。", scene: "corridor_door" });
@@ -1096,6 +1099,68 @@ window.MIST_DATA = (() => {
     });
   });
 
+  const narratorSpeakers = new Set(["旁白", "Narrator"]);
+  const actionLead = /^(?:她|他|它|有人|门外|走廊|屏幕|手机|录音|雨声|灯光|房间|林舟|许知晚|许知夏|陈妍|周屿|房东)(?:[^。！？；…]{0,24})(?:说|问|答|把|站|坐|看|盯|停|后退|抬|放|擦|握|转|落|响|亮|断|沉默)/;
+
+  function contentTypeFor(node, speaker, text, forceNarration = false) {
+    if (node.type === "choice" || node.type === "deduction") return "system";
+    if (forceNarration || narratorSpeakers.has(speaker)) return "narration";
+    if (speaker === "Broadcast" || speaker === "广播") return "broadcast";
+    if (node.contentType) return node.contentType;
+    if (speaker === "许知夏的声音" || /录音|语音留言/.test(node.scene || "")) return "recording";
+    if (node.scene === "phone_call_ui" && speaker !== "林舟") return "phone";
+    return "dialogue";
+  }
+
+  function isNarrativeFragment(node, text) {
+    if (narratorSpeakers.has(node.speaker) || node.type === "choice" || node.type === "deduction") return true;
+    return actionLead.test(String(text || "").trim());
+  }
+
+  function performanceDirection(node, contentType, speaker) {
+    if (contentType === "narration" || contentType === "system") return "";
+    if (contentType === "phone") return "像真实电话通话，保持近距离与轻微压缩感，不要朗诵。";
+    if (contentType === "recording") return "像真实旧录音，年轻、克制、带压抑的紧迫感；不要鬼声。";
+    const chapter = Number(String(node.chapterId || "").slice(-2)) || 1;
+    const stage = chapter <= 2 ? "先疑惑后戒备，停顿自然，不要故意压低声音。" : chapter <= 4 ? "确认异常后更谨慎，句尾克制，不把恐惧演成尖叫。" : "疲惫但必须作出决定，短句清楚，情绪有压迫感而不过度表演。";
+    const roles = {
+      "林舟": "疲惫、戒备，危险逼近时短促但能重新稳住。",
+      "许知晚": "表面克制，情绪被压在字里；信任变化必须可听见。",
+      "许知夏": "真实年轻人的求救，压抑、犹豫，不持续哭喊。",
+      "周屿": "表面温和，施压时仍维持礼貌；控制欲只在被拆穿后露出。",
+      "陈妍": "清醒、可靠，紧张也不丢判断。",
+    };
+    return `${roles[speaker] || "像现场对话，不像有声书朗读。"}${stage}`;
+  }
+
+  function semanticFragmentsFor(node) {
+    const text = String(node.text || "").trim();
+    if (!text) return [{ text, speaker: node.speaker || "旁白", forceNarration: narratorSpeakers.has(node.speaker) }];
+    if (narratorSpeakers.has(node.speaker) || node.type === "choice" || node.type === "deduction") {
+      return [{ text, speaker: node.speaker || "旁白", forceNarration: narratorSpeakers.has(node.speaker) }];
+    }
+    if (!/[“”]/.test(text)) {
+      return text.split(/\n{2,}/).map((part) => ({
+        text: part.trim(),
+        speaker: isNarrativeFragment(node, part) ? "旁白" : node.speaker,
+        forceNarration: isNarrativeFragment(node, part),
+      })).filter((part) => part.text);
+    }
+    const fragments = [];
+    const quote = /“([^”]+)”/g;
+    let cursor = 0;
+    let match;
+    while ((match = quote.exec(text))) {
+      const narration = text.slice(cursor, match.index).replace(/[，、]\s*$/, "").trim();
+      if (narration) fragments.push({ text: narration, speaker: "旁白", forceNarration: true });
+      fragments.push({ text: match[1].trim(), speaker: node.speaker, forceNarration: false });
+      cursor = match.index + match[0].length;
+    }
+    const tail = text.slice(cursor).replace(/^[，、]\s*/, "").trim();
+    if (tail) fragments.push({ text: tail, speaker: "旁白", forceNarration: true });
+    return fragments.length ? fragments : [{ text, speaker: node.speaker, forceNarration: false }];
+  }
+
   function splitMobileText(text, budget = 60) {
     const parts = String(text || "")
       .trim()
@@ -1122,21 +1187,51 @@ window.MIST_DATA = (() => {
     let count = 0;
     Object.values(nodes).forEach((node) => {
       const cannotSplit = node.type === "choice" || node.type === "deduction" || node.type === "ending" || node.resolveEnding === true;
-      const beats = cannotSplit ? [node.text] : splitMobileText(node.text);
+      const semanticFragments = cannotSplit ? [{ text: node.text, speaker: node.speaker || "旁白", forceNarration: narratorSpeakers.has(node.speaker) }] : semanticFragmentsFor(node);
+      const beats = semanticFragments.flatMap((fragment) => splitMobileText(fragment.text).map((text) => ({ ...fragment, text })));
       if (beats.length < 2) {
-        expanded[node.nodeId] = node;
+        const beat = beats[0] || { text: node.text, speaker: node.speaker || "旁白", forceNarration: narratorSpeakers.has(node.speaker) };
+        const contentType = contentTypeFor(node, beat.speaker, beat.text, beat.forceNarration);
+        expanded[node.nodeId] = {
+          ...node,
+          speaker: contentType === "narration" ? "旁白" : beat.speaker,
+          text: beat.text,
+          contentType,
+          voiceEnabled: ["dialogue", "broadcast", "phone", "recording", "inner-monologue"].includes(contentType),
+          spokenText: ["dialogue", "broadcast", "phone", "recording", "inner-monologue"].includes(contentType) ? beat.text : undefined,
+          voiceDirection: performanceDirection(node, contentType, beat.speaker),
+        };
         return;
       }
       count += beats.length - 1;
       const beatIds = beats.slice(1).map((_, index) => `${node.nodeId}__m${String(index + 2).padStart(2, "0")}`);
       const originalNext = node.nextNodeId;
-      expanded[node.nodeId] = { ...node, text: beats[0], nextNodeId: beatIds[0], mobileBeatCount: beats.length };
+      const first = beats[0];
+      const firstContentType = contentTypeFor(node, first.speaker, first.text, first.forceNarration);
+      expanded[node.nodeId] = {
+        ...node,
+        speaker: firstContentType === "narration" ? "旁白" : first.speaker,
+        text: first.text,
+        contentType: firstContentType,
+        voiceEnabled: ["dialogue", "broadcast", "phone", "recording", "inner-monologue"].includes(firstContentType),
+        spokenText: ["dialogue", "broadcast", "phone", "recording", "inner-monologue"].includes(firstContentType) ? first.text : undefined,
+        voiceDirection: performanceDirection(node, firstContentType, first.speaker),
+        nextNodeId: beatIds[0],
+        mobileBeatCount: beats.length,
+      };
       beatIds.forEach((beatId, index) => {
+        const beat = beats[index + 1];
+        const contentType = contentTypeFor(node, beat.speaker, beat.text, beat.forceNarration);
         expanded[beatId] = {
           ...node,
           nodeId: beatId,
           type: "dialogue",
-          text: beats[index + 1],
+          speaker: contentType === "narration" ? "旁白" : beat.speaker,
+          text: beat.text,
+          contentType,
+          voiceEnabled: ["dialogue", "broadcast", "phone", "recording", "inner-monologue"].includes(contentType),
+          spokenText: ["dialogue", "broadcast", "phone", "recording", "inner-monologue"].includes(contentType) ? beat.text : undefined,
+          voiceDirection: performanceDirection(node, contentType, beat.speaker),
           nextNodeId: beatIds[index + 1] || originalNext,
           gainClues: [],
           setFlags: [],

@@ -109,13 +109,17 @@
       resolveEnding: data.resolveEnding === true,
       audioPolicy: data.audioPolicy || { bgmMode: "keep", ambienceMode: "keep" },
       sfxOnEnter: data.sfxOnEnter || [],
+      contentType: data.contentType,
+      voiceEnabled: data.voiceEnabled,
+      spokenText: data.spokenText,
+      voiceDirection: data.voiceDirection,
     };
     if (data.nextNodeId === null) delete nodes[nodeId].nextNodeId;
   }
 
   add("dorm_01_001", { chapterId: "dorm_chapter_01", text: "00:17。417 的灯同时熄灭。天花板扬声器发出一声干涩的轻响。", nextNodeId: "dorm_01_002", objectiveId: "hear-the-rules", objectiveText: "确认广播究竟要宿舍做什么。", visualFocus: "speaker", sceneHold: false, transitionStyle: "fade", sfxOnEnter: [{ key: "dorm_broadcast_start", volume: 0.18, fadeInMs: 80, duckBgmMs: 260 }], investigationHotspots: [{ hotspotId: "speaker-grille", label: "扬声器", detailTitle: "广播孔", text: "灰尘堵住了孔眼，声音却像刚有人擦过一样清楚。规则来自这里，但不一定都该被服从。" }] });
-  add("dorm_01_002", { chapterId: "dorm_chapter_01", speaker: "Broadcast", text: "校园女声平静地念完六条规则。她没有提到名单，也没有提到必须交出谁。", nextNodeId: "dorm_01_003", setFlags: ["heard_broadcast"], gainClues: ["dorm_clue_broadcast_recording"], ruleUpdates: [{ ruleId: "dorm_rule_01", status: "partly-credible" }, { ruleId: "dorm_rule_02", status: "unverified" }] });
-  add("dorm_01_003", { chapterId: "dorm_chapter_01", speaker: "Chen Lu", visualCharacter: "Chen Lu", text: "陈露数了一遍屋里的人，在第五个数字上停住。没有人念出那个数字。", nextNodeId: "dorm_01_004", visualFocus: "temporary-bed" });
+  add("dorm_01_002", { chapterId: "dorm_chapter_01", speaker: "Broadcast", contentType: "broadcast", text: "零点十七分，开始点名。请遵守宿舍夜间规则。", nextNodeId: "dorm_01_003", setFlags: ["heard_broadcast"], gainClues: ["dorm_clue_broadcast_recording"], ruleUpdates: [{ ruleId: "dorm_rule_01", status: "partly-credible" }, { ruleId: "dorm_rule_02", status: "unverified" }] });
+  add("dorm_01_003", { chapterId: "dorm_chapter_01", speaker: "Chen Lu", visualCharacter: "Chen Lu", text: "等一下。这里……有五个人。", nextNodeId: "dorm_01_004", visualFocus: "temporary-bed" });
   add("dorm_01_004", { chapterId: "dorm_chapter_01", text: "门外响起三下敲门声。停顿开始了。最后一下还没落下，木门上先擦过第四道声音。", nextNodeId: "dorm_01_005", visualFocus: "door", sfxOnEnter: [{ key: "dorm_knock_wood", volume: 0.26, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.26, delayMs: 240, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.26, delayMs: 480, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.26, delayMs: 720, suppressMs: 0, duckBgmMs: 650 }] });
   add("dorm_01_005", { chapterId: "dorm_chapter_01", type: "choice", text: "敲门节奏不对。你怎么做？", choices: [
     choice("listen", "保持安静，数清间隔。", "dorm_01_006", { setFlags: ["checked_knock_pattern"], choiceImpactText: "你记下矛盾，没有回应门外。", ruleUpdates: [{ ruleId: "dorm_rule_02", status: "verified" }] }),
@@ -135,7 +139,7 @@
 
   add("dorm_03_001", { chapterId: "dorm_chapter_03", scene: "dorm_washroom_mirror", text: "00:44，应急灯变成红色。没人放水，洗手间的镜子却先蒙上了雾。", nextNodeId: "dorm_03_002", objectiveId: "read-the-mirror", objectiveText: "判断镜中的名字是警告，还是陷阱。", sceneHold: false, transitionStyle: "fade", visualFocus: "mirror", setFlags: ["saw_red_light"], ruleUpdates: [{ ruleId: "dorm_rule_04", status: "verified" }], investigationHotspots: [{ hotspotId: "red-light", label: "应急灯", detailTitle: "十秒红灯", text: "红灯亮起时，走廊的广播停了十秒。它不是催促你逃，而是在等谁先暴露。" }] });
   add("dorm_03_002", { chapterId: "dorm_chapter_03", text: "雾气里浮出一个名字：周婉宁。它比周围的玻璃更旧。", nextNodeId: "dorm_03_003", gainClues: ["dorm_clue_mirror_name"], setFlags: ["saw_mirror_name"], ruleUpdates: [{ ruleId: "dorm_rule_06", status: "verified" }] });
-  add("dorm_03_003", { chapterId: "dorm_chapter_03", speaker: "Shen Yan", visualCharacter: "Shen Yan", text: "沈妍本该躺在四号床。她的床是空的。洗手间门外先敲三下，停两秒，最后一下落在门缝旁。", nextNodeId: "dorm_03_004", sfxOnEnter: [{ key: "dorm_knock_wood", volume: 0.22, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.22, delayMs: 240, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.22, delayMs: 480, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.22, delayMs: 1500, suppressMs: 0, duckBgmMs: 500 }] });
+  add("dorm_03_003", { chapterId: "dorm_chapter_03", speaker: "Shen Yan", visualCharacter: "Shen Yan", text: "四号床是空的。门外不是我。别开。", nextNodeId: "dorm_03_004", sfxOnEnter: [{ key: "dorm_knock_wood", volume: 0.22, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.22, delayMs: 240, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.22, delayMs: 480, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.22, delayMs: 1500, suppressMs: 0, duckBgmMs: 500 }] });
   add("dorm_03_004", { chapterId: "dorm_chapter_03", type: "choice", text: "门外的人说自己是沈妍。半开的宿舍门外，能看到她原来的床。", choices: [
     choice("verify-bed", "先确认床位，再决定要不要开门。", "dorm_03_005", { choiceImpactText: "床上有一道熟睡的人影。你没有打开洗手间门。", ruleUpdates: [{ ruleId: "dorm_rule_05", status: "verified" }] }),
     choice("open-door", "替她打开洗手间门。", "dorm_03_005", { choiceImpactText: "冷气涌进来。镜雾散开，门外却没有任何人。", ruleUpdates: [{ ruleId: "dorm_rule_05", status: "contradiction" }] }),
@@ -154,7 +158,7 @@
     choice("trust-correction", "相信修正规则，先保住纸和视频。", "dorm_04_009", { setFlags: ["trusted_correction", "refused_reduction"], choiceIntent: "保全证据", choiceImpactText: "你拒绝把“减少人数”当成解决办法。", relationshipEffects: [{ id: "trust_linsui", delta: 16, reason: "你没有让恐惧替大家做决定。" }, { id: "support_chenlu", delta: 8, reason: "陈露把视频备份到了你的手机。" }], ruleUpdates: [{ ruleId: "dorm_rule_correction", status: "hidden-correction" }] }),
     choice("doubt-correction", "先不表态，把纸放回原处。", "dorm_04_009", { choiceIntent: "暂缓判断", choiceImpactText: "广播没有催促，像是早就知道你会犹豫。", relationshipEffects: [{ id: "trust_linsui", delta: -6, reason: "林穗不确定你会不会站在她们这一边。" }], ruleUpdates: [{ ruleId: "dorm_rule_correction", status: "contradiction" }] }),
   ] });
-  add("dorm_04_009", { chapterId: "dorm_chapter_04", scene: "dorm_fire_memory_2014", speaker: "周婉宁", visualCharacter: "Zhou Wanning", text: "旧楼道没有火。一个女孩站在 320 门外，等着别人把她的名字读完。", nextNodeId: "dorm_04_010", sceneHold: false, transitionStyle: "fade" });
+  add("dorm_04_009", { chapterId: "dorm_chapter_04", scene: "dorm_fire_memory_2014", speaker: "周婉宁", contentType: "recording", visualCharacter: "Zhou Wanning", text: "我在三百二十门外。等他们把我的名字念完。", nextNodeId: "dorm_04_010", sceneHold: false, transitionStyle: "fade" });
   add("dorm_04_010", { chapterId: "dorm_chapter_04", speaker: "周婉宁", visualCharacter: "Zhou Wanning", text: "“那晚不是少了一个人。”她说，“是有人把我从人数里划掉了。”", nextNodeId: "dorm_04_011" });
   add("dorm_04_011", { chapterId: "dorm_chapter_04", text: "319 和 320 的差，不是档案笔误。它第一次证明，名单可以比活着的人更有权力。", nextNodeId: "dorm_04_012", visualFocus: "fire-record" });
   add("dorm_04_012", { chapterId: "dorm_chapter_04", text: "417 的扬声器忽然换成许棠的声音：请未登记人员，前往值班室。", nextNodeId: "dorm_05_001", objectiveComplete: true, chapterRecap: { title: "2014 年被删去的是周婉宁；今晚，轮到许棠。", next: "在 01:13 前，宿舍必须决定是否把一个真实的人交给名单。" } });
@@ -244,6 +248,93 @@
     },
   };
 
+  const narratorSpeakers = new Set(["Narrator", "旁白"]);
+  const audibleTypes = new Set(["dialogue", "broadcast", "phone", "recording", "inner-monologue"]);
+
+  function contentTypeFor(node, speaker, forceNarration = false) {
+    if (node.type === "choice" || node.type === "deduction") return "system";
+    if (forceNarration || narratorSpeakers.has(speaker)) return "narration";
+    if (speaker === "Broadcast" || speaker === "广播") return "broadcast";
+    return node.contentType || "dialogue";
+  }
+
+  function performanceDirection(node, contentType, speaker) {
+    if (!audibleTypes.has(contentType)) return "";
+    if (contentType === "broadcast") return "制度化、平静、准确，越危险越正常；不要鬼声、耳语或夸张电流。";
+    if (contentType === "recording") return "像来自旧记录的真实年轻女声，疲惫、克制、带恐惧；不要鬼叫。";
+    const chapter = Number(String(node.chapterId || "").slice(-2)) || 1;
+    const stage = chapter <= 2 ? "异常初现，疑惑里带一点不安。" : chapter <= 4 ? "异常确认后更谨慎，停顿更多但不故意颤抖。" : "真相逼近，疲惫、害怕且必须决定，短句清楚。";
+    const roles = {
+      "陈露": "起初用轻快压住紧张，发现异常后说得更快又不敢说完。",
+      "Chen Lu": "起初用轻快压住紧张，发现异常后说得更快又不敢说完。",
+      "许棠": "害怕但努力让自己说清楚；后期有克制的勇气，不是哭腔。",
+      "林穗": "温和、保护人；害怕时更谨慎、反复确认，决定相信前能听见挣扎。",
+      "赵晴": "习惯用秩序自救；压力很强但不是恶毒反派。",
+      "沈妍": "平时安静、语速偏慢；真正害怕时失去原有平静。",
+      "Shen Yan": "平时安静、语速偏慢；真正害怕时失去原有平静。",
+      "吴阿姨": "直接的宿管口吻；提到旧案时有长期压住的愧疚。",
+      "周婉宁": "来自过去的真实记录，年轻、疲惫、恐惧但不演成鬼声。",
+    };
+    return `${roles[speaker] || "像现场交流，不像朗读。"}${stage}`;
+  }
+
+  function semanticFragmentsFor(node) {
+    const text = String(node.text || "").trim();
+    if (narratorSpeakers.has(node.speaker) || node.type === "choice" || node.type === "deduction" || !/[“”]/.test(text)) {
+      return [{ text, speaker: node.speaker || "Narrator", forceNarration: narratorSpeakers.has(node.speaker) }];
+    }
+    const fragments = [];
+    const quote = /“([^”]+)”/g;
+    let cursor = 0;
+    let match;
+    while ((match = quote.exec(text))) {
+      const narration = text.slice(cursor, match.index).replace(/[，、]\s*$/, "").trim();
+      if (narration) fragments.push({ text: narration, speaker: "Narrator", forceNarration: true });
+      fragments.push({ text: match[1].trim(), speaker: node.speaker, forceNarration: false });
+      cursor = match.index + match[0].length;
+    }
+    const tail = text.slice(cursor).replace(/^[，、]\s*/, "").trim();
+    if (tail) fragments.push({ text: tail, speaker: "Narrator", forceNarration: true });
+    return fragments.length ? fragments : [{ text, speaker: node.speaker, forceNarration: false }];
+  }
+
+  function normaliseDialogueNodes() {
+    const expanded = {};
+    Object.values(nodes).forEach((node) => {
+      const fragments = semanticFragmentsFor(node);
+      const ids = fragments.slice(1).map((_, index) => `${node.nodeId}__beat${String(index + 2).padStart(2, "0")}`);
+      const apply = (base, fragment, nodeId, nextNodeId, derived) => {
+        const contentType = contentTypeFor(node, fragment.speaker, fragment.forceNarration);
+        return {
+          ...base,
+          nodeId,
+          nextNodeId,
+          speaker: contentType === "narration" ? "Narrator" : fragment.speaker,
+          text: fragment.text,
+          contentType,
+          voiceEnabled: audibleTypes.has(contentType),
+          spokenText: audibleTypes.has(contentType) ? fragment.text : undefined,
+          voiceDirection: performanceDirection(node, contentType, fragment.speaker),
+          ...(derived ? {
+            gainClues: [], setFlags: [], choices: [], ruleUpdates: [], objectiveId: undefined, objectiveText: undefined,
+            objectiveComplete: false, investigationHotspots: [], chapterRecap: undefined, sfxOnEnter: [],
+            sceneHold: true, transitionStyle: "hold", resolveEnding: false,
+          } : {}),
+        };
+      };
+      const originalNext = node.nextNodeId;
+      expanded[node.nodeId] = apply(node, fragments[0], node.nodeId, ids[0] || originalNext, false);
+      ids.forEach((id, index) => {
+        expanded[id] = apply(node, fragments[index + 1], id, ids[index + 1] || originalNext, true);
+      });
+      if (originalNext === undefined && !ids.length) delete expanded[node.nodeId].nextNodeId;
+    });
+    Object.keys(nodes).forEach((id) => delete nodes[id]);
+    Object.assign(nodes, expanded);
+  }
+
+  normaliseDialogueNodes();
+
   window.MIST_DORMITORY_DATA = {
     schemaVersion: "1.0",
     script: {
@@ -269,11 +360,11 @@
     rulePlaybook,
     routePlans,
     audioProduction: {
-      status: "xfyun-generated-awaiting-listening-signoff",
-      broadcastVoiceStatus: "xfyun-generated-awaiting-listening-signoff",
-      broadcastVoiceSource: "科大讯飞超拟人语音合成 WebAPI",
-      broadcastVoiceLicense: "account-authorised-synthesis; public distribution and commercial use require account-holder confirmation",
-      broadcastVoiceNote: "规则广播和最终补录广播由授权的科大讯飞超拟人语音合成 WebAPI 生成；当前版本不使用浏览器朗读或未授权回退，仍待三设备人工试听签核。",
+      status: "volcengine-pending-api-authorisation",
+      broadcastVoiceStatus: "volcengine-pending-api-authorisation",
+      broadcastVoiceSource: "Volcengine bidirectional TTS WebSocket; generation is blocked until the account resource and approved speaker IDs are authorised.",
+      broadcastVoiceLicense: "pending account-authorised synthesis and public-distribution confirmation",
+      broadcastVoiceNote: "正式广播将由授权的 Volcengine TTS 生成。当前不使用浏览器朗读、未授权回退或旧供应商文件作为新对白的正式替代；仍待接口授权、角色音色配置和三设备人工试听签核。",
       approvedCuePolicy: "只有明确动作使用拟音；无准确来源时保持静默。",
       headphoneListeningSignoff: "pending",
       desktopSpeakerListeningSignoff: "pending",
