@@ -17,14 +17,17 @@ if (!fs.existsSync(file)) {
     "StartSession",
     "TaskRequest",
     "FinishSession",
-  "context_texts",
-  "seed-icl-2.0",
+    "context_texts",
+    "seed-tts-2.0",
     "VOLC_TTS_API_KEY",
-    "VOLC_TTS_SPEAKER_MAP",
-    "refresh-voice-runtime.mjs",
+    "VOLC_TTS_RESOURCE_ID",
+    "assets/voice-casting-manifest.js",
+    "voice-staging-manifest.json",
   ]) {
     if (!source.includes(token)) failures.push(`Volcengine generator is missing ${token}.`);
   }
+  if (source.includes("VOLC_TTS_SPEAKER_MAP")) failures.push("Volcengine generator must use committed formal casting, not an environment speaker map.");
+  if (source.includes("refresh-voice-runtime.mjs")) failures.push("Volcengine generator must not refresh runtime directly; promotion owns runtime activation.");
   if (source.includes("xfyun") || source.includes("XFYUN")) failures.push("Volcengine generator must not fall back to XFYUN.");
 }
 
