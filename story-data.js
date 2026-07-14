@@ -1114,7 +1114,9 @@ window.MIST_DATA = (() => {
 
   function isNarrativeFragment(node, text) {
     if (narratorSpeakers.has(node.speaker) || node.type === "choice" || node.type === "deduction") return true;
-    return actionLead.test(String(text || "").trim());
+    const fragment = String(text || "").trim();
+    const explicitNarrativeLead = /^(?:\u6700\u540e\u4e00\u4e2a\u5b57|\u73b0\u5728\u7684\u6797\u821f|\u7535\u8bdd\u90a3\u5934|\u5979\u7684\u58f0\u97f3\u5f88\u8f7b|\u8fd9\u53e5\u8bdd\u51fa\u53e3\u540e)/;
+    return actionLead.test(fragment) || explicitNarrativeLead.test(fragment);
   }
 
   function performanceDirection(node, contentType, speaker) {

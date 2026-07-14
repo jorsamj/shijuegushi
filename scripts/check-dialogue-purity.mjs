@@ -23,6 +23,9 @@ const stories = [
   ["script_rain_call", load("story-data.js", "MIST_DATA")],
   ["script_dormitory_rollcall", load("assets/stories/dormitory-rollcall/story-data.js", "MIST_DORMITORY_DATA")],
 ];
+const expectedSilentNarrativeNodes = {
+  script_rain_call: new Set(["ch01_005__m02", "ch01_019__m02", "ch03_005__m03", "ch04_020__m03", "ch05_005__m02"]),
+};
 const runtime = load("assets/voice-runtime-manifest.js", "SECOND_LIFE_VOICE_MANIFEST");
 
 for (const [scriptId, data] of stories) {
@@ -55,6 +58,13 @@ for (const [scriptId, data] of stories) {
       if (!normalise(node.spokenText)) failures.push(`${label} audible content requires spokenText.`);
       if (/[“”]/.test(node.text || "")) failures.push(`${label} dialogue text must not mix quoted speech with narration.`);
       if (normalise(node.text) !== normalise(node.spokenText)) failures.push(`${label} displayed dialogue and spokenText must match.`);
+    }
+  }
+
+  for (const nodeId of expectedSilentNarrativeNodes[scriptId] || []) {
+    const node = data.nodes?.[nodeId];
+    if (!node || node.contentType !== "narration" || node.voiceEnabled !== false || node.spokenText) {
+      failures.push(`${scriptId}:${nodeId} must remain a silent narration beat.`);
     }
   }
 
