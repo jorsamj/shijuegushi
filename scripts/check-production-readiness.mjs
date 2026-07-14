@@ -31,6 +31,8 @@ const checks = [
   ["node", ["scripts/check-voice-assets.mjs"]],
   ["node", ["scripts/check-voice-casting.mjs"]],
   ["node", ["scripts/check-voice-lifecycle.mjs"]],
+  ["node", ["scripts/check-unreferenced-voice-audit.mjs"]],
+  ["node", ["scripts/check-voice-review-tool.mjs"]],
   ["node", ["scripts/check-dormitory-release-gates.mjs"]],
   ["node", ["scripts/check-dormitory-asset-library.mjs"]],
   ["node", ["scripts/check-multi-story.mjs"]],

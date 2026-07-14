@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>第二人生 - 本地配音审听</title>
+    <link rel="stylesheet" href="review.css">
+  </head>
+  <body>
+    <main class="review-shell">
+      <header class="review-header">
+        <p class="eyebrow">SECOND LIFE / LOCAL QA</p>
+        <h1>本地配音审听</h1>
+        <p class="warning">本页面仅用于本地配音审听，不构成正式发布签核。</p>
+      </header>
+
+      <section class="filters" aria-label="筛选配音">
+        <label>故事<select id="story-filter"><option value="all">全部故事</option></select></label>
+        <label>章节<select id="chapter-filter"><option value="all">全部章节</option></select></label>
+        <label>角色<select id="role-filter"><option value="all">全部角色</option></select></label>
+        <label>节点<input id="node-filter" type="search" placeholder="nodeId / 台词关键词"></label>
+        <label class="toggle"><input id="broadcast-filter" type="checkbox"> 仅制度广播</label>
+        <label class="toggle"><input id="ending-filter" type="checkbox"> 仅结局</label>
+      </section>
+
+      <section class="queue-controls" aria-label="播放控制">
+        <button id="previous-button" type="button">上一条</button>
+        <button id="play-button" type="button">播放</button>
+        <button id="pause-button" type="button">暂停</button>
+        <button id="next-button" type="button">下一条</button>
+        <button id="play-filtered-button" type="button">连续播放筛选结果</button>
+        <button id="play-broadcast-button" type="button">试听全部制度广播</button>
+        <label>间隔 <input id="gap-input" type="range" min="0" max="2000" step="50" value="350"> <output id="gap-output">350ms</output></label>
+        <button id="export-button" type="button" class="secondary">导出本地 JSON</button>
+      </section>
+
+      <p id="summary" class="summary" aria-live="polite"></p>
+      <section id="voice-list" class="voice-list" aria-live="polite"></section>
+    </main>
+
+    <template id="voice-item-template">
+      <article class="voice-item">
+        <div class="voice-item__head">
+          <p class="voice-item__id"></p>
+          <p class="voice-item__meta"></p>
+        </div>
+        <p class="voice-item__text"></p>
+        <dl class="voice-item__details"></dl>
+        <div class="voice-item__actions">
+          <button class="item-play" type="button">播放</button>
+          <button class="item-stop secondary" type="button">停止</button>
+        </div>
+        <fieldset class="review-state">
+          <legend>本地审听标记</legend>
+          <label><input type="radio" value="pending"> 待审听</label>
+          <label><input type="radio" value="pass"> 通过</label>
+          <label><input type="radio" value="redo"> 需重做</label>
+          <label><input type="radio" value="pronunciation"> 读音错误</label>
+          <label><input type="radio" value="rhythm"> 节奏错误</label>
+          <label><input type="radio" value="voice"> 音色不符</label>
+        </fieldset>
+        <label class="note-label">备注<textarea class="review-note" rows="2" placeholder="仅保存在此浏览器"></textarea></label>
+      </article>
+    </template>
+
+    <script src="../../story-data.js"></script>
+    <script src="../../assets/stories/dormitory-rollcall/story-data.js"></script>
+    <script src="../../assets/stories/dormitory-rollcall/broadcast-audio-contract.js"></script>
+    <script src="review.js"></script>
+  </body>
+</html>
