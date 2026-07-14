@@ -13,6 +13,7 @@ if (!source.includes("broadcast-audio-contract.js")) failures.push("Dormitory st
 if (!source.includes('const model = "seed-tts-2.0"') || !source.includes("model,")) failures.push("Generated entries must declare the formal Model 2.0 model.");
 if (!source.includes("voiceType")) failures.push("Generated entries must declare their verified Model 2.0 voiceType.");
 if (source.includes("VOLC_TTS_SPEAKER_MAP")) failures.push("Formal casting must come from the committed verified casting manifest, not an environment speaker map.");
+if (source.includes("resourceId !== model")) failures.push("Formal generation must treat the configured resource ID as an opaque authorised API resource, not a guessed model literal.");
 
 if (failures.length) {
   console.error("Volcengine generation safety check failed:");

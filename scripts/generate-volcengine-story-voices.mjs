@@ -154,7 +154,7 @@ function config() {
   const apiKey = process.env.VOLC_TTS_API_KEY || "";
   const resourceId = process.env.VOLC_TTS_RESOURCE_ID || "";
   if (!apiKey) throw new Error("VOLC_TTS_API_KEY is required. No fallback provider will be used.");
-  if (resourceId !== model) throw new Error("VOLC_TTS_RESOURCE_ID must be seed-tts-2.0 for the formal Model 2.0 delivery.");
+  if (!resourceId) throw new Error("VOLC_TTS_RESOURCE_ID is required for the formal Model 2.0 delivery.");
   return { apiKey, resourceId };
 }
 
