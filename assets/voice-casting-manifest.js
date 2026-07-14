@@ -41,6 +41,9 @@
         },
       },
       script_rain_call: {
+        identityBasis: {
+          womanAtDoor: "The woman at the door explicitly identifies herself as Xu Zhiwan, Xu Zhixia's sister. Her private knowledge is verified in chapter 1, and the final deduction confirms that identity.",
+        },
         speakerAliases: {
           "\u6797\u821f": "linzhou",
           "\u8bb8\u77e5\u590f": "xuzhixia",
