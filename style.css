@@ -3259,6 +3259,367 @@ img.is-missing {
   }
 }
 
+/* Story shelf: every released story keeps the same physical weight. */
+.archive-bookshelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(238px, 1fr));
+  gap: clamp(22px, 3.4vw, 42px);
+  align-items: end;
+  padding: 12px 2px 38px;
+}
+
+.story-book {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  width: 100%;
+  aspect-ratio: 0.67;
+  overflow: hidden;
+  border: 1px solid rgba(224, 204, 153, 0.22);
+  border-radius: 4px 8px 8px 4px;
+  padding: 0;
+  color: var(--text);
+  background: #111318;
+  box-shadow: -8px 0 0 rgba(2, 3, 5, 0.58), 0 22px 34px rgba(0, 0, 0, 0.34);
+  cursor: pointer;
+  isolation: isolate;
+  text-align: left;
+  transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+}
+
+.story-book::before {
+  position: absolute;
+  z-index: 3;
+  inset: 0 auto 0 0;
+  width: 12px;
+  content: "";
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.56), transparent);
+  pointer-events: none;
+}
+
+.story-book:hover,
+.story-book:focus-visible {
+  transform: translateY(-7px);
+  border-color: rgba(222, 188, 111, 0.58);
+  box-shadow: -8px 0 0 rgba(2, 3, 5, 0.58), 0 30px 46px rgba(0, 0, 0, 0.46);
+}
+
+.story-book:focus-visible {
+  outline: 2px solid rgba(240, 211, 143, 0.82);
+  outline-offset: 4px;
+}
+
+.story-book.is-sealed {
+  filter: grayscale(0.82);
+  opacity: 0.52;
+  cursor: default;
+}
+
+.story-book.is-sealed:hover {
+  transform: none;
+  border-color: rgba(224, 204, 153, 0.22);
+  box-shadow: -8px 0 0 rgba(2, 3, 5, 0.58), 0 22px 34px rgba(0, 0, 0, 0.34);
+}
+
+.story-book-spine {
+  position: absolute;
+  z-index: 4;
+  top: 15px;
+  left: 15px;
+  color: rgba(242, 225, 181, 0.88);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  writing-mode: vertical-rl;
+}
+
+.story-book-cover {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #15171d;
+}
+
+.story-book-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.64) contrast(1.08) brightness(0.74);
+}
+
+.story-book-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 7, 10, 0.08), rgba(5, 7, 10, 0.1) 42%, rgba(5, 7, 10, 0.93));
+}
+
+.story-book-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 8px;
+  align-content: end;
+  min-height: 42%;
+  padding: 20px 18px 20px 35px;
+  background: linear-gradient(0deg, rgba(7, 9, 12, 0.94), rgba(7, 9, 12, 0.44), transparent);
+}
+
+.story-book-copy small,
+.story-book-copy em {
+  color: rgba(225, 214, 182, 0.64);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+}
+
+.story-book-copy strong {
+  max-width: 9em;
+  font-family: var(--serif);
+  font-size: clamp(25px, 2.7vw, 34px);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.18;
+}
+
+.book-detail-screen {
+  display: grid;
+  place-items: center;
+  padding-top: max(34px, env(safe-area-inset-top));
+}
+
+.book-detail {
+  position: relative;
+  display: grid;
+  width: min(920px, 100%);
+  min-height: min(660px, 76dvh);
+  overflow: hidden;
+  border: 1px solid rgba(222, 203, 151, 0.24);
+  border-radius: 4px 8px 8px 4px;
+  background: #d8d0bf;
+  box-shadow: -10px 0 0 rgba(0, 0, 0, 0.52), 0 28px 80px rgba(0, 0, 0, 0.45);
+  perspective: 1600px;
+}
+
+.book-detail-cover {
+  position: absolute;
+  z-index: 2;
+  inset: 0 50% 0 0;
+  overflow: hidden;
+  transform-origin: left center;
+  backface-visibility: hidden;
+  background: #12151a;
+  box-shadow: 8px 0 18px rgba(0, 0, 0, 0.38);
+  animation: book-cover-open 620ms cubic-bezier(0.2, 0.72, 0.2, 1) both;
+}
+
+.book-detail-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.58) contrast(1.06) brightness(0.7);
+}
+
+.book-detail-cover::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.4), transparent 28%, rgba(0, 0, 0, 0.52));
+}
+
+.book-detail-cover span {
+  position: absolute;
+  z-index: 1;
+  left: 28px;
+  bottom: 28px;
+  color: rgba(246, 229, 190, 0.82);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.book-page {
+  display: grid;
+  align-content: center;
+  gap: 22px;
+  width: min(570px, 66%);
+  min-height: 100%;
+  margin-left: auto;
+  padding: clamp(32px, 7vw, 76px);
+  color: #292722;
+  background:
+    linear-gradient(90deg, rgba(85, 67, 43, 0.16), transparent 8%),
+    linear-gradient(180deg, #e4ddcc, #d8d0bf);
+  animation: book-page-reveal 440ms ease 160ms both;
+}
+
+.book-page .eyebrow {
+  margin: 0;
+  color: rgba(92, 72, 46, 0.74);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+}
+
+.book-page h1 {
+  margin: 0;
+  color: #28231d;
+  font-family: var(--serif);
+  font-size: clamp(35px, 5.2vw, 65px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.book-page-summary {
+  margin: 0;
+  color: rgba(45, 39, 31, 0.77);
+  line-height: 1.8;
+}
+
+.book-progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  border-top: 1px solid rgba(76, 57, 34, 0.22);
+  border-bottom: 1px solid rgba(76, 57, 34, 0.22);
+  padding: 14px 0;
+}
+
+.book-progress div {
+  min-width: 0;
+}
+
+.book-progress dt {
+  margin-bottom: 6px;
+  color: rgba(76, 57, 34, 0.6);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.book-progress dd {
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: #342c23;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.book-page-actions,
+.book-restart-confirm > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.book-page-actions .case-button,
+.book-restart-confirm .case-button {
+  border-color: rgba(53, 39, 22, 0.84);
+  color: #f4e9d4;
+  background: #34291d;
+}
+
+.book-page-actions .ghost-button,
+.book-restart-confirm .ghost-button,
+.book-close-button {
+  min-height: 42px;
+  border: 1px solid rgba(63, 47, 29, 0.38);
+  border-radius: 4px;
+  padding: 10px 14px;
+  color: #3c3023;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.book-close-button {
+  margin-left: auto;
+}
+
+.book-restart-confirm {
+  border-top: 1px solid rgba(76, 57, 34, 0.24);
+  padding-top: 16px;
+}
+
+.book-restart-confirm p {
+  margin: 0 0 12px;
+  color: rgba(59, 45, 29, 0.8);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+@keyframes book-cover-open {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(-158deg); }
+}
+
+@keyframes book-page-reveal {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 700px) {
+  .archive-bookshelf {
+    display: grid;
+    grid-auto-columns: minmax(208px, 68vw);
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    justify-content: start;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding: 10px 0 22px 2px;
+    scroll-padding-inline: 2px;
+    scroll-snap-type: inline mandatory;
+    scrollbar-width: none;
+  }
+
+  .archive-bookshelf::-webkit-scrollbar { display: none; }
+  .story-book { scroll-snap-align: start; }
+  .story-book:hover { transform: none; }
+
+  .book-detail-screen {
+    width: min(100% - 24px, 1180px);
+    min-height: 100dvh;
+    padding: max(18px, env(safe-area-inset-top)) 0 max(18px, env(safe-area-inset-bottom));
+  }
+
+  .book-detail {
+    min-height: min(730px, calc(100dvh - 36px));
+  }
+
+  .book-detail-cover {
+    inset: 0 56% 0 0;
+    animation-duration: 480ms;
+  }
+
+  .book-page {
+    gap: 17px;
+    width: 77%;
+    padding: 30px 20px 24px;
+  }
+
+  .book-page h1 { font-size: clamp(32px, 10vw, 47px); }
+  .book-page-summary { font-size: 14px; line-height: 1.65; }
+  .book-progress { grid-template-columns: 1fr; gap: 8px; }
+  .book-progress div { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 8px; }
+  .book-progress dt { margin: 0; }
+  .book-page-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .book-page-actions .case-button { grid-column: 1 / -1; justify-content: center; }
+  .book-close-button { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-book,
+  .book-detail-cover,
+  .book-page {
+    animation: none;
+    transition: none;
+    transform: none;
+  }
+}
+
 
 .scene-overlay-layer,
 .scene-prop-layer {

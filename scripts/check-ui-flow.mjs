@@ -67,8 +67,15 @@ for (const forbidden of [
   assert(!showSeriesBody.includes(forbidden), `story detail page must not render ${forbidden}`);
 }
 assert(showSeriesBody.includes("LIFE FILE"), "story detail page must show LIFE FILE");
+assert(showSeriesBody.includes("book-detail"), "story detail page must render an opened story book");
 assert(showSeriesBody.includes("start-script"), "story detail page must expose a start/continue action");
-assert(showSeriesBody.includes("story-file-sealed"), "story detail page should show future stories as sealed notes only");
+assert(showSeriesBody.includes("data-restart-confirm"), "restart confirmation must remain inside the opened book");
+assert(!showSeriesBody.includes("openConfirm("), "story entry and restart must not open a generic modal");
+assert(showSeriesBody.includes("beginStorySession"), "story entry must use the resilient session launcher");
+assert(scriptText.includes("function isPlaceholderDialogueAsset"), "voice playback must define its placeholder guard");
+assert(scriptText.includes("function beginStorySession"), "resilient story session launcher is missing");
+assert(scriptText.includes("mode === \"continue\" && loadProgress(scriptId)"), "continue must verify local progress before entering");
+assert(scriptText.includes("stopAmbience(\"browse-story\")"), "opening a story book must silence residual story ambience");
 
 for (const nodeId of keyNodes) {
   const node = DATA.nodes[nodeId];
@@ -105,7 +112,10 @@ assert(scriptText.includes("MILESTONES") && (scriptText.match(/milestoneId:/g) |
 assert(styleText.includes("@media (max-width: 700px)"), "mobile breakpoint is missing");
 assert(styleText.includes(".position-center .vn-character-standee"), "center character positioning is missing");
 assert(styleText.includes(".head-safe .vn-character-standee"), "head-safe character CSS is missing");
-assert(styleText.includes(".story-file-sealed"), "sealed story detail CSS is missing");
+assert(styleText.includes(".archive-bookshelf"), "story bookshelf CSS is missing");
+assert(styleText.includes(".story-book"), "equal-weight story book CSS is missing");
+assert(styleText.includes(".book-detail"), "opened-book CSS is missing");
+assert(styleText.includes("@keyframes book-cover-open"), "book opening animation is missing");
 assert(exists("docs/UI_PLAYTEST_CHECKLIST.md"), "UI playtest checklist is missing");
 assert(exists("docs/VISUAL_QA_REPORT.md"), "visual QA report is missing");
 

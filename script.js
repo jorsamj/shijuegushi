@@ -1009,6 +1009,10 @@
     return window.SECOND_LIFE_VOICE_MANIFEST?.stories?.[state?.scriptId || "script_rain_call"]?.[kind]?.[entryId] || null;
   }
 
+  function isPlaceholderDialogueAsset(node) {
+    return node?.voicePlaceholder === true || node?.voiceSource === "placeholder";
+  }
+
   function speakNode(node, kind = "nodes") {
     const settings = getAudioSettings();
     if (!settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked) return;
@@ -1528,10 +1532,7 @@
     stopBgm("return-to-archive");
     stopAmbience("return-to-archive");
     startEntryMusic("life_archive_theme");
-    const availableSeries = STORY_CATALOG.series.filter((series) => series.status === "open");
-    const openSeries = availableSeries[0];
-    const ledgerSeries = STORY_CATALOG.series
-      .filter((series) => series !== openSeries)
+    const shelfSeries = [...STORY_CATALOG.series]
       .sort((left, right) => {
         const leftScript = left.scriptIds?.[0] ? getScript(left.scriptIds[0]) : null;
         const rightScript = right.scriptIds?.[0] ? getScript(right.scriptIds[0]) : null;
@@ -1539,15 +1540,27 @@
         const rightOrder = Number(rightScript?.order || 99);
         return leftOrder - rightOrder;
       });
-    const lockedRows = ledgerSeries.map((series, index) => {
+    const books = shelfSeries.map((series, index) => {
       const seriesScript = series.scriptIds?.[0] ? getScript(series.scriptIds[0]) : null;
       const storyOrder = Number(seriesScript?.order || index + 2);
+      const isOpen = series.status === "open" && seriesScript;
+      const progress = isOpen && hasProgress(seriesScript.scriptId);
+      const cover = isOpen
+        ? (STORY_VISUALS[seriesScript.scriptId] || RAIN_VISUALS).covers?.home || ""
+        : VISUALS.covers?.home || "";
+      const status = !isOpen ? "档案封存中" : (progress ? "可继续" : "可开始");
       return `
-      <button class="archive-ledger-row" type="button" data-series-id="${series.seriesId}">
-        <span class="archive-ledger-index">${String(storyOrder).padStart(2, "0")}</span>
-        <strong>${escapeHTML(series.title)}</strong>
-        <span>${series.status === "open" ? "可读取" : "档案封存中"}</span>
-        <i aria-hidden="true">&#8594;</i>
+      <button class="story-book${isOpen ? "" : " is-sealed"}" type="button" data-series-id="${series.seriesId}" ${isOpen ? "" : "aria-disabled=\"true\""}>
+        <span class="story-book-spine" aria-hidden="true">${String(storyOrder).padStart(2, "0")}</span>
+        <span class="story-book-cover">
+          ${cover ? `<img src="${escapeHTML(cover)}" alt="" />` : ""}
+          <span class="story-book-veil" aria-hidden="true"></span>
+        </span>
+        <span class="story-book-copy">
+          <small>ARCHIVE / ${String(storyOrder).padStart(2, "0")}</small>
+          <strong>${escapeHTML(series.title)}</strong>
+          <em>${status}</em>
+        </span>
       </button>
     `;
     }).join("");
@@ -1559,24 +1572,10 @@
         <header class="page-header archive-header">
           <p class="eyebrow">SECOND LIFE / LIFE ARCHIVE</p>
           <h1>人生档案</h1>
-          <p>这里保存着尚未结束的人生。选择一份档案，接过其中的秘密、选择与结局。</p>
+          <p>这里保存着尚未结束的人生。抽出一本，读到它为你停下的那一页。</p>
         </header>
-        ${openSeries ? `
-          <article class="archive-feature" data-series-id="${openSeries.seriesId}">
-            <img src="${escapeHTML(VISUALS.covers?.home || "")}" alt="《${escapeHTML(openSeries.title)}》故事封面" />
-            <div class="archive-feature-scrim" aria-hidden="true"></div>
-            <div class="archive-feature-copy">
-              <p class="archive-status">开放档案 / 01</p>
-              <span class="story-kind">悬疑人生</span>
-              <h2>${escapeHTML(openSeries.title)}</h2>
-              <p>${escapeHTML(openSeries.summary)}</p>
-              <button class="case-button" type="button">查看档案 <i aria-hidden="true">&#8594;</i></button>
-            </div>
-          </article>
-        ` : `<div class="archive-empty-state"><p>暂时没有可读取的档案。</p></div>`}
-        <section class="archive-ledger" aria-label="更多档案">
-          <div class="archive-ledger-head"><p>更多人生</p><span>${ledgerSeries.filter((series) => series.status === "open").length} 份可读取，${ledgerSeries.filter((series) => series.status !== "open").length} 份仍在等待</span></div>
-          ${lockedRows}
+        <section class="archive-bookshelf" aria-label="故事书架">
+          ${books || `<div class="archive-empty-state"><p>暂时没有可读取的档案。</p></div>`}
         </section>
       </section>
       `
@@ -1599,66 +1598,97 @@
     const series = getSeries(seriesId);
     const scripts = series.scriptIds.map((id) => getScript(id)).filter(Boolean);
     const openScript = scripts.find((script) => script.status === "open") || scripts[0];
-    const sealedScripts = scripts.filter((script) => script.scriptId !== openScript.scriptId);
+    if (!openScript) {
+      showToast("这份档案暂时无法读取。", "warn");
+      showHall();
+      return;
+    }
+    stopNodeTransientAudio("browse-story");
+    stopBgm("browse-story");
+    stopAmbience("browse-story");
     const hasLocalProgress = hasProgress(openScript.scriptId);
+    const savedProgress = hasLocalProgress ? readJSON(getStoryStorageKeys(openScript.scriptId).progress, null) : null;
     const previewData = getDataset(openScript.scriptId);
     const previewVisuals = STORY_VISUALS[openScript.scriptId] || RAIN_VISUALS;
-    const sealedRows = sealedScripts
-      .map((script) => `
-        <article class="sealed-story-note">
-          <span>\u6863\u6848\u5c01\u5b58\u4e2d</span>
-          <strong>\u300a${escapeHTML(script.title)}\u300b</strong>
-          <p>${escapeHTML(script.summary || "\u8fd9\u6bb5\u4eba\u751f\u8fd8\u6ca1\u6709\u5411\u4f60\u6253\u5f00\u3002")}</p>
-        </article>
-      `)
-      .join("");
-    const primaryActionText = hasLocalProgress ? "\u7ee7\u7eed\u4f53\u9a8c" : "\u5f00\u59cb\u4f53\u9a8c";
+    const primaryActionText = hasLocalProgress ? "继续故事" : "开始故事";
+    const currentNode = savedProgress?.nodeId ? previewData.nodes?.[savedProgress.nodeId] : null;
+    const chapter = currentNode ? previewData.chapters?.find((item) => item.chapterId === currentNode.chapterId) : null;
+    const savedDate = savedProgress?.updatedAt ? new Date(savedProgress.updatedAt) : null;
+    const savedAt = savedDate && !Number.isNaN(savedDate.getTime())
+      ? new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(savedDate)
+      : "尚未留下进度";
 
     setView(
       "series",
       `
-      <section class="series-screen story-file-screen">
-        <button class="back-link" type="button" data-action="back-hall">\u2190 \u8fd4\u56de\u4eba\u751f\u6863\u6848</button>
-        <header class="series-brief story-file-brief">
-          <img class="story-file-cover" src="${escapeHTML(previewVisuals.covers?.home || "")}" alt="" aria-hidden="true" />
-          <div class="story-file-cover-scrim" aria-hidden="true"></div>
-          <div class="story-file-copy">
-            <p class="eyebrow">LIFE FILE</p>
-            <p class="story-file-number">ARCHIVE / ${String(openScript.order || 1).padStart(2, "0")} / AVAILABLE</p>
-            <h1>${escapeHTML(openScript.title)}</h1>
-            <p>${escapeHTML(previewData.script?.summary || openScript.summary || "")}</p>
-            <div class="story-file-tags"><span>互动悬疑</span><span>${escapeHTML(openScript.seriesId === "series_dormitory_rollcall" ? "校园规则" : "都市雨夜")}</span><span>多结局</span></div>
-            <p class="story-file-intro">${escapeHTML(openScript.summary)}</p>
-            <div class="story-file-actions">
-              <button class="case-button" type="button" data-action="start-script">${primaryActionText}</button>
-              ${hasLocalProgress ? `<button class="ghost-button" type="button" data-action="restart-script">\u91cd\u65b0\u5f00\u59cb</button>` : ""}
-            </div>
+      <section class="series-screen book-detail-screen">
+        <div class="book-detail is-open" aria-label="${escapeHTML(openScript.title)}故事书页">
+          <div class="book-detail-cover" aria-hidden="true">
+            <img src="${escapeHTML(previewVisuals.covers?.home || "")}" alt="" />
+            <span>SECOND LIFE</span>
           </div>
-        </header>
-        <aside class="story-file-sealed" aria-label="\u540e\u7eed\u6545\u4e8b">
-          <p>\u540e\u7eed\u4eba\u751f</p>
-          ${sealedRows}
-        </aside>
+          <article class="book-page">
+            <p class="eyebrow">LIFE FILE / ${String(openScript.order || 1).padStart(2, "0")}</p>
+            <h1>${escapeHTML(openScript.title)}</h1>
+            <p class="book-page-summary">${escapeHTML(previewData.script?.summary || openScript.summary || "")}</p>
+            <dl class="book-progress">
+              <div><dt>当前状态</dt><dd>${hasLocalProgress ? "已保存进度" : "尚未开始"}</dd></div>
+              <div><dt>所在章节</dt><dd>${escapeHTML(chapter?.title || "从第一章开始")}</dd></div>
+              <div><dt>最近记录</dt><dd>${escapeHTML(savedAt)}</dd></div>
+            </dl>
+            <div class="book-page-actions">
+              <button class="case-button" type="button" data-action="start-script">${primaryActionText}</button>
+              <button class="ghost-button" type="button" data-action="show-restart">重新开始</button>
+              <button class="book-close-button" type="button" data-action="back-hall">合上书本</button>
+            </div>
+            <section class="book-restart-confirm hidden" data-restart-confirm aria-live="polite">
+              <p>重新开始会覆盖这本故事的当前进度，另一份人生档案不会受影响。</p>
+              <div>
+                <button class="ghost-button" type="button" data-action="cancel-restart">保留进度</button>
+                <button class="case-button" type="button" data-action="restart-script">确认重新开始</button>
+              </div>
+            </section>
+          </article>
+        </div>
       </section>
       `
     );
-    startEntryMusic("life_archive_theme");
-
     app.querySelector("[data-action='back-hall']").addEventListener("click", showHall);
     app.querySelector("[data-action='start-script']").addEventListener("click", () => {
-      requestImmersiveMode();
-      if (hasLocalProgress) {
-        openConfirm("\u7ee7\u7eed\u4f53\u9a8c", "\u68c0\u6d4b\u5230\u672c\u5730\u8fdb\u5ea6\u3002\u8981\u4ece\u4e0a\u6b21\u4fdd\u5b58\u7684\u4eba\u751f\u8282\u70b9\u7ee7\u7eed\u5417\uff1f", () => {
-          loadProgress(openScript.scriptId);
-          showGame();
-        }, () => startNewGame(openScript.scriptId));
-      } else {
-        startNewGame(openScript.scriptId);
-      }
+      beginStorySession(openScript.scriptId, hasLocalProgress ? "continue" : "start");
+    });
+    app.querySelector("[data-action='show-restart']")?.addEventListener("click", () => {
+      app.querySelector("[data-restart-confirm]")?.classList.remove("hidden");
+    });
+    app.querySelector("[data-action='cancel-restart']")?.addEventListener("click", () => {
+      app.querySelector("[data-restart-confirm]")?.classList.add("hidden");
     });
     app.querySelector("[data-action='restart-script']")?.addEventListener("click", () => {
-      openConfirm("重新开始", `将从《${openScript.title}》的第一个节点重新进入。`, () => startNewGame(openScript.scriptId));
+      beginStorySession(openScript.scriptId, "restart");
     });
+  }
+
+  function beginStorySession(scriptId, mode = "start") {
+    requestImmersiveMode();
+    stopNodeTransientAudio("story-entry");
+    stopBgm("story-entry");
+    stopAmbience("story-entry");
+    stopEntryMusic("story-entry");
+    try {
+      if (mode === "continue" && loadProgress(scriptId)) {
+        showGame();
+        return;
+      }
+      if (mode === "continue") showToast("未找到可用进度，已从第一章开始。", "warn");
+      startNewGame(scriptId);
+    } catch (error) {
+      console.error("[Second Life] Story entry failed", error);
+      stopNodeTransientAudio("story-entry-failed");
+      stopBgm("story-entry-failed");
+      stopAmbience("story-entry-failed");
+      showToast("暂时无法进入故事，已回到人生档案。", "warn");
+      showHall();
+    }
   }
 
 
@@ -1682,7 +1712,11 @@
       return;
     }
     applyNodeEffects(node);
-    prepareAudioCue(node);
+    try {
+      prepareAudioCue(node);
+    } catch (error) {
+      console.warn("[Second Life] Audio cue skipped; story remains playable.", error);
+    }
 
     const chapter = getChapter(node.chapterId);
     const sceneClass = `scene-${node.scene || "rental_room_rain_night"}`;
