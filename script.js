@@ -1009,6 +1009,81 @@
     return window.SECOND_LIFE_VOICE_MANIFEST?.stories?.[state?.scriptId || "script_rain_call"]?.[kind]?.[entryId] || null;
   }
 
+  function isDocumentedRuntimeCue(scriptId, cueId, cue, nodeId) {
+    if (
+      scriptId !== "script_dormitory_rollcall"
+      || cue?.nodeId !== nodeId
+      || cue.provider !== "volcengine-doubao-tts-websocket"
+      || cue.model !== "seed-tts-2.0"
+      || typeof cue.voiceType !== "string"
+      || !cue.voiceType.endsWith("_uranus_bigtts")
+      || Object.hasOwn(cue, "emotion")
+      || Object.hasOwn(cue, "emotionIntensity")
+    ) return false;
+    const contractCue = (window.DORMITORY_BROADCAST_AUDIO_CONTRACT?.cues || [])
+      .find((candidate) => candidate.audioId === cueId);
+    return Boolean(contractCue?.nodeIds?.includes(nodeId));
+  }
+
+  function playRuntimeCue(node) {
+    const settings = getAudioSettings();
+    if (!node?.nodeId || !settings.audioEnabled || !settings.voiceEnabled || !audioState.unlocked) return false;
+    const isEndingCue = Boolean(DATA.endings?.[node.nodeId]);
+    if (state?.nodeId !== node.nodeId || (state?.endingId && (!isEndingCue || state.endingId !== node.nodeId))) return false;
+
+    const scriptId = state?.scriptId || "script_rain_call";
+    const runtimeCues = window.SECOND_LIFE_VOICE_MANIFEST?.stories?.[scriptId]?.cues || {};
+    const cueIds = Object.keys(runtimeCues)
+      .filter((cueId) => isDocumentedRuntimeCue(scriptId, cueId, runtimeCues[cueId], node.nodeId));
+    if (!cueIds.length) return false;
+
+    stopAllDialogueAudio();
+    const token = audioState.dialogueToken;
+    const sessionId = audioState.dialogueSessionId;
+    const isCurrentCueNode = () => (
+      token === audioState.dialogueToken
+      && sessionId === audioState.dialogueSessionId
+      && state?.scriptId === scriptId
+      && state?.nodeId === node.nodeId
+      && (!state?.endingId || (isEndingCue && state.endingId === node.nodeId))
+    );
+    const playCueAt = (index) => {
+      if (!isCurrentCueNode() || index >= cueIds.length) return;
+      const cueId = cueIds[index];
+      const generatedCue = getStoryVoiceEntry(cueId, "cues");
+      if (!generatedCue?.path) {
+        playCueAt(index + 1);
+        return;
+      }
+      const audio = playRealAudio({ src: generatedCue.path, sourceType: "generated-story-cue" }, {
+        category: "voice",
+        key: cueId,
+        loop: false,
+        volume: scaledVolume(0.82, "voice"),
+        reason: "documented-cue-enter",
+      });
+      if (!audio) {
+        playCueAt(index + 1);
+        return;
+      }
+      audioState.currentDialogueAudio = audio;
+      audioState.realVoice = audio;
+      let advanced = false;
+      const advance = () => {
+        if (advanced) return;
+        advanced = true;
+        if (!isCurrentCueNode()) return;
+        audioState.currentDialogueAudio = null;
+        audioState.realVoice = null;
+        playCueAt(index + 1);
+      };
+      audio.addEventListener("ended", advance, { once: true });
+      audio.addEventListener("error", advance, { once: true });
+    };
+    playCueAt(0);
+    return true;
+  }
+
   function isPlaceholderDialogueAsset(node) {
     return node?.voicePlaceholder === true || node?.voiceSource === "placeholder";
   }
@@ -1221,7 +1296,7 @@
     transitionAudioForNode(prevNode, node, sceneCue);
     const sfxList = Array.isArray(sceneCue.sfx) ? sceneCue.sfx : sceneCue.sfx ? [sceneCue.sfx] : [];
     sfxList.forEach((name) => playSfx(name));
-    speakNode(node);
+    if (!playRuntimeCue(node)) speakNode(node);
   }
 
   function stopAllAudio() {
@@ -2214,6 +2289,7 @@
       </section>
       `
     );
+    playRuntimeCue(ending);
 
     app.querySelector("[data-action='restart']").addEventListener("click", () => {
       openConfirm("重新开始", `会从《${getScript(state.scriptId)?.title || "当前故事"}》开头重新进入。当前自动进度会被覆盖。`, () => startNewGame(state.scriptId));

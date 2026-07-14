@@ -48,6 +48,7 @@ const stories = [
 const storiesById = new Map(stories);
 const dormitoryCueContract = new Map((dormitoryBroadcastContract?.cues || []).map((cue) => [cue.audioId, cue]));
 const dormitoryEndingBroadcastIds = new Set(["dorm_ending_a", "dorm_ending_b", "dorm_ending_c", "dorm_ending_d"]);
+const permittedDormitoryCueContentTypes = new Set(["narration", "system", "broadcast"]);
 
 function hash(text) {
   return crypto.createHash("sha256").update(normaliseForSpeech(text)).digest("hex");
@@ -97,22 +98,23 @@ function validateBroadcastCue(scriptId, cueId, entry) {
     return { valid: false, nodeIds: [] };
   }
   if (entry?.cueId && entry.cueId !== cueId) failures.push(`${scriptId}:cue:${cueId} cueId must match its runtime key.`);
-  if (entry?.nodeId && !(cue.nodeIds || []).includes(entry.nodeId)) {
+  if (typeof entry?.nodeId !== "string" || !entry.nodeId) {
+    failures.push(`${scriptId}:cue:${cueId} must declare an explicit playback nodeId.`);
+  } else if (!(cue.nodeIds || []).includes(entry.nodeId)) {
     failures.push(`${scriptId}:cue:${cueId} nodeId must match the broadcast contract.`);
   }
 
   const story = storiesById.get(scriptId);
   const invalidTarget = (cue.nodeIds || []).find((targetId) => {
     const node = story?.nodes?.[targetId];
-    if (node) return node.contentType !== "broadcast";
+    if (node) return !permittedDormitoryCueContentTypes.has(node.contentType);
     return !story?.endings?.[targetId] || !dormitoryEndingBroadcastIds.has(targetId);
   });
-  if (invalidTarget) failures.push(`${scriptId}:cue:${cueId} must target a broadcast node or one of the four documented in-world ending broadcasts; got ${invalidTarget}.`);
+  if (invalidTarget) failures.push(`${scriptId}:cue:${cueId} must target a documented narration, system, or broadcast node, or one of the four in-world ending broadcasts; got ${invalidTarget}.`);
 
   validateEntry(`${scriptId}:cue:${cueId}`, entry, cue.line);
   return {
     valid: failures.length === before && !invalidTarget,
-    nodeIds: (cue.nodeIds || []).filter((targetId) => story?.nodes?.[targetId]?.contentType === "broadcast"),
   };
 }
 
@@ -136,7 +138,6 @@ for (const [scriptId, story] of stories) {
     const result = validateBroadcastCue(scriptId, cueId, entry);
     if (result.valid) {
       deliveredCueIds.add(cueId);
-      result.nodeIds.forEach((nodeId) => deliveredNodeIds.add(nodeId));
     }
   }
   if (Object.keys(storyRuntime.endings || {}).length) {
