@@ -175,14 +175,16 @@ function pcmToWav(pcm, sampleRate = 24000) {
   return Buffer.concat([header, pcm]);
 }
 
-function synthesisRequest(target, speaker) {
+function synthesisRequest(target, speaker, resourceId) {
   const roleDirection = rolePerformanceProfiles[target.roleId] || "像现场交流，不像有声书朗读。";
+  const clonedVoice = resourceId === "seed-icl-2.0";
   return {
     req_params: {
       speaker,
+      ...(clonedVoice ? { model: "seed-tts-2.0-standard" } : {}),
       audio_params: { format: "pcm", sample_rate: 24000, speech_rate: 0, loudness_rate: 0, enable_subtitle: false },
       additions: { disable_markdown_filter: true, explicit_language: "zh-cn" },
-      context_texts: [roleDirection, target.voiceDirection],
+      ...(clonedVoice ? {} : { context_texts: [roleDirection, target.voiceDirection] }),
     },
   };
 }
@@ -210,7 +212,7 @@ function synthesize(target, speaker, options) {
           return finish(new Error(`Volcengine synthesis failed (${message.errorCode || message.event}).`));
         }
         if (message.type === MsgType.AudioOnlyServer && message.payload.length) chunks.push(message.payload);
-        if (message.event === Event.ConnectionStarted) socket.send(encodeMessage(Event.StartSession, sessionId, synthesisRequest(target, speaker)));
+        if (message.event === Event.ConnectionStarted) socket.send(encodeMessage(Event.StartSession, sessionId, synthesisRequest(target, speaker, options.resourceId)));
         if (message.event === Event.SessionStarted) {
           socket.send(encodeMessage(Event.TaskRequest, sessionId, { text: target.spokenText }));
           socket.send(encodeMessage(Event.FinishSession, sessionId, {}));

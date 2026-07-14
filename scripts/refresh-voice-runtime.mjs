@@ -53,8 +53,7 @@ for (const story of stories) {
     const entry = manifest.entries?.[node.nodeId];
     if (!entry || entry.status !== "generated") continue;
     const expectedHash = hash(normaliseForSpeech(node.spokenText));
-    const requiresVolcengine = node.contentType === "broadcast";
-    if (audibleTypes.has(node.contentType) && node.voiceEnabled === true && (!requiresVolcengine || entry.provider === "volcengine-doubao-tts-websocket") && entry.textHash === expectedHash && fs.existsSync(path.join(root, entry.webPath))) {
+    if (audibleTypes.has(node.contentType) && node.voiceEnabled === true && entry.provider === "volcengine-doubao-tts-websocket" && entry.textHash === expectedHash && fs.existsSync(path.join(root, entry.webPath))) {
       next.nodes[node.nodeId] = { path: entry.webPath, roleId: entry.roleId, textHash: entry.textHash, provider: entry.provider || manifest.provider || "unknown" };
       retained += 1;
     } else {

@@ -63,6 +63,7 @@ for (const [scriptId, data] of stories) {
     const node = data.nodes?.[nodeId];
     if (!node) failures.push(`${scriptId}:${nodeId} is referenced by voice runtime but missing from story data.`);
     else if (!audibleTypes.has(node.contentType) || node.voiceEnabled !== true) failures.push(`${scriptId}:${nodeId} is not audible dialogue but remains in the voice runtime.`);
+    else if (voiceNodes[nodeId]?.provider !== "volcengine-doubao-tts-websocket") failures.push(`${scriptId}:${nodeId} is not a Volcengine runtime voice entry.`);
   }
 
   if (Object.keys(runtime?.stories?.[scriptId]?.endings || {}).length) {
