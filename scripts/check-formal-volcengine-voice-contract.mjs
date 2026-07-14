@@ -37,10 +37,17 @@ const verifiedVoiceTypes = new Set((catalog.voices || [])
   .filter((voice) => voice.model === "Doubao Voice Synthesis Model 2.0" && voice.modelStatus === "verified")
   .map((voice) => voice.voiceType));
 const runtime = loadScript("assets/voice-runtime-manifest.js", "SECOND_LIFE_VOICE_MANIFEST") || { stories: {} };
+const dormitoryBroadcastContract = loadScript(
+  "assets/stories/dormitory-rollcall/broadcast-audio-contract.js",
+  "DORMITORY_BROADCAST_AUDIO_CONTRACT",
+);
 const stories = [
   ["script_rain_call", loadScript("story-data.js", "MIST_DATA")],
   ["script_dormitory_rollcall", loadScript("assets/stories/dormitory-rollcall/story-data.js", "MIST_DORMITORY_DATA")],
 ];
+const storiesById = new Map(stories);
+const dormitoryCueContract = new Map((dormitoryBroadcastContract?.cues || []).map((cue) => [cue.audioId, cue]));
+const dormitoryEndingBroadcastIds = new Set(["dorm_ending_a", "dorm_ending_b", "dorm_ending_c", "dorm_ending_d"]);
 
 function hash(text) {
   return crypto.createHash("sha256").update(normaliseForSpeech(text)).digest("hex");
@@ -58,7 +65,7 @@ function hasForbiddenValue(entry) {
   return JSON.stringify(entry).toLowerCase().match(/xfyun|mars_bigtts/);
 }
 
-function validateEntry(label, entry, node) {
+function validateEntry(label, entry, expectedSpeech) {
   if (!entry || typeof entry !== "object") {
     failures.push(`${label} must use an object runtime voice entry.`);
     return;
@@ -74,12 +81,39 @@ function validateEntry(label, entry, node) {
   } else if (!verifiedVoiceTypes.has(entry.voiceType)) {
     failures.push(`${label} voiceType ${entry.voiceType} is not verified by assets/volcengine-tts2-voice-catalog.json.`);
   }
-  if (!node || !audibleTypes.has(node.contentType) || node.voiceEnabled !== true) {
-    failures.push(`${label} must map to one current audible story node.`);
+  if (!expectedSpeech) {
+    failures.push(`${label} must map to current audible story speech or a documented in-world broadcast cue.`);
     return;
   }
-  if (entry.textHash !== hash(node.spokenText)) failures.push(`${label} textHash is stale for the current spokenText.`);
+  if (entry.textHash !== hash(expectedSpeech)) failures.push(`${label} textHash is stale for the current formal spoken text.`);
   if (!isValidWav(entry.path)) failures.push(`${label} path must point to an existing RIFF/WAVE master.`);
+}
+
+function validateBroadcastCue(scriptId, cueId, entry) {
+  const before = failures.length;
+  const cue = scriptId === "script_dormitory_rollcall" ? dormitoryCueContract.get(cueId) : null;
+  if (!cue) {
+    failures.push(`${scriptId}:cue:${cueId} is not a documented formal in-world broadcast cue.`);
+    return { valid: false, nodeIds: [] };
+  }
+  if (entry?.cueId && entry.cueId !== cueId) failures.push(`${scriptId}:cue:${cueId} cueId must match its runtime key.`);
+  if (entry?.nodeId && !(cue.nodeIds || []).includes(entry.nodeId)) {
+    failures.push(`${scriptId}:cue:${cueId} nodeId must match the broadcast contract.`);
+  }
+
+  const story = storiesById.get(scriptId);
+  const invalidTarget = (cue.nodeIds || []).find((targetId) => {
+    const node = story?.nodes?.[targetId];
+    if (node) return node.contentType !== "broadcast";
+    return !story?.endings?.[targetId] || !dormitoryEndingBroadcastIds.has(targetId);
+  });
+  if (invalidTarget) failures.push(`${scriptId}:cue:${cueId} must target a broadcast node or one of the four documented in-world ending broadcasts; got ${invalidTarget}.`);
+
+  validateEntry(`${scriptId}:cue:${cueId}`, entry, cue.line);
+  return {
+    valid: failures.length === before && !invalidTarget,
+    nodeIds: (cue.nodeIds || []).filter((targetId) => story?.nodes?.[targetId]?.contentType === "broadcast"),
+  };
 }
 
 for (const [scriptId, story] of stories) {
@@ -89,14 +123,20 @@ for (const [scriptId, story] of stories) {
     .filter((node) => audibleTypes.has(node.contentType) && node.voiceEnabled === true)
     .map((node) => [node.nodeId, node]));
 
+  const deliveredNodeIds = new Set();
   for (const [nodeId, entry] of Object.entries(entries)) {
-    validateEntry(`${scriptId}:${nodeId}`, entry, expectedNodes[nodeId]);
+    const before = failures.length;
+    validateEntry(`${scriptId}:${nodeId}`, entry, expectedNodes[nodeId]?.spokenText);
+    if (failures.length === before && expectedNodes[nodeId]) deliveredNodeIds.add(nodeId);
   }
+
+  const requiredCueIds = scriptId === "script_dormitory_rollcall" ? [...dormitoryCueContract.keys()] : [];
+  const deliveredCueIds = new Set();
   for (const [cueId, entry] of Object.entries(storyRuntime.cues || {})) {
-    const node = expectedNodes[entry?.nodeId];
-    validateEntry(`${scriptId}:cue:${cueId}`, entry, node);
-    if (node && node.contentType !== "broadcast") {
-      failures.push(`${scriptId}:cue:${cueId} must map to a broadcast node, not ${node.contentType}.`);
+    const result = validateBroadcastCue(scriptId, cueId, entry);
+    if (result.valid) {
+      deliveredCueIds.add(cueId);
+      result.nodeIds.forEach((nodeId) => deliveredNodeIds.add(nodeId));
     }
   }
   if (Object.keys(storyRuntime.endings || {}).length) {
@@ -104,9 +144,13 @@ for (const [scriptId, story] of stories) {
   }
 
   if (requireDelivery) {
-    const missingNodeIds = Object.keys(expectedNodes).filter((nodeId) => !Object.hasOwn(entries, nodeId));
+    const missingNodeIds = Object.keys(expectedNodes).filter((nodeId) => !deliveredNodeIds.has(nodeId));
     if (missingNodeIds.length) {
-      failures.push(`${scriptId} formal delivery is incomplete: ${Object.keys(entries).length}/${Object.keys(expectedNodes).length} audible nodes are mapped. Missing IDs: ${missingNodeIds.slice(0, 12).join(", ")}${missingNodeIds.length > 12 ? ` (+${missingNodeIds.length - 12} more)` : ""}.`);
+      failures.push(`${scriptId} formal node delivery is incomplete: ${deliveredNodeIds.size}/${Object.keys(expectedNodes).length} audible nodes are satisfied. Missing IDs: ${missingNodeIds.slice(0, 12).join(", ")}${missingNodeIds.length > 12 ? ` (+${missingNodeIds.length - 12} more)` : ""}.`);
+    }
+    const missingCueIds = requiredCueIds.filter((cueId) => !deliveredCueIds.has(cueId));
+    if (missingCueIds.length) {
+      failures.push(`${scriptId} formal broadcast delivery is incomplete: ${deliveredCueIds.size}/${requiredCueIds.length} documented cue deliveries are satisfied. Missing IDs: ${missingCueIds.join(", ")}.`);
     }
   }
 }
