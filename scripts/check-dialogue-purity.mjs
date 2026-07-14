@@ -68,6 +68,13 @@ for (const [scriptId, data] of stories) {
   if (Object.keys(runtime?.stories?.[scriptId]?.endings || {}).length) {
     failures.push(`${scriptId} still references narrated ending audio at runtime.`);
   }
+
+  const voiceCues = runtime?.stories?.[scriptId]?.cues || {};
+  for (const [cueId, cue] of Object.entries(voiceCues)) {
+    if (cue?.provider !== "volcengine-doubao-tts-websocket") {
+      failures.push(`${scriptId}:${cueId} is a non-Volcengine runtime broadcast cue.`);
+    }
+  }
 }
 
 if (!/function speakNode\(node, kind = "nodes"\) \{[\s\S]{0,300}?node\?\.voiceEnabled !== true/.test(scriptSource)) {

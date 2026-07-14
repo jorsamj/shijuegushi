@@ -29,6 +29,21 @@ const roleLabels = {
   dorm_broadcast: "宿舍广播", chenlu: "陈露", shenyan: "沈妍", manager_wu: "吴阿姨", zhouwanning: "周婉宁", xutang: "许棠", zhaoqing: "赵晴", linsui: "林穗",
   linzhou: "林舟", xuzhixia: "许知夏", xuzhiwan: "许知晚", zhouyu: "周屿", chenyan: "陈妍", woman_at_door: "门外女人", landlady: "房东老太",
 };
+const rolePerformanceProfiles = {
+  dorm_broadcast: "午夜宿舍值班系统，不是新闻主持人：中低音区、近距离 PA、小房间反射很轻。逐项读取，短停，字尾下落；完全克制，不像客服、广告、耳语或恐怖片。",
+  xutang: "年轻女大学生，先迟钝后努力说清楚。害怕不等于哭腔；后期有克制勇气。",
+  linsui: "温和、保护人。害怕时说得更谨慎，反复确认，但不突然失控。",
+  zhaoqing: "寝室长式的控制感，用秩序抵抗恐惧；压力大但不是恶毒反派。",
+  chenlu: "用轻快掩饰紧张；发现异常后变快、断句更多，像不敢把话说完。",
+  shenyan: "安静、偏慢、停顿更多；真正害怕时才失去原有平静。",
+  manager_wu: "直接的宿管口吻；旧案被提起时有压住多年的回避和愧疚。",
+  zhouwanning: "来自旧记录的年轻女性，疲惫、真实、克制地害怕，绝不演成鬼声。",
+  linzhou: "疲惫而戒备，危险逼近时短促；关键时刻能重新稳住。",
+  xuzhiwan: "表面克制，情绪压在字里，信任变化清晰可听。",
+  xuzhixia: "真实年轻人的旧录音，压抑、犹豫、恐惧，不持续哭喊。",
+  zhouyu: "表面温和，施压时仍礼貌；被拆穿后才显出控制欲。",
+  chenyan: "清醒可靠，紧张不削弱判断。",
+};
 const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -161,12 +176,13 @@ function pcmToWav(pcm, sampleRate = 24000) {
 }
 
 function synthesisRequest(target, speaker) {
+  const roleDirection = rolePerformanceProfiles[target.roleId] || "像现场交流，不像有声书朗读。";
   return {
     req_params: {
       speaker,
       audio_params: { format: "pcm", sample_rate: 24000, speech_rate: 0, loudness_rate: 0, enable_subtitle: false },
       additions: { disable_markdown_filter: true, explicit_language: "zh-cn" },
-      context_texts: [target.voiceDirection],
+      context_texts: [roleDirection, target.voiceDirection],
     },
   };
 }

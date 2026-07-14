@@ -43,14 +43,18 @@ for (const story of stories) {
   const data = loadScript(story.dataFile, story.global);
   const manifest = JSON.parse(fs.readFileSync(path.join(root, story.manifestFile), "utf8"));
   const previousCues = runtime.stories[story.scriptId]?.cues || {};
-  const next = { nodes: {}, endings: {}, cues: previousCues };
+  const approvedCues = Object.fromEntries(Object.entries(previousCues)
+    .filter(([cueId]) => manifest.entries?.[cueId]?.provider === "volcengine-doubao-tts-websocket")
+    .map(([cueId, cue]) => [cueId, { ...cue, provider: manifest.entries[cueId].provider }]));
+  const next = { nodes: {}, endings: {}, cues: approvedCues };
   let retained = 0;
   let removed = 0;
   for (const node of Object.values(data.nodes || {})) {
     const entry = manifest.entries?.[node.nodeId];
     if (!entry || entry.status !== "generated") continue;
     const expectedHash = hash(normaliseForSpeech(node.spokenText));
-    if (audibleTypes.has(node.contentType) && node.voiceEnabled === true && entry.textHash === expectedHash && fs.existsSync(path.join(root, entry.webPath))) {
+    const requiresVolcengine = node.contentType === "broadcast";
+    if (audibleTypes.has(node.contentType) && node.voiceEnabled === true && (!requiresVolcengine || entry.provider === "volcengine-doubao-tts-websocket") && entry.textHash === expectedHash && fs.existsSync(path.join(root, entry.webPath))) {
       next.nodes[node.nodeId] = { path: entry.webPath, roleId: entry.roleId, textHash: entry.textHash, provider: entry.provider || manifest.provider || "unknown" };
       retained += 1;
     } else {
@@ -58,7 +62,7 @@ for (const story of stories) {
     }
   }
   runtime.stories[story.scriptId] = next;
-  reports.push({ scriptId: story.scriptId, retained, removed, cues: Object.keys(previousCues).length });
+  reports.push({ scriptId: story.scriptId, retained, removed, cues: Object.keys(approvedCues).length });
 }
 
 fs.writeFileSync(
