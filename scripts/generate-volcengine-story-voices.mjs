@@ -30,6 +30,7 @@ const story = stories[storyName];
 const audibleTypes = new Set(["dialogue", "broadcast", "phone", "recording", "inner-monologue"]);
 const provider = "volcengine-doubao-tts-websocket";
 const model = "seed-tts-2.0";
+const debugEvents = process.env.VOLC_TTS_DEBUG_EVENTS === "1";
 
 if (!story) throw new Error("Use --story=dormitory or --story=rain-call.");
 if (!stage) throw new Error("Formal generation must use --stage before promotion.");
@@ -213,6 +214,19 @@ function parseMessage(input) {
   return { type, flag, event, payload: buffer.subarray(offset, offset + size) };
 }
 
+function safeServerDetail(message) {
+  const raw = message?.payload?.toString("utf8")?.trim();
+  if (!raw) return "";
+  try {
+    const parsed = JSON.parse(raw);
+    const code = parsed.code || parsed.error_code || parsed.err_code || "";
+    const serverMessage = parsed.message || parsed.error || parsed.err_msg || parsed.msg || "";
+    return [code, serverMessage].filter(Boolean).join(": ");
+  } catch {
+    return raw.replace(/\s+/g, " ").slice(0, 240);
+  }
+}
+
 function pcmToWav(pcm, sampleRate = 24000) {
   const header = Buffer.alloc(44);
   header.write("RIFF", 0);
@@ -234,11 +248,16 @@ function synthesisRequest(target, options) {
   return {
     req_params: {
       speaker: target.role.voiceType,
+      text: target.spokenText,
       audio_params: { format: "pcm", sample_rate: 24000, speech_rate: 0, loudness_rate: 0, enable_subtitle: false },
-      additions: { disable_markdown_filter: true, explicit_language: "zh-cn" },
+      additions: JSON.stringify({ disable_markdown_filter: true, explicit_language: "zh-cn" }),
       context_texts: [target.role.contextProfile, target.role.sourceProfile, target.voiceDirection],
     },
   };
+}
+
+function startSessionRequest() {
+  return {};
 }
 
 function synthesize(target, options) {
@@ -260,13 +279,20 @@ function synthesize(target, options) {
     socket.on("message", (raw) => {
       try {
         const message = parseMessage(raw);
+        if (debugEvents) {
+          console.error(`Volcengine event: type=${message.type}; flag=${message.flag}; event=${message.event || 0}; bytes=${message.payload?.length || 0}`);
+          if (message.event === 350 && message.payload?.length) {
+            console.error(`Volcengine event 350 payload: ${message.payload.toString("utf8").replace(/\s+/g, " ").slice(0, 240)}`);
+          }
+        }
         if (message.type === MsgType.Error || message.event === Event.ConnectionFailed || message.event === Event.SessionFailed) {
-          return finish(new Error(`Volcengine synthesis failed (${message.errorCode || message.event}).`));
+          const detail = safeServerDetail(message);
+          return finish(new Error(`Volcengine synthesis failed (${message.errorCode || message.event})${detail ? `: ${detail}` : ""}.`));
         }
         if (message.type === MsgType.AudioOnlyServer && message.payload.length) chunks.push(message.payload);
-        if (message.event === Event.ConnectionStarted) socket.send(encodeMessage(Event.StartSession, sessionId, synthesisRequest(target, options)));
+        if (message.event === Event.ConnectionStarted) socket.send(encodeMessage(Event.StartSession, sessionId, startSessionRequest()));
         if (message.event === Event.SessionStarted) {
-          socket.send(encodeMessage(Event.TaskRequest, sessionId, { text: target.spokenText }));
+          socket.send(encodeMessage(Event.TaskRequest, sessionId, synthesisRequest(target, options)));
           socket.send(encodeMessage(Event.FinishSession, sessionId, {}));
         }
         if (message.event === Event.SessionFinished) {
