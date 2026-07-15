@@ -49,7 +49,7 @@ for (const story of stories) {
     const expectedHash = hash(normaliseForSpeech(node.spokenText));
     const validEntry = entry
       && entry.status === "generated"
-      && entry.provider === "volcengine-doubao-tts-websocket"
+      && entry.provider === "volcengine-doubao-tts-unidirectional"
       && entry.textHash === expectedHash
       && isValidWav(entry.webPath);
     if (validEntry) valid += 1;

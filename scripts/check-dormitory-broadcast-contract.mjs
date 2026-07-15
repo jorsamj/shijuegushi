@@ -57,9 +57,15 @@ for (const audioId of requiredIds) {
   for (const field of ["chapterIds", "nodeIds", "line", "tone", "durationSeconds", "recommendedFileName", "skippable", "stopPolicy", "deliveryStatus", "licenceSource", "publicDistributionAllowed", "commercialDistributionAllowed", "listeningSignoff"]) {
     if (!(field in cue)) failures.push(`${audioId} is missing ${field}.`);
   }
-  if (cue.deliveryStatus === "awaiting-authorised-human-recording" && cue.filePath !== null) failures.push(`${audioId} must not point at an unapproved file.`);
+  if (cue.deliveryStatus !== "volcengine-generated-awaiting-listening-signoff" && cue.deliveryStatus !== "volcengine-generated-ready") {
+    failures.push(`${audioId} must record generated Volcengine delivery status.`);
+  }
+  if (!cue.filePath || !fs.existsSync(path.join(root, cue.filePath))) failures.push(`${audioId} must point at an existing generated WAV file.`);
+  if (!cue.licenceSource) failures.push(`${audioId} must record the authorised synthesis source.`);
+  if (cue.publicDistributionAllowed !== true || cue.commercialDistributionAllowed !== true) failures.push(`${audioId} must record public and commercial distribution permission.`);
+  if (cue.listeningSignoff !== "pending" && cue.listeningSignoff !== "complete") failures.push(`${audioId} must record listening sign-off state.`);
   if (cue.loop !== false) failures.push(`${audioId} must be a non-looping broadcast cue.`);
-  if (cue.recommendedFileName !== `${audioId}_zh-CN.mp3`) failures.push(`${audioId} must use its canonical recommended filename.`);
+  if (cue.recommendedFileName !== path.basename(cue.filePath || "")) failures.push(`${audioId} recommended filename must match the generated file path.`);
   if (typeof cue.skippable !== "boolean") failures.push(`${audioId} must explicitly declare whether playback is skippable.`);
   for (const nodeId of cue.nodeIds || []) {
     const node = story?.nodes?.[nodeId];
@@ -93,4 +99,4 @@ if (failures.length) {
 }
 
 console.log("Dormitory broadcast contract check passed.");
-console.log(`slots=${contract.cues.length}; awaiting=${contract.cues.filter((cue) => cue.deliveryStatus === "awaiting-authorised-human-recording").length}`);
+console.log(`slots=${contract.cues.length}; generated=${contract.cues.filter((cue) => cue.deliveryStatus === "volcengine-generated-awaiting-listening-signoff" || cue.deliveryStatus === "volcengine-generated-ready").length}; listeningPending=${contract.cues.filter((cue) => cue.listeningSignoff !== "complete").length}`);

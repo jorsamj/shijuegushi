@@ -1013,7 +1013,7 @@
     if (
       scriptId !== "script_dormitory_rollcall"
       || cue?.nodeId !== nodeId
-      || cue.provider !== "volcengine-doubao-tts-websocket"
+      || cue.provider !== "volcengine-doubao-tts-unidirectional"
       || cue.model !== "seed-tts-2.0"
       || typeof cue.voiceType !== "string"
       || !cue.voiceType.endsWith("_uranus_bigtts")

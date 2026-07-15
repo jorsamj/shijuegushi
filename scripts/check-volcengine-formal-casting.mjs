@@ -15,7 +15,7 @@ const expectations = {
 };
 
 const failures = [];
-if (casting?.provider !== "volcengine-doubao-tts-websocket") failures.push("Casting provider must be Volcengine Model 2.0.");
+if (casting?.provider !== "volcengine-doubao-tts-unidirectional") failures.push("Casting provider must be Volcengine Model 2.0.");
 if (casting?.model !== "seed-tts-2.0") failures.push("Casting model must be seed-tts-2.0.");
 
 for (const [storyId, roleIds] of Object.entries(expectations)) {

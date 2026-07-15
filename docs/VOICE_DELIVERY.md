@@ -1,30 +1,48 @@
-# 剧情配音交付说明
+# Story Voice Delivery
 
-## 宿舍规则怪谈：熄灯后，请勿点名
+Provider: Volcengine Doubao Voice Synthesis Model 2.0, HTTP unidirectional API.
 
-- 提供商：科大讯飞超拟人语音合成 WebAPI。
-- 母版目录：`assets/stories/dormitory-rollcall/audio/voice-original/`。
-- 运行时目录映射：`assets/voice-runtime-manifest.js`。
-- 格式：24 kHz、单声道、16-bit PCM WAV；未添加背景音乐。
-- 覆盖：46 个正式剧情节点、4 个结局正文、14 个独立制度广播段。
-- 选角：9 个故事角色均使用不同的已授权 VCN，详见 `assets/voice-casting-manifest.js`。
-- 缓存：文件的文本 hash 与选角参数 hash 写入 `voice-manifest.json`；相同输入不会重新请求。
-- 发布状态：`awaiting-listening-signoff`。自动生成不等同于人工试听通过。
+Sensitive configuration is read from local environment variables at generation
+time and is never written to source, logs, manifests, or documentation.
 
-本作品的部分角色与广播语音由人工智能语音技术合成，不宣称为真人录音。公开或商业分发前，账号持有人必须确认所用套餐、发音人及生成音频的分发权限。
+## Delivery Layout
 
-## 第二人生：雨夜来电
+| Story | Formal manifest | Formal master directory | Runtime mapping |
+|---|---|---|---|
+| Rain Call | `assets/stories/rain-call/audio/voice-manifest.json` | `assets/stories/rain-call/audio/voice-original/` | `assets/voice-runtime-manifest.js` |
+| Dormitory Rules | `assets/stories/dormitory-rollcall/audio/voice-manifest.json` | `assets/stories/dormitory-rollcall/audio/voice-original/` | `assets/voice-runtime-manifest.js` |
 
-- 母版目录：`assets/stories/rain-call/audio/voice-original/`。
-- 运行时目录映射：`assets/voice-runtime-manifest.js`。
-- 格式：24 kHz、单声道、16-bit PCM WAV；无服务端背景音乐。
-- 覆盖：134 个正式剧情节点和 4 个结局正文，共 138 条音频。
-- 选角：8 个故事角色使用与宿舍故事完全不重复的授权 VCN。
-- 发布状态：`awaiting-listening-signoff`。两部故事均需人工试听和完整回归后才可通过发布门禁。
+Generated formal assets:
 
-## 人工签核仍需完成
+- Rain Call: 105 current audible node WAVs
+- Dormitory Rules: 19 current audible node WAVs
+- Dormitory institutional broadcasts: 14 independent WAV cues
+- Total runtime-formal Volcengine WAVs: 138
 
-1. 耳机、桌面外放、手机外放试听全部广播与关键角色语音。
-2. 双故事往返存档、读取与重开实测。
-3. 第二故事移动端六章与四结局通关。
-4. 第一故事完整人工回归和浏览器控制台检查。
+All formal files are 24 kHz mono PCM WAV masters with no baked-in background
+music. Source treatment such as telephone, old recording, or broadcast is
+controlled by per-line `context_texts` and runtime mixing/lifecycle rules.
+
+## Legacy Archive
+
+Previous XFYUN voice masters are retained in timestamped
+`voice-legacy-xfyun-*` directories as rollback evidence. They are not referenced
+by the formal runtime manifest.
+
+## Release State
+
+The formal runtime switch is complete, but release remains blocked until these
+manual gates are filled with real results:
+
+1. Headphone listening sign-off.
+2. Desktop-speaker listening sign-off.
+3. Phone-speaker listening sign-off.
+4. All 14 institutional-broadcast order and cadence confirmation.
+5. Cross-story save/load isolation test.
+6. Dormitory mobile six-chapter and four-ending playthrough.
+7. Rain Call full manual regression.
+8. Mobile background restore.
+9. Console no-error verification.
+
+Do not mark PR #6 ready, merge `main`, or publish GitHub Pages until those
+manual records are complete.

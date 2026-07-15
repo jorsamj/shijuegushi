@@ -2,10 +2,9 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
-import WebSocket from "ws";
 
 const root = path.resolve(import.meta.dirname, "..");
-const endpoint = "wss://openspeech.bytedance.com/api/v3/tts/bidirection";
+const endpoint = "https://openspeech.bytedance.com/api/v3/tts/unidirectional";
 const storyName = process.argv.find((argument) => argument.startsWith("--story="))?.slice(8) || "dormitory";
 const stage = process.argv.includes("--stage");
 const force = process.argv.includes("--force");
@@ -28,9 +27,8 @@ const stories = {
 };
 const story = stories[storyName];
 const audibleTypes = new Set(["dialogue", "broadcast", "phone", "recording", "inner-monologue"]);
-const provider = "volcengine-doubao-tts-websocket";
+const provider = "volcengine-doubao-tts-unidirectional";
 const model = "seed-tts-2.0";
-const debugEvents = process.env.VOLC_TTS_DEBUG_EVENTS === "1";
 
 if (!story) throw new Error("Use --story=dormitory or --story=rain-call.");
 if (!stage) throw new Error("Formal generation must use --stage before promotion.");
@@ -159,63 +157,8 @@ function config() {
   return { apiKey, resourceId };
 }
 
-const MsgType = { FullClientRequest: 1, FullServerResponse: 9, AudioOnlyServer: 11, Error: 15 };
-const Flag = { NoSeq: 0, PositiveSeq: 1, NegativeSeq: 3, WithEvent: 4 };
-const Event = { StartConnection: 1, FinishConnection: 2, ConnectionStarted: 50, ConnectionFailed: 51, StartSession: 100, FinishSession: 102, SessionStarted: 150, SessionFinished: 152, SessionFailed: 153, TaskRequest: 200 };
-
-function jsonPayload(value) { return Buffer.from(JSON.stringify(value), "utf8"); }
-
-function encodeMessage(event, sessionId, payload = {}) {
-  const isConnectionEvent = [Event.StartConnection, Event.FinishConnection].includes(event);
-  const chunks = [Buffer.from([0x11, (MsgType.FullClientRequest << 4) | Flag.WithEvent, 0x10, 0]), Buffer.alloc(4)];
-  chunks[1].writeInt32BE(event);
-  if (!isConnectionEvent) {
-    const session = Buffer.from(sessionId, "utf8");
-    const length = Buffer.alloc(4);
-    length.writeUInt32BE(session.length);
-    chunks.push(length, session);
-  }
-  const body = jsonPayload(payload);
-  const bodyLength = Buffer.alloc(4);
-  bodyLength.writeUInt32BE(body.length);
-  chunks.push(bodyLength, body);
-  return Buffer.concat(chunks);
-}
-
-function parseMessage(input) {
-  const buffer = Buffer.from(input);
-  const type = buffer[1] >> 4;
-  const flag = buffer[1] & 0x0f;
-  let offset = 4;
-  if (type === MsgType.Error) {
-    const errorCode = buffer.readUInt32BE(offset);
-    offset += 4;
-    const size = buffer.readUInt32BE(offset);
-    offset += 4;
-    return { type, flag, errorCode, payload: buffer.subarray(offset, offset + size) };
-  }
-  if ([MsgType.FullServerResponse, MsgType.AudioOnlyServer].includes(type) && [Flag.PositiveSeq, Flag.NegativeSeq].includes(flag)) offset += 4;
-  let event = 0;
-  if (flag === Flag.WithEvent) {
-    event = buffer.readInt32BE(offset);
-    offset += 4;
-    const connectionEvent = [Event.ConnectionStarted, Event.ConnectionFailed, Event.FinishConnection].includes(event);
-    if (!connectionEvent) {
-      const size = buffer.readUInt32BE(offset);
-      offset += 4 + size;
-    }
-    if ([Event.ConnectionStarted, Event.ConnectionFailed].includes(event)) {
-      const size = buffer.readUInt32BE(offset);
-      offset += 4 + size;
-    }
-  }
-  const size = buffer.readUInt32BE(offset);
-  offset += 4;
-  return { type, flag, event, payload: buffer.subarray(offset, offset + size) };
-}
-
-function safeServerDetail(message) {
-  const raw = message?.payload?.toString("utf8")?.trim();
+function safeServerDetail(rawValue) {
+  const raw = Buffer.isBuffer(rawValue) ? rawValue.toString("utf8").trim() : String(rawValue || "").trim();
   if (!raw) return "";
   try {
     const parsed = JSON.parse(raw);
@@ -256,64 +199,104 @@ function synthesisRequest(target, options) {
   };
 }
 
-function startSessionRequest() {
-  return {};
+function parseJsonObjects(text) {
+  const source = String(text || "").trim();
+  if (!source) return [];
+  try {
+    return [JSON.parse(source)];
+  } catch {}
+  const byLine = source.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (byLine.length > 1) {
+    const parsed = [];
+    for (const line of byLine) {
+      try {
+        parsed.push(JSON.parse(line));
+      } catch {
+        return [];
+      }
+    }
+    return parsed;
+  }
+  const parsed = [];
+  let depth = 0;
+  let start = -1;
+  let inString = false;
+  let escaped = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === "\"") inString = false;
+      continue;
+    }
+    if (character === "\"") {
+      inString = true;
+      continue;
+    }
+    if (character === "{") {
+      if (depth === 0) start = index;
+      depth += 1;
+    } else if (character === "}") {
+      depth -= 1;
+      if (depth === 0 && start >= 0) {
+        try {
+          parsed.push(JSON.parse(source.slice(start, index + 1)));
+        } catch {
+          return [];
+        }
+        start = -1;
+      }
+    }
+  }
+  return parsed;
 }
 
-function synthesize(target, options) {
-  return new Promise((resolve, reject) => {
-    const connectId = crypto.randomUUID();
-    const sessionId = crypto.randomUUID();
-    const chunks = [];
-    let connectionLogId = "";
-    let done = false;
-    const socket = new WebSocket(endpoint, { headers: { "X-Api-Key": options.apiKey, "X-Api-Resource-Id": options.resourceId, "X-Api-Connect-Id": connectId } });
-    const finish = (error) => {
-      if (done) return;
-      done = true;
-      clearTimeout(timeout);
-      try { socket.close(); } catch {}
-      if (error) reject(error); else resolve(Buffer.concat(chunks));
-    };
-    const timeout = setTimeout(() => finish(new Error("Volcengine synthesis timed out.")), 45000);
-    socket.on("upgrade", (response) => {
-      connectionLogId = response.headers?.["x-tt-logid"] || response.headers?.["X-Tt-Logid"] || "";
+async function synthesize(target, options) {
+  const requestId = crypto.randomUUID();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45000);
+  let response;
+  try {
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Api-Key": options.apiKey,
+        "X-Api-Resource-Id": options.resourceId,
+        "X-Api-Request-Id": requestId,
+      },
+      body: JSON.stringify(synthesisRequest(target, options)),
+      signal: controller.signal,
     });
-    socket.on("unexpected-response", (_request, response) => {
-      const logId = response.headers?.["x-tt-logid"] || response.headers?.["X-Tt-Logid"] || "";
-      finish(new Error(`Volcengine WebSocket rejected during handshake: status=${response.statusCode || "unknown"}${logId ? `; X-Tt-Logid=${logId}` : ""}`));
-    });
-    socket.on("open", () => socket.send(encodeMessage(Event.StartConnection, "", {})));
-    socket.on("message", (raw) => {
-      try {
-        const message = parseMessage(raw);
-        if (debugEvents) {
-          console.error(`Volcengine event: type=${message.type}; flag=${message.flag}; event=${message.event || 0}; bytes=${message.payload?.length || 0}`);
-          if (message.event === 350 && message.payload?.length) {
-            console.error(`Volcengine event 350 payload: ${message.payload.toString("utf8").replace(/\s+/g, " ").slice(0, 240)}`);
-          }
-        }
-        if (message.type === MsgType.Error || message.event === Event.ConnectionFailed || message.event === Event.SessionFailed) {
-          const detail = safeServerDetail(message);
-          return finish(new Error(`Volcengine synthesis failed (${message.errorCode || message.event})${detail ? `: ${detail}` : ""}${connectionLogId ? `; X-Tt-Logid=${connectionLogId}` : ""}.`));
-        }
-        if (message.type === MsgType.AudioOnlyServer && message.payload.length) chunks.push(message.payload);
-        if (message.event === Event.ConnectionStarted) socket.send(encodeMessage(Event.StartSession, sessionId, startSessionRequest()));
-        if (message.event === Event.SessionStarted) {
-          socket.send(encodeMessage(Event.TaskRequest, sessionId, synthesisRequest(target, options)));
-          socket.send(encodeMessage(Event.FinishSession, sessionId, {}));
-        }
-        if (message.event === Event.SessionFinished) {
-          socket.send(encodeMessage(Event.FinishConnection, "", {}));
-          if (chunks.length) finish(); else finish(new Error("Volcengine synthesis returned no audio."));
-        }
-      } catch (error) {
-        finish(error);
-      }
-    });
-    socket.on("error", (error) => finish(new Error(`Volcengine WebSocket failure: ${error.message}`)));
-    socket.on("close", () => { if (!done) finish(chunks.length ? null : new Error("Volcengine closed before audio arrived.")); });
-  });
+  } catch (error) {
+    clearTimeout(timeout);
+    throw new Error(`Volcengine HTTP request failed: ${error.message}`);
+  }
+  const logId = response.headers.get("x-tt-logid") || "";
+  const body = await response.text();
+  clearTimeout(timeout);
+  if (!response.ok) {
+    const detail = safeServerDetail(body);
+    throw new Error(`Volcengine HTTP synthesis failed: status=${response.status}${detail ? `: ${detail}` : ""}${logId ? `; X-Tt-Logid=${logId}` : ""}.`);
+  }
+  const payloads = parseJsonObjects(body);
+  if (!payloads.length) {
+    throw new Error(`Volcengine HTTP synthesis returned unparsable chunks${logId ? `; X-Tt-Logid=${logId}` : ""}.`);
+  }
+  const chunks = [];
+  for (const payload of payloads) {
+    const code = payload.code ?? payload.Code ?? 0;
+    if (![0, 20000000].includes(Number(code))) {
+      const message = payload.message || payload.Message || payload.msg || "unknown";
+      throw new Error(`Volcengine HTTP synthesis failed (${code}): ${message}${logId ? `; X-Tt-Logid=${logId}` : ""}.`);
+    }
+    if (payload.data) chunks.push(Buffer.from(payload.data, "base64"));
+  }
+  if (!chunks.length) {
+    throw new Error(`Volcengine HTTP synthesis returned no audio${logId ? `; X-Tt-Logid=${logId}` : ""}.`);
+  }
+  return Buffer.concat(chunks);
 }
 
 async function main() {

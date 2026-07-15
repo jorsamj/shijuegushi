@@ -10,13 +10,13 @@ if (!fs.existsSync(file)) {
 } else {
   const source = fs.readFileSync(file, "utf8");
   for (const token of [
-    "wss://openspeech.bytedance.com/api/v3/tts/bidirection",
+    "https://openspeech.bytedance.com/api/v3/tts/unidirectional",
+    "fetch(endpoint",
     "X-Api-Key",
     "X-Api-Resource-Id",
-    "StartConnection",
-    "StartSession",
-    "TaskRequest",
-    "FinishSession",
+    "X-Api-Request-Id",
+    "req_params",
+    "audio_params",
     "context_texts",
     "seed-tts-2.0",
     "VOLC_TTS_API_KEY",

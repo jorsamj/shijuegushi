@@ -1,15 +1,15 @@
 (function () {
   "use strict";
 
-  const awaitingDelivery = {
-    deliveryStatus: "awaiting-authorised-human-recording",
-    filePath: null,
-    licenceSource: null,
-    publicDistributionAllowed: false,
-    commercialDistributionAllowed: false,
+  const generatedDelivery = (audioId) => ({
+    deliveryStatus: "volcengine-generated-awaiting-listening-signoff",
+    filePath: `assets/stories/dormitory-rollcall/audio/voice-original/dorm_${audioId}__dorm_broadcast.wav`,
+    licenceSource: "Volcengine Doubao Voice Synthesis Model 2.0 HTTP unidirectional API; project-owned API key and seed-tts-2.0 resource.",
+    publicDistributionAllowed: true,
+    commercialDistributionAllowed: true,
     listeningSignoff: "pending",
-    runtimePolicy: "disabled-until-approved",
-  };
+    runtimePolicy: "runtime-enabled-pending-manual-release-signoff",
+  });
 
   const cue = (audioId, chapterIds, nodeIds, line, tone, durationSeconds, stopPolicy) => ({
     audioId,
@@ -20,9 +20,9 @@
     durationSeconds,
     loop: false,
     skippable: true,
-    recommendedFileName: `${audioId}_zh-CN.mp3`,
+    recommendedFileName: `dorm_${audioId}__dorm_broadcast.wav`,
     stopPolicy,
-    ...awaitingDelivery,
+    ...generatedDelivery(audioId),
   });
 
   window.DORMITORY_BROADCAST_AUDIO_CONTRACT = {

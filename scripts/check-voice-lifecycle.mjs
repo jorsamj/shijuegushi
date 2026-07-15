@@ -20,7 +20,7 @@ if (!source.includes("DORMITORY_BROADCAST_AUDIO_CONTRACT")) failures.push("Forma
 if (!cueDispatcher.includes('window.SECOND_LIFE_VOICE_MANIFEST?.stories?.[scriptId]?.cues || {}')) failures.push("Formal cue dispatch must read only the current story cue manifest.");
 if (!cueDispatcher.includes('isDocumentedRuntimeCue(scriptId, cueId, runtimeCues[cueId], node.nodeId)')) failures.push("Formal cue dispatch must filter cues by the current entered node.");
 if (!cueDispatcher.includes('getStoryVoiceEntry(cueId, "cues")')) failures.push("Formal cue dispatch must resolve cue files through the current story runtime manifest.");
-if (!source.includes('cue.provider !== "volcengine-doubao-tts-websocket"')) failures.push("Formal cue dispatch must reject non-Volcengine providers, including legacy XFYUN mappings.");
+if (!source.includes('cue.provider !== "volcengine-doubao-tts-unidirectional"')) failures.push("Formal cue dispatch must reject non-Volcengine providers, including legacy XFYUN mappings.");
 if (!source.includes('cue.model !== "seed-tts-2.0"') || !source.includes('cue.voiceType.endsWith("_uranus_bigtts")')) failures.push("Formal cue dispatch must only play standard Doubao TTS 2.0 cue mappings.");
 if (!source.includes('cue?.nodeId !== nodeId')) failures.push("Formal cue dispatch must require an explicit cue nodeId matching the entered node.");
 if (cueDispatcher.indexOf("stopAllDialogueAudio();") < 0 || cueDispatcher.indexOf("stopAllDialogueAudio();") > cueDispatcher.indexOf("playCueAt(0);")) failures.push("Formal cue dispatch must stop prior dialogue audio before beginning cue playback.");

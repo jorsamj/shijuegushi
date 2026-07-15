@@ -6,7 +6,7 @@
 
 **Architecture:** Story data remains the source of truth for pure dialogue and `spokenText`. A formal delivery manifest owns only verified Model 2.0 `uranus_bigtts` WAVs. The runtime manifest is rebuilt exclusively from that delivery manifest, so legacy XFYUN masters remain archival and cannot become hidden playback fallbacks.
 
-**Tech Stack:** Static JavaScript story data, Node.js, WebSocket Doubao TTS 2.0, WAV assets, browser runtime manifests, Node QA scripts.
+**Tech Stack:** Static JavaScript story data, Node.js, HTTP unidirectional Doubao TTS 2.0, WAV assets, browser runtime manifests, Node QA scripts.
 
 ---
 
@@ -46,7 +46,7 @@
 
 **Files:** Modify `assets/voice-casting-manifest.js`; create `docs/FORMAL_VOICE_CASTING.md`.
 
-- [ ] Map every real speaking role, but never a narrator, to exactly one verified formal record: provider `volcengine-doubao-tts-websocket`, model `seed-tts-2.0`, and one verified `uranus_bigtts` `voiceType`.
+- [ ] Map every real speaking role, but never a narrator, to exactly one verified formal record: provider `volcengine-doubao-tts-unidirectional`, model `seed-tts-2.0`, and one verified `uranus_bigtts` `voiceType`.
 - [ ] Write a role-specific `contextProfile`: Dormitory begins with everyday uncertainty, escalates through conflict into restrained decision; the broadcast stays calm, clear, institutional, local-PA-like, and not newsreader-like. Rain Call stays urban, telephone-grounded, and pressure-driven.
 - [ ] Treat telephone, recording, message, and broadcast as source context rather than a new actor voice. The base timbre remains identifiable across the role's chapters and endings.
 - [ ] Do not select a voice by its display name alone. Check its verified catalog scene/language, role age/identity, and actual dialogue constraints.
@@ -89,4 +89,3 @@
 - The plan covers dialogue purity, existing-story dramatic improvements, formal casting, generation, runtime promotion, and release gates.
 - It forbids Model 1.0 `mars_bigtts` and its `emotion` parameters from Model 2.0 `uranus_bigtts` requests.
 - It never adds rules, characters, endings, scenes, gameplay, a main merge, or a Pages release.
-

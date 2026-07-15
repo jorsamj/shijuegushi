@@ -73,7 +73,7 @@ for (const [scriptId, data] of stories) {
     const node = data.nodes?.[nodeId];
     if (!node) failures.push(`${scriptId}:${nodeId} is referenced by voice runtime but missing from story data.`);
     else if (!audibleTypes.has(node.contentType) || node.voiceEnabled !== true) failures.push(`${scriptId}:${nodeId} is not audible dialogue but remains in the voice runtime.`);
-    else if (voiceNodes[nodeId]?.provider !== "volcengine-doubao-tts-websocket") failures.push(`${scriptId}:${nodeId} is not a Volcengine runtime voice entry.`);
+    else if (voiceNodes[nodeId]?.provider !== "volcengine-doubao-tts-unidirectional") failures.push(`${scriptId}:${nodeId} is not a Volcengine runtime voice entry.`);
     else if (voiceNodes[nodeId]?.model !== "seed-tts-2.0") failures.push(`${scriptId}:${nodeId} must declare the formal seed-tts-2.0 runtime model.`);
     else if (!String(voiceNodes[nodeId]?.voiceType || "").endsWith("_uranus_bigtts")) failures.push(`${scriptId}:${nodeId} must declare a standard Model 2.0 voiceType.`);
     else if (Object.hasOwn(voiceNodes[nodeId], "emotion") || Object.hasOwn(voiceNodes[nodeId], "emotionIntensity")) failures.push(`${scriptId}:${nodeId} must not carry Model 1.0 emotion fields at runtime.`);
@@ -85,7 +85,7 @@ for (const [scriptId, data] of stories) {
 
   const voiceCues = runtime?.stories?.[scriptId]?.cues || {};
   for (const [cueId, cue] of Object.entries(voiceCues)) {
-    if (cue?.provider !== "volcengine-doubao-tts-websocket") {
+    if (cue?.provider !== "volcengine-doubao-tts-unidirectional") {
       failures.push(`${scriptId}:${cueId} is a non-Volcengine runtime broadcast cue.`);
     }
     if (cue?.model !== "seed-tts-2.0") failures.push(`${scriptId}:${cueId} must declare the formal seed-tts-2.0 runtime model.`);

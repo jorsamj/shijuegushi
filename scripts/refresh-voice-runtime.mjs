@@ -4,7 +4,7 @@ import path from "node:path";
 import vm from "node:vm";
 
 const root = path.resolve(import.meta.dirname, "..");
-const provider = "volcengine-doubao-tts-websocket";
+const provider = "volcengine-doubao-tts-unidirectional";
 const model = "seed-tts-2.0";
 const audibleTypes = new Set(["dialogue", "broadcast", "phone", "recording", "inner-monologue"]);
 const stories = [

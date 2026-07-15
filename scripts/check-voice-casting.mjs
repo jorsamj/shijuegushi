@@ -15,7 +15,7 @@ const dormitoryRoles = Object.values(casting?.stories?.script_dormitory_rollcall
 const rainRoles = Object.values(casting?.stories?.script_rain_call?.roles || {});
 const roles = [...dormitoryRoles, ...rainRoles];
 
-if (casting?.provider !== "volcengine-doubao-tts-websocket" || casting?.model !== "seed-tts-2.0") {
+if (casting?.provider !== "volcengine-doubao-tts-unidirectional" || casting?.model !== "seed-tts-2.0") {
   failures.push("Casting manifest must declare the formal Volcengine Model 2.0 provider and model.");
 }
 if (dormitoryRoles.length !== 8) failures.push(`Dormitory story needs eight distinct speaking roles; got ${dormitoryRoles.length}.`);

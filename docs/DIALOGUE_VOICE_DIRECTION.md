@@ -57,7 +57,7 @@ speaker's underlying voiceprint.
 ## Required Human Listening
 
 The following items require focused listening after authorised Volcengine audio
-is generated:
+has been generated:
 
 - Names: Zhou Wanning, Xu Tang, Xu Zhiwan, Xu Zhixia, Lin Zhou, Zhou Yu, Chen Yan.
 - Numbers and times: 417, 00:17, 00:44, 01:13, 2014, 319, and 320.
@@ -69,8 +69,9 @@ is generated:
 
 ## Generation Status
 
-The Volcengine bidirectional WebSocket generator is prepared in
-`scripts/generate-volcengine-story-voices.mjs`. Generation is intentionally
-blocked until the account authorises the configured resource and supplies an
-approved speaker ID for each required role. No browser TTS or unapproved
-single-speaker fallback is permitted.
+The Volcengine HTTP unidirectional generator is implemented in
+`scripts/generate-volcengine-story-voices.mjs`, using only verified Doubao
+Model 2.0 `uranus_bigtts` speaker IDs and the `seed-tts-2.0` resource. Formal
+WAVs have been generated and promoted to the runtime manifest; browser TTS,
+legacy XFYUN runtime fallback, and unapproved single-speaker fallback are not
+permitted. Manual listening remains required before release.

@@ -11,7 +11,7 @@
 
   window.SECOND_LIFE_VOICE_CASTING = {
     version: 3,
-    provider: "volcengine-doubao-tts-websocket",
+    provider: "volcengine-doubao-tts-unidirectional",
     model: "seed-tts-2.0",
     selectionPolicy: "verified-uranus-bigtts-only",
     stories: {
