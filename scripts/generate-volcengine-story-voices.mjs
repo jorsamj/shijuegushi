@@ -265,6 +265,7 @@ function synthesize(target, options) {
     const connectId = crypto.randomUUID();
     const sessionId = crypto.randomUUID();
     const chunks = [];
+    let connectionLogId = "";
     let done = false;
     const socket = new WebSocket(endpoint, { headers: { "X-Api-Key": options.apiKey, "X-Api-Resource-Id": options.resourceId, "X-Api-Connect-Id": connectId } });
     const finish = (error) => {
@@ -275,6 +276,13 @@ function synthesize(target, options) {
       if (error) reject(error); else resolve(Buffer.concat(chunks));
     };
     const timeout = setTimeout(() => finish(new Error("Volcengine synthesis timed out.")), 45000);
+    socket.on("upgrade", (response) => {
+      connectionLogId = response.headers?.["x-tt-logid"] || response.headers?.["X-Tt-Logid"] || "";
+    });
+    socket.on("unexpected-response", (_request, response) => {
+      const logId = response.headers?.["x-tt-logid"] || response.headers?.["X-Tt-Logid"] || "";
+      finish(new Error(`Volcengine WebSocket rejected during handshake: status=${response.statusCode || "unknown"}${logId ? `; X-Tt-Logid=${logId}` : ""}`));
+    });
     socket.on("open", () => socket.send(encodeMessage(Event.StartConnection, "", {})));
     socket.on("message", (raw) => {
       try {
@@ -287,7 +295,7 @@ function synthesize(target, options) {
         }
         if (message.type === MsgType.Error || message.event === Event.ConnectionFailed || message.event === Event.SessionFailed) {
           const detail = safeServerDetail(message);
-          return finish(new Error(`Volcengine synthesis failed (${message.errorCode || message.event})${detail ? `: ${detail}` : ""}.`));
+          return finish(new Error(`Volcengine synthesis failed (${message.errorCode || message.event})${detail ? `: ${detail}` : ""}${connectionLogId ? `; X-Tt-Logid=${connectionLogId}` : ""}.`));
         }
         if (message.type === MsgType.AudioOnlyServer && message.payload.length) chunks.push(message.payload);
         if (message.event === Event.ConnectionStarted) socket.send(encodeMessage(Event.StartSession, sessionId, startSessionRequest()));
