@@ -6,7 +6,7 @@ const root = path.resolve(import.meta.dirname, "..");
 const failures = [];
 const contentTypes = new Set(["narration", "dialogue", "broadcast", "phone", "recording", "system", "inner-monologue"]);
 const audibleTypes = new Set(["dialogue", "broadcast", "phone", "recording", "inner-monologue"]);
-const narrators = new Set(["旁白", "Narrator"]);
+const narrators = new Set(["??", "??", "Narrator", "\u65c1\u767d"]);
 const scriptSource = fs.readFileSync(path.join(root, "script.js"), "utf8");
 
 function load(file, property) {
@@ -69,6 +69,11 @@ for (const [scriptId, data] of stories) {
   }
 
   const voiceNodes = runtime?.stories?.[scriptId]?.nodes || {};
+  if (scriptId === "script_dormitory_rollcall" && data.audioProduction?.status === "story-restructured-needs-dormitory-voice-regeneration") {
+    if (Object.keys(voiceNodes).length) failures.push(`${scriptId} must not keep stale runtime voices after story restructuring.`);
+    if (Object.keys(runtime?.stories?.[scriptId]?.cues || {}).length) failures.push(`${scriptId} must not keep stale runtime broadcast cues after story restructuring.`);
+    continue;
+  }
   for (const nodeId of Object.keys(voiceNodes)) {
     const node = data.nodes?.[nodeId];
     if (!node) failures.push(`${scriptId}:${nodeId} is referenced by voice runtime but missing from story data.`);

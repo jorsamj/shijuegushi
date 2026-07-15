@@ -34,7 +34,7 @@
       props: {},
       audio: map?.audio || { scenes: {} },
       covers: { home: map?.covers?.story || "" },
-      endings: Object.fromEntries(["dorm_ending_a", "dorm_ending_b", "dorm_ending_c", "dorm_ending_d"].map((id) => [id, { image: map?.endings?.[id] || archiveImage }])),
+      endings: Object.fromEntries(Object.keys(DORMITORY_DATA?.endings || {}).map((id) => [id, { image: map?.endings?.[id] || archiveImage }])),
     };
   }
 
@@ -2395,8 +2395,8 @@
       const rows = [
         `You restored ${getCoreClueCount()} of ${CORE_CLUE_IDS.length} core records.`,
         state.flags.understood_rule_eight_forged ? "You identified rule eight as a forged instruction." : "You did not fully identify rule eight as forged.",
-        state.flags.named_xutang ? "Xu Tang was named in the final count." : "Xu Tang remained exposed to the system's blank line.",
-        state.flags.named_zhouwanning ? "Zhou Wanning was restored to the old record." : "Zhou Wanning's erasure remained unresolved.",
+        state.flags.named_xutang ? "许棠被补入最终名单。" : "许棠仍暴露在系统的空白行里。",
+        state.flags.named_zhouwanning ? "周婉宁被恢复到旧记录。" : "周婉宁的删除仍未被纠正。",
       ];
       if (missing.length) rows.push(`Missing records: ${missing.map((id) => DATA.clues[id]?.title || id).join(", ")}.`);
       rows.push(`This led to ${DATA.endings[endingId]?.title || endingId}.`);

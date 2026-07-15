@@ -29,7 +29,7 @@
     .replace(/\s+/g, " ").trim();
   const storyData = {
     "script_rain_call": { title: "雨夜来电", data: window.MIST_DATA },
-    "script_dormitory_rollcall": { title: "熄灯后，请勿点名", data: window.MIST_DORMITORY_DATA },
+    "script_dormitory_rollcall": { title: "宿舍规则怪谈", data: window.MIST_DORMITORY_DATA },
   };
   const fetchManifest = (url) => fetch(url).then((response) => {
     if (!response.ok) throw new Error(`无法读取 ${url}: ${response.status}`);

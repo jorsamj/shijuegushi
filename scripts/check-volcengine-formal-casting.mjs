@@ -38,12 +38,12 @@ for (const [storyId, roleIds] of Object.entries(expectations)) {
 }
 
 const rainAliases = casting?.stories?.script_rain_call?.speakerAliases || {};
-if (rainAliases["女人"] !== "xuzhiwan") failures.push("The woman-at-door alias must share Xu Zhiwan's stable voiceprint.");
-if (!String(casting?.stories?.script_rain_call?.identityBasis?.womanAtDoor || "").includes("Xu Zhiwan")) {
+if (rainAliases["\u5973\u4eba"] !== "xuzhiwan") failures.push("The woman-at-door alias must share Xu Zhiwan's stable voiceprint.");
+if (!String(casting?.stories?.script_rain_call?.identityBasis?.womanAtDoor || "").includes("\u8bb8\u77e5\u665a")) {
   failures.push("The woman-at-door shared voiceprint needs an explicit current-story identity basis.");
 }
 const dormAliases = casting?.stories?.script_dormitory_rollcall?.speakerAliases || {};
-if (dormAliases.Broadcast !== "dorm_broadcast" || dormAliases["广播"] !== "dorm_broadcast") failures.push("Dormitory broadcast aliases must map to the shared broadcast role.");
+if (dormAliases["\u5e7f\u64ad"] !== "dorm_broadcast") failures.push("Dormitory broadcast aliases must map to the shared broadcast role.");
 
 if (failures.length) {
   console.error(failures.map((failure) => `- ${failure}`).join("\n"));

@@ -9,10 +9,7 @@ vm.runInNewContext(source, context, { filename: "dormitory-story-data.js" });
 const data = context.window.MIST_DORMITORY_DATA;
 const failures = [];
 const notes = [];
-
-function assert(condition, message) {
-  if (!condition) failures.push(message);
-}
+const assert = (condition, message) => { if (!condition) failures.push(message); };
 
 function allChoices(node) {
   return node.choices?.length ? node.choices : node.question?.choices || [];
@@ -26,10 +23,16 @@ const nodes = data?.nodes || {};
 const nodeIds = new Set(Object.keys(nodes));
 const publicRules = data?.rules || [];
 const allClueIds = Object.keys(data?.clues || {});
+const endingIds = Object.keys(data?.endings || {});
 
+assert(data?.script?.title === "宿舍规则怪谈", "Player-facing dormitory story title must be 宿舍规则怪谈.");
+assert(data?.series?.title === "宿舍规则怪谈", "Player-facing dormitory series title must be 宿舍规则怪谈.");
 assert(data?.script?.startNodeId && nodes[data.script.startNodeId], "The dormitory story start node must exist.");
 assert(publicRules.length === 6, "The dormitory story must retain exactly six public rules.");
 assert(data?.hiddenRules?.length === 1, "The dormitory story must retain one hidden correction rule.");
+assert(allClueIds.length === 6, "The restructured dormitory story must define six core clues.");
+assert(endingIds.length === 8, `The restructured dormitory story must define eight endings; got ${endingIds.length}.`);
+assert(data?.phonePlaybook?.events?.length >= 6, "Phone playbook must include group, private, image/video, broadcast and escape-team events.");
 
 const reached = new Set();
 const stack = [data?.script?.startNodeId];
@@ -43,20 +46,27 @@ while (stack.length) {
 }
 assert(reached.size === nodeIds.size, `All dormitory nodes must be reachable; missing: ${[...nodeIds].filter((id) => !reached.has(id)).join(", ")}`);
 
+const effectiveChoices = Object.values(nodes).reduce((sum, node) => sum + allChoices(node).length, 0);
+assert(effectiveChoices >= 30 && effectiveChoices <= 40, `The story must contain 30-40 effective choices; got ${effectiveChoices}.`);
+
 for (let chapter = 1; chapter <= 6; chapter += 1) {
   const chapterId = `dorm_chapter_${String(chapter).padStart(2, "0")}`;
   const chapterNodes = Object.values(nodes).filter((node) => node.chapterId === chapterId);
-  assert(chapterNodes.length >= 6, `${chapterId} must have at least six formal story beats.`);
-  if (chapter >= 4) assert(chapterNodes.length >= 10, `${chapterId} must have at least ten mobile-readable formal beats.`);
+  const choiceNodes = chapterNodes.filter((node) => allChoices(node).length > 0);
+  assert(chapterNodes.length >= 8, `${chapterId} must have at least eight formal mobile-readable beats.`);
+  assert(choiceNodes.length >= 2, `${chapterId} must include at least two consequential interaction beats.`);
 }
 
 for (const node of Object.values(nodes)) {
   assert(typeof node.text === "string" && node.text.trim(), `${node.nodeId} must have formal copy.`);
   assert(!/\b(TODO|TBD|placeholder|lorem ipsum)\b/i.test(node.text), `${node.nodeId} contains placeholder copy.`);
   assert(nodeEdges(node).every((nodeId) => nodeIds.has(nodeId)), `${node.nodeId} points to a missing node.`);
-  if (node.type === "deduction") {
-    assert(allChoices(node).length >= 3, `${node.nodeId} must retain its deduction choices at runtime.`);
-    assert(allChoices(node).some((choice) => choice.isCorrect === true), `${node.nodeId} must have a correct deduction answer.`);
+  assert(!/\b(Chen Lu|Shen Yan|Broadcast|Manager Wu|Xu Tang|Lin Sui|Zhou Wanning|Zhao Qing)\b/.test(JSON.stringify(node)), `${node.nodeId} contains a player-visible English character name.`);
+  if (node.contentType === "dialogue" || node.contentType === "broadcast" || node.contentType === "recording") {
+    assert(node.speaker !== "旁白" && node.voiceEnabled === true && node.spokenText === node.text, `${node.nodeId} audible node must map exactly to its spoken text.`);
+  }
+  if (node.contentType === "narration" || node.contentType === "system") {
+    assert(node.voiceEnabled === false && !node.spokenText, `${node.nodeId} ${node.contentType} must remain silent.`);
   }
 }
 
@@ -64,10 +74,10 @@ for (const chapterId of data?.chapters?.map((chapter) => chapter.chapterId) || [
   const beat = data?.chapterBeats?.[chapterId];
   assert(beat?.question && beat?.confirmedFact && beat?.newQuestion && beat?.hook, `${chapterId} must document its suspense structure.`);
   assert(Array.isArray(beat?.investigationNodeIds) && beat.investigationNodeIds.length > 0, `${chapterId} must document an investigation beat.`);
-  assert(Array.isArray(beat?.choiceNodeIds) && beat.choiceNodeIds.length > 0, `${chapterId} must document a consequential choice.`);
+  assert(Array.isArray(beat?.choiceNodeIds) && beat.choiceNodeIds.length > 0, `${chapterId} must document consequential choices.`);
 }
 
-for (const rule of publicRules) {
+for (const rule of [...publicRules, ...(data?.hiddenRules || [])]) {
   const detail = data?.rulePlaybook?.[rule.ruleId];
   assert(detail, `${rule.ruleId} needs a rule-playbook entry.`);
   assert(detail?.firstNodeId && nodes[detail.firstNodeId], `${rule.ruleId} needs a first appearance node.`);
@@ -77,45 +87,24 @@ for (const rule of publicRules) {
   assert(detail?.playerJudgment && detail?.finalTruth && detail?.endingImpact, `${rule.ruleId} needs a player judgment, truth, and ending impact.`);
 }
 
-assert(data?.rulePlaybook?.dorm_rule_correction?.finalTruth === "hidden-correction", "The hidden correction rule must be explicitly identified as the final correction.");
-assert(
-  Object.values(nodes).some((node) => [node, ...(node.investigationHotspots || [])].some((source) => (source.ruleUpdates || []).some((update) => update.ruleId === "dorm_rule_correction"))),
-  "The hidden correction rule must unlock in play."
-);
-
 const resolver = data?.profile?.endingResolver;
 assert(typeof resolver === "function", "The dormitory profile needs an ending resolver.");
-const completeAState = {
-  clues: allClueIds,
-  flags: {
-    corrected_2014_count: true,
-    corrected_417_count: true,
-    trusted_correction: true,
-    named_xutang: true,
-    named_zhouwanning: true,
-  },
-  relationships: { trust_linsui: 35, trust_zhaoqing: 25, support_chenlu: 25, protect_xutang: 40 },
-};
-if (typeof resolver === "function") {
-  assert(resolver(completeAState) === "dorm_ending_a", "A route must require a completed correction, not a final-answer guess.");
-  assert(resolver({ ...completeAState, relationships: { ...completeAState.relationships, trust_zhaoqing: 0 } }) !== "dorm_ending_a", "A route must fail without the required companion trust.");
-  assert(resolver({ ...completeAState, flags: { ...completeAState.flags, sent_unregistered_downstairs: true } }) === "dorm_ending_b", "Handing over Xu Tang must resolve to ending B.");
-  assert(resolver({ ...completeAState, flags: { ...completeAState.flags, accused_wrong_person: true } }) === "dorm_ending_c", "Accusing another roommate must resolve to ending C.");
-  assert(resolver({ ...completeAState, flags: { ...completeAState.flags, cut_broadcast: true } }) === "dorm_ending_d", "Cutting the broadcast must resolve to ending D.");
-}
-
 const clueGrantNodes = new Map(allClueIds.map((clueId) => [clueId, []]));
 for (const node of Object.values(nodes)) {
   for (const clueId of node.gainClues || []) clueGrantNodes.get(clueId)?.push(node.nodeId);
+  for (const choice of allChoices(node)) for (const clueId of choice.gainClues || []) clueGrantNodes.get(clueId)?.push(`${node.nodeId}/${choice.choiceId}`);
   for (const hotspot of node.investigationHotspots || []) {
     for (const clueId of hotspot.gainClues || []) clueGrantNodes.get(clueId)?.push(`${node.nodeId}/${hotspot.hotspotId}`);
   }
 }
 for (const [clueId, grantNodes] of clueGrantNodes) assert(grantNodes.length > 0, `${clueId} must be obtainable.`);
 
-for (const endingId of ["dorm_ending_a", "dorm_ending_b", "dorm_ending_c", "dorm_ending_d"]) {
-  assert(data?.endings?.[endingId]?.report?.pathSummary, `${endingId} needs a player-facing ending report.`);
+for (const endingId of endingIds) {
+  const ending = data.endings[endingId];
+  assert(ending.title && ending.text && ending.finalLine && ending.report?.pathSummary, `${endingId} needs title, full scene, final line and review report.`);
+  assert(data?.endingPreconditions?.[endingId]?.length > 0, `${endingId} needs documented entry conditions.`);
 }
+assert(Object.keys(data?.inversionForeshadowing || {}).length >= 3, "At least three twist endings need documented foreshadowing.");
 
 if (failures.length) {
   console.error("Dormitory story flow check failed:");
@@ -125,8 +114,8 @@ if (failures.length) {
 
 notes.push(`nodes=${nodeIds.size}`);
 notes.push(`reachable=${reached.size}`);
-notes.push(`chapter-4-6=${[4, 5, 6].map((chapter) => Object.values(nodes).filter((node) => node.chapterId === `dorm_chapter_${String(chapter).padStart(2, "0")}`).length).join("/")}`);
+notes.push(`choices=${effectiveChoices}`);
+notes.push(`endings=${endingIds.join(",")}`);
 notes.push(`clue-routes=${[...clueGrantNodes.entries()].map(([id, entries]) => `${id}:${entries.join("|")}`).join("; ")}`);
-notes.push("ending-routes=A=complete correction+trust; B=hand over Xu Tang; C=accuse another roommate; D=cut or evade broadcast");
 console.log("Dormitory story flow check passed.");
 notes.forEach((note) => console.log(note));

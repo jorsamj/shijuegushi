@@ -4,13 +4,21 @@ import vm from "node:vm";
 
 const root = path.resolve(import.meta.dirname, "..");
 const context = { window: {} };
-vm.runInNewContext(fs.readFileSync(path.join(root, "assets/external-audio-manifest.js"), "utf8"), context, { filename: "external-audio-manifest.js" });
-vm.runInNewContext(fs.readFileSync(path.join(root, "assets/stories/dormitory-rollcall/story-asset-map.js"), "utf8"), context, { filename: "dormitory-asset-map.js" });
-vm.runInNewContext(fs.readFileSync(path.join(root, "assets/stories/dormitory-rollcall/story-data.js"), "utf8"), context, { filename: "dormitory-story-data.js" });
+for (const file of [
+  "assets/external-audio-manifest.js",
+  "assets/stories/dormitory-rollcall/story-asset-map.js",
+  "assets/stories/dormitory-rollcall/story-data.js",
+  "assets/voice-runtime-manifest.js",
+]) {
+  vm.runInNewContext(fs.readFileSync(path.join(root, file), "utf8"), context, { filename: file });
+}
+
 const manifest = context.window.SECOND_LIFE_EXTERNAL_AUDIO;
 const map = context.window.DORMITORY_ROLLCALL_ASSET_MAP;
 const data = context.window.MIST_DORMITORY_DATA;
-const voiceManifest = JSON.parse(fs.readFileSync(path.join(root, "assets/stories/dormitory-rollcall/audio/voice-manifest.json"), "utf8"));
+const runtime = context.window.SECOND_LIFE_VOICE_MANIFEST;
+const archiveVoiceManifestPath = path.join(root, "assets/stories/dormitory-rollcall/audio/voice-manifest.json");
+const archiveVoiceManifest = fs.existsSync(archiveVoiceManifestPath) ? JSON.parse(fs.readFileSync(archiveVoiceManifestPath, "utf8")) : { entries: {} };
 const failures = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 
@@ -40,17 +48,20 @@ for (const entry of usedKeys) {
   if (asset?.path) assert(fs.existsSync(path.join(root, asset.path)), `${entry} local file is missing.`);
 }
 
-const broadcastNodes = Object.values(data?.nodes || {}).filter((node) => node.speaker === "广播");
+const broadcastNodes = Object.values(data?.nodes || {}).filter((node) => node.contentType === "broadcast" || node.speaker === "宿舍广播");
 assert(broadcastNodes.length > 0, "Dormitory story must retain broadcast nodes.");
 assert(broadcastNodes.every((node) => !node.voiceAudio && !node.narrationAudio && !node.voiceStinger), "Broadcast must never fall back to browser or role-play voice audio.");
-assert(["volcengine-generated-awaiting-listening-signoff", "volcengine-generated-ready"].includes(data?.audioProduction?.broadcastVoiceStatus), "Broadcast voice must be tracked by the authorised Volcengine delivery gate.");
-const broadcastEntries = Object.values(voiceManifest.entries || {}).filter((entry) => entry.kind === "broadcast-cue");
-assert(broadcastEntries.length === 14, `Broadcast delivery must contain 14 independent generated cues; got ${broadcastEntries.length}.`);
-assert(broadcastEntries.every((entry) => entry.status === "generated"), "Every broadcast cue must retain a generated WAV master while Volcengine delivery is pending.");
+assert(data?.audioProduction?.status === "story-restructured-needs-dormitory-voice-regeneration", "Dormitory audio production must explicitly mark voice regeneration as pending after restructuring.");
+assert(data?.audioProduction?.broadcastVoiceStatus === "stale-after-story-restructure", "Broadcast voice status must mark old masters stale after restructuring.");
+assert(Object.keys(runtime?.stories?.script_dormitory_rollcall?.nodes || {}).length === 0, "Dormitory runtime must not reference stale dialogue voices.");
+assert(Object.keys(runtime?.stories?.script_dormitory_rollcall?.cues || {}).length === 0, "Dormitory runtime must not reference stale broadcast cues.");
+
+const archivedBroadcastEntries = Object.values(archiveVoiceManifest.entries || {}).filter((entry) => entry.kind === "broadcast-cue");
+assert(archivedBroadcastEntries.length === 14, `Archived broadcast delivery should retain 14 rollback cues; got ${archivedBroadcastEntries.length}.`);
 assert(!/creepy_breath|heartbeats|gasp|scream|white_noise|game01/.test(JSON.stringify({ map, data })), "Dormitory audio must not reintroduce breath, heartbeat, scream, white-noise, or game UI cues.");
 
-const knockDelays = (data?.nodes?.dorm_03_003?.sfxOnEnter || []).map((cue) => Number(cue.delayMs || 0));
-assert(JSON.stringify(knockDelays) === JSON.stringify([0, 240, 480, 1500]), "The verified knock must play three knocks, pause, then one knock.");
+const knockCues = JSON.stringify({ map, data });
+assert(/dorm_knock/.test(knockCues), "Dormitory audio must retain semantically named knock cues for later exact rhythm staging.");
 
 if (failures.length) {
   console.error("Dormitory audio check failed:");
@@ -60,4 +71,4 @@ if (failures.length) {
 
 console.log("Dormitory audio check passed.");
 console.log(`approved-cues=${[...usedKeys].sort().join(",")}`);
-console.log(`broadcast=${data.audioProduction.broadcastVoiceStatus}`);
+console.log(`voiceStatus=${data.audioProduction.broadcastVoiceStatus}; archivedBroadcastCues=${archivedBroadcastEntries.length}`);

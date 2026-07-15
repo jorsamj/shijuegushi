@@ -25,7 +25,7 @@ const manualGates = [
   ["phoneSpeakerListeningSignoff", "Phone-speaker listening sign-off is incomplete."],
   ["broadcastCadenceSignoff", "All 14 institutional-broadcast order and cadence sign-off is incomplete."],
   ["crossStorySaveSignoff", "Manual cross-story save/load isolation sign-off is incomplete."],
-  ["dormitoryMobilePlaythroughSignoff", "Dormitory mobile six-chapter and four-ending playthrough sign-off is incomplete."],
+  ["dormitoryMobilePlaythroughSignoff", "Dormitory mobile six-chapter and eight-ending playthrough sign-off is incomplete."],
   ["rainCallRegressionSignoff", "Rain Call full manual regression sign-off is incomplete."],
   ["mobileBackgroundRestoreSignoff", "Mobile background-restore sign-off is incomplete."],
   ["consoleErrorSignoff", "Console no-error verification sign-off is incomplete."],

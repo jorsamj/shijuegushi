@@ -10,12 +10,14 @@ const data = context.window.MIST_DORMITORY_DATA;
 const failures = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 
-assert(data?.routePlans, "Dormitory data must define QA route plans for all four endings.");
+assert(data?.routePlans, "Dormitory data must define QA route plans for all endings.");
 
 function apply(state, source) {
   for (const clueId of source?.gainClues || []) if (!state.clues.includes(clueId)) state.clues.push(clueId);
   for (const flagId of source?.setFlags || []) state.flags[flagId] = true;
-  for (const effect of source?.relationshipEffects || []) state.relationships[effect.id] = Math.max(-100, Math.min(100, (state.relationships[effect.id] || 0) + Number(effect.delta || 0)));
+  for (const effect of source?.relationshipEffects || []) {
+    state.relationships[effect.id] = Math.max(-100, Math.min(100, (state.relationships[effect.id] || 0) + Number(effect.delta || 0)));
+  }
 }
 
 function choicesFor(node) {
@@ -31,7 +33,7 @@ function runRoute(routeName) {
   const seen = new Set();
   let safety = 0;
 
-  while (nodeId && safety < 120) {
+  while (nodeId && safety < 160) {
     safety += 1;
     const node = data.nodes[nodeId];
     if (!node) return { error: `missing node ${nodeId}`, state, visited };
@@ -58,7 +60,9 @@ function runRoute(routeName) {
   return { error: `route ${routeName} exceeded traversal safety`, state, visited };
 }
 
-const expected = { a: "dorm_ending_a", b: "dorm_ending_b", c: "dorm_ending_c", d: "dorm_ending_d" };
+const expected = Object.fromEntries(Object.entries(data.routePlans || {}).map(([name, plan]) => [name, plan.expectedEnding]));
+assert(Object.keys(expected).length === 8, `Dormitory route QA must cover eight endings; got ${Object.keys(expected).length}.`);
+
 const results = {};
 for (const [routeName, endingId] of Object.entries(expected)) {
   const result = runRoute(routeName);
@@ -70,12 +74,19 @@ for (const [routeName, endingId] of Object.entries(expected)) {
   }
 }
 
-assert(results.a?.state?.clues.length === Object.keys(data.clues || {}).length, "A route must obtain all six clues.");
-assert(results.a?.state?.flags?.trusted_correction, "A route must trust the hidden correction rule.");
-assert(results.a?.state?.flags?.corrected_2014_count && results.a?.state?.flags?.corrected_417_count, "A route must correct both historical and current counts.");
-assert(results.b?.state?.flags?.sent_unregistered_downstairs, "B route must hand over Xu Tang.");
-assert(results.c?.state?.flags?.accused_wrong_person, "C route must accuse another roommate.");
-assert(results.d?.state?.flags?.cut_broadcast, "D route must cut or abandon the broadcast.");
+const reachedEndings = new Set(Object.values(results).map((result) => result.endingId));
+for (const endingId of Object.keys(data.endings || {})) {
+  assert(reachedEndings.has(endingId), `Ending ${endingId} is not reached by any QA route.`);
+}
+
+assert(results.true_dawn?.state?.clues.length === Object.keys(data.clues || {}).length, "True dawn route must obtain all six clues.");
+assert(results.true_dawn?.state?.flags?.trusted_true_broadcast, "True dawn route must identify the true broadcast.");
+assert(results.true_dawn?.state?.flags?.final_no_response, "True dawn route must stop the final roll-call response.");
+assert(results.second_xutang?.state?.flags?.identity_stolen || results.second_xutang?.state?.flags?.said_full_name, "Second-Xu-Tang route must expose identity theft risk.");
+assert(results.east_passage?.state?.flags?.chose_east_route, "East-passage route must choose the east passage.");
+assert(results.broken_broadcast?.state?.flags?.broke_broadcast, "Broken-broadcast route must break the broadcast room system.");
+assert(results.left_behind?.state?.flags?.abandoned_real_survivor, "Left-behind route must abandon a real survivor.");
+assert(results.legal_count?.state?.flags?.sacrificed_unknown, "Legal-count route must sacrifice a doubtful survivor.");
 
 if (failures.length) {
   console.error("Dormitory ending-route check failed:");
@@ -85,5 +96,6 @@ if (failures.length) {
 
 console.log("Dormitory ending-route check passed.");
 for (const [name, result] of Object.entries(results)) {
-  console.log(`${name.toUpperCase()} => ${result.endingId}; nodes=${result.visited.length}; clues=${result.state.clues.length}; flags=${Object.entries(result.state.flags).filter(([, value]) => value).map(([key]) => key).join(",")}`);
+  const trueFlags = Object.entries(result.state.flags).filter(([, value]) => value).map(([key]) => key);
+  console.log(`${name} => ${result.endingId}; nodes=${result.visited.length}; clues=${result.state.clues.length}; flags=${trueFlags.join(",")}`);
 }
