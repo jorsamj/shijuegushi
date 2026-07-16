@@ -2296,6 +2296,20 @@ img.is-missing {
   background: linear-gradient(135deg, rgba(216, 182, 106, 0.12), rgba(126, 183, 199, 0.08));
 }
 
+.scene-asset-shell.has-missing-asset::after {
+  content: "画面正在恢复";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: rgba(240, 235, 222, 0.72);
+  background: radial-gradient(circle at 50% 36%, rgba(70, 76, 82, 0.32), rgba(8, 10, 14, 0.92));
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+
 .choice-feedback-card.tone-correct {
   border-color: rgba(158, 216, 204, 0.34);
 }
@@ -4897,5 +4911,327 @@ body[data-view="series"] {
   .case-button i,
   .archive-ledger-row i {
     transition: none;
+  }
+}
+
+/* Shared dormitory-story runtime layers. Each layer is data-driven and short-lived. */
+.vn-visual-cast {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.vn-visual-cast-member {
+  position: absolute;
+  right: clamp(18px, 6vw, 100px);
+  bottom: -4%;
+  z-index: var(--cast-z-index, 3);
+  width: min(48vw, 580px);
+  height: min(118%, 820px);
+  margin: 0;
+}
+
+.vn-visual-cast-member.position-left { right: auto; left: clamp(20px, 5vw, 86px); }
+.vn-visual-cast-member.position-center { right: auto; left: 50%; transform: translateX(-50%); }
+.vn-visual-cast-member.position-right { right: clamp(18px, 4vw, 72px); left: auto; }
+
+.vn-visual-cast-member img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: var(--cast-focus-x, 50%) var(--cast-focus-y, 16%);
+  filter: drop-shadow(0 30px 38px rgba(0, 0, 0, 0.68));
+}
+
+.vn-visual-cast-member.framing-face { height: min(154%, 980px); }
+.vn-visual-cast-member.framing-bust { height: min(134%, 900px); }
+.vn-visual-cast-member.framing-fullbody { height: min(106%, 760px); }
+
+.dorm-phone-layer {
+  position: absolute;
+  top: clamp(72px, 12vh, 124px);
+  right: clamp(16px, 5vw, 84px);
+  z-index: 9;
+  width: min(280px, 27vw);
+  pointer-events: none;
+}
+
+.dorm-phone-screen {
+  min-height: 330px;
+  overflow: hidden;
+  border: 1px solid rgba(203, 228, 240, 0.34);
+  border-radius: 8px;
+  color: #eaf5f4;
+  background: rgba(7, 16, 23, 0.92);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.42);
+}
+
+.dorm-phone-status,
+.dorm-phone-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 11px;
+}
+
+.dorm-phone-status {
+  color: rgba(228, 244, 241, 0.68);
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dorm-phone-header {
+  min-height: 42px;
+  border-bottom: 1px solid rgba(198, 228, 235, 0.14);
+}
+
+.dorm-phone-header strong,
+.dorm-phone-call strong,
+.dorm-phone-system strong { font-size: 13px; }
+.dorm-phone-header small { color: rgba(228, 244, 241, 0.56); font-size: 10px; }
+
+.dorm-phone-messages {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.dorm-phone-message {
+  width: fit-content;
+  max-width: 90%;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: rgba(158, 212, 213, 0.13);
+}
+
+.dorm-phone-message.is-self {
+  justify-self: end;
+  color: #072027;
+  background: rgba(161, 225, 215, 0.86);
+}
+
+.dorm-phone-message strong { display: block; margin-bottom: 3px; font-size: 10px; }
+.dorm-phone-message p,
+.dorm-phone-notice,
+.dorm-phone-call p,
+.dorm-phone-video p,
+.dorm-phone-system p { margin: 0; font-size: 11px; line-height: 1.48; }
+
+.dorm-phone-media {
+  display: block;
+  width: 100%;
+  max-height: 128px;
+  margin-top: 6px;
+  object-fit: cover;
+}
+
+.dorm-phone-typing { margin: 0; padding: 0 10px 10px; color: rgba(196, 234, 224, 0.68); font-size: 11px; }
+.dorm-phone-call,
+.dorm-phone-video,
+.dorm-phone-system { display: grid; place-items: center; gap: 10px; min-height: 245px; padding: 18px; text-align: center; }
+.dorm-phone-call .dorm-phone-media { width: 84px; height: 84px; margin: 0; border-radius: 50%; }
+.dorm-phone-video { align-content: center; }
+.dorm-phone-video .dorm-phone-media { height: 180px; margin: 0; }
+.dorm-phone-system { background: rgba(130, 187, 207, 0.08); }
+
+.story-inline-feedback {
+  position: fixed;
+  right: clamp(18px, 4vw, 56px);
+  bottom: clamp(108px, 14vh, 150px);
+  z-index: 19;
+  display: grid;
+  gap: 8px;
+  width: min(340px, calc(100vw - 36px));
+  pointer-events: none;
+}
+
+.story-inline-feedback-item {
+  padding: 10px 12px;
+  border-left: 3px solid #c9a969;
+  border-radius: 4px;
+  opacity: 0;
+  color: #f4efe3;
+  background: rgba(6, 10, 15, 0.88);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  transform: translateY(8px);
+  transition: transform 180ms ease-out, opacity 180ms ease-out;
+}
+
+.story-inline-feedback-item.is-visible { opacity: 1; transform: translateY(0); }
+.story-inline-feedback-item.tone-correct { border-left-color: #8dc7ad; }
+.story-inline-feedback-item.tone-wrong { border-left-color: #c87575; }
+.story-inline-feedback-item strong { display: block; font-size: 12px; }
+.story-inline-feedback-item p { margin: 4px 0 0; color: rgba(238, 239, 228, 0.78); font-size: 12px; line-height: 1.45; }
+
+.scene-effect-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.scene-effect {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
+}
+
+.scene-effect.is-active { animation-duration: var(--scene-effect-duration, 520ms); animation-fill-mode: both; animation-timing-function: ease-out; }
+.effect-lights-out,
+.effect-blackout,
+.effect-black-screen,
+.effect-bad-ending,
+.effect-final-freeze { background: rgba(0, 0, 0, 0.72); }
+.effect-hallway-shake,
+.effect-door-impact,
+.effect-attack { border: 10px solid rgba(229, 234, 225, 0.12); }
+.effect-blood-edge,
+.effect-blood-trace { border: 14px solid rgba(110, 9, 18, 0.5); }
+.effect-signal-tear,
+.effect-noise { background: repeating-linear-gradient(0deg, rgba(158, 226, 234, 0.16) 0 2px, transparent 2px 8px); }
+.effect-phone-vibration,
+.effect-phone-vibrate { background: radial-gradient(circle at 78% 28%, rgba(178, 235, 231, 0.28), transparent 0 18%); }
+.effect-misalignment,
+.effect-character-misalign,
+.effect-double-character,
+.effect-mimic-reveal,
+.effect-doppelganger-reveal { background: linear-gradient(90deg, rgba(190, 235, 224, 0.12), transparent 42%, rgba(155, 24, 42, 0.2)); }
+.effect-drag,
+.effect-chase { background: linear-gradient(90deg, rgba(0, 0, 0, 0.6), transparent 44%); }
+.effect-lighting-change,
+.effect-stairwell-flicker { background: rgba(229, 238, 211, 0.16); }
+.effect-level-heavy { filter: contrast(1.16) saturate(0.82); }
+
+.effect-lights-out.is-active,
+.effect-blackout.is-active,
+.effect-black-screen.is-active,
+.effect-bad-ending.is-active,
+.effect-final-freeze.is-active,
+.effect-lighting-change.is-active,
+.effect-stairwell-flicker.is-active { animation-name: scene-effect-blackout; }
+.effect-hallway-shake.is-active,
+.effect-door-impact.is-active,
+.effect-attack.is-active,
+.effect-phone-vibration.is-active,
+.effect-phone-vibrate.is-active { animation-name: scene-effect-impact; }
+.effect-blood-edge.is-active,
+.effect-blood-trace.is-active,
+.effect-drag.is-active,
+.effect-chase.is-active { animation-name: scene-effect-edge; }
+.effect-signal-tear.is-active,
+.effect-noise.is-active,
+.effect-misalignment.is-active,
+.effect-character-misalign.is-active,
+.effect-double-character.is-active,
+.effect-mimic-reveal.is-active,
+.effect-doppelganger-reveal.is-active { animation-name: scene-effect-signal; }
+
+@keyframes scene-effect-blackout {
+  0% { opacity: 0; filter: brightness(1); }
+  38% { opacity: 0.82; filter: brightness(0.56); }
+  100% { opacity: 0; filter: brightness(1); }
+}
+
+@keyframes scene-effect-impact {
+  0% { opacity: 0; transform: translate3d(0, 0, 0); }
+  24% { opacity: 0.72; transform: translate3d(5px, -2px, 0); }
+  54% { opacity: 0.52; transform: translate3d(-4px, 2px, 0); }
+  100% { opacity: 0; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes scene-effect-edge {
+  0% { opacity: 0; transform: translateX(-2%); }
+  36% { opacity: 0.68; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(1%); }
+}
+
+@keyframes scene-effect-signal {
+  0% { opacity: 0; filter: blur(0); transform: translateX(0); }
+  36% { opacity: 0.7; filter: blur(1px); transform: translateX(3px); }
+  100% { opacity: 0; filter: blur(0); transform: translateX(0); }
+}
+
+.is-reduced-motion .scene-effect,
+.is-reduced-motion .story-inline-feedback-item,
+.is-reduced-motion .scene-asset-shell.is-scene-entering .scene-bg-image,
+.is-reduced-motion .scene-asset-shell.is-scene-held .scene-bg-image {
+  animation: none;
+  transition: none;
+}
+
+.is-reduced-motion .scene-effect-layer { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-effect,
+  .story-inline-feedback-item { animation: none; transition: none; }
+}
+
+/* Formal dormitory masters are portrait sources. The outer shell supplies desktop ambience only. */
+.scene-asset-shell.is-portrait-master {
+  display: grid;
+  place-items: center;
+  background: #04070b;
+}
+
+.scene-ambient-backdrop {
+  position: absolute;
+  inset: -7%;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.5;
+  filter: blur(20px) saturate(0.78) brightness(0.48);
+  transform: scale(1.08);
+}
+
+.scene-ambient-backdrop img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scene-portrait-master {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
+  overflow: hidden;
+  background: #05070c;
+}
+
+.scene-portrait-master .scene-bg-image,
+.scene-portrait-master .scene-bg-previous {
+  object-fit: contain;
+  background: #05070c;
+}
+
+@media (min-width: 701px) {
+  .game-screen.is-dormitory-story .scene-stage {
+    padding-inline: clamp(22px, 4vw, 72px);
+  }
+
+  .game-screen.is-dormitory-story .scene-asset-shell.is-portrait-master {
+    width: min(1180px, calc(100vw - 84px));
+    height: clamp(420px, 68vh, 720px);
+    min-height: 0;
+  }
+
+  .game-screen.is-dormitory-story .scene-portrait-master {
+    width: auto;
+    height: min(100%, 68vh);
+    max-width: 100%;
+    aspect-ratio: 9 / 16;
+  }
+
+  .game-screen.is-dormitory-story .scene-portrait-master .scene-bg-image,
+  .game-screen.is-dormitory-story .scene-portrait-master .scene-bg-previous {
+    object-fit: contain;
   }
 }

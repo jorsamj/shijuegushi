@@ -196,6 +196,35 @@
   let immersiveAttempted = false;
   let dialoguePointerStart = null;
   const preloadedVisuals = new Set();
+  const preloadingVisuals = new Set();
+  const inlineFeedbackTimers = new Set();
+  let effectCleanupToken = 0;
+  const EFFECT_LEVELS = new Set(["light", "medium", "heavy"]);
+  const EFFECT_TYPES = new Set([
+    "lights-out",
+    "hallway-shake",
+    "blood-edge",
+    "door-impact",
+    "signal-tear",
+    "phone-vibration",
+    "phone-vibrate",
+    "noise",
+    "lighting-change",
+    "black-screen",
+    "blood-trace",
+    "character-misalign",
+    "double-character",
+    "blackout",
+    "misalignment",
+    "drag",
+    "attack",
+    "chase",
+    "mimic-reveal",
+    "doppelganger-reveal",
+    "bad-ending",
+    "stairwell-flicker",
+    "final-freeze",
+  ]);
   let state = createInitialState();
   let audioState = {
     context: null,
@@ -226,6 +255,91 @@
     currentNodeId: "",
     debugLog: [],
   };
+
+  function normalizeEffectLevel(level) {
+    return ({ "轻度": "light", "中度": "medium", "重度": "heavy" })[level]
+      || (EFFECT_LEVELS.has(level) ? level : "light");
+  }
+
+  function getNodeSceneEffects(node = {}) {
+    const source = Array.isArray(node.effects)
+      ? node.effects
+      : node.effect
+        ? [{ type: node.effect, level: node.effectIntensity }]
+        : [];
+    return source.map((effect) => {
+      const type = String(effect?.type || effect?.effect || "").trim().toLowerCase();
+      if (!EFFECT_TYPES.has(type)) return null;
+      return {
+        type,
+        level: normalizeEffectLevel(effect?.level || effect?.intensity || node.effectIntensity),
+        durationMs: clampNumber(Number(effect?.durationMs ?? 520), 140, 1800),
+        delayMs: clampNumber(Number(effect?.delayMs ?? 0), 0, 1200),
+        target: normalizeVisualToken(effect?.target, "scene"),
+      };
+    }).filter(Boolean);
+  }
+
+  const SceneEffectController = {
+    timers: new Set(),
+
+    schedule(callback, delayMs) {
+      const timer = window.setTimeout(() => {
+        this.timers.delete(timer);
+        callback();
+      }, delayMs);
+      this.timers.add(timer);
+    },
+
+    clear() {
+      effectCleanupToken += 1;
+      this.timers.forEach((timer) => window.clearTimeout(timer));
+      this.timers.clear();
+      app?.querySelectorAll(".scene-effect-layer").forEach((layer) => {
+        layer.replaceChildren();
+      });
+      app?.querySelectorAll(".dorm-phone-layer").forEach((layer) => layer.classList.remove("is-ringing"));
+    },
+
+    play(node = {}) {
+      this.clear();
+      if (getReducedMotionPreference()) return;
+      const layer = app?.querySelector(".scene-effect-layer");
+      if (!layer) return;
+      const cleanupToken = effectCleanupToken;
+      let heavyUsed = false;
+      getNodeSceneEffects(node).forEach((effect) => {
+        if (effect.level === "heavy") {
+          if (heavyUsed) return;
+          heavyUsed = true;
+        }
+        const effectNode = document.createElement("div");
+        effectNode.className = `scene-effect effect-${effect.type} effect-level-${effect.level} effect-target-${effect.target}`;
+        effectNode.style.setProperty("--scene-effect-duration", `${effect.durationMs}ms`);
+        effectNode.style.setProperty("--scene-effect-delay", `${effect.delayMs}ms`);
+        const remove = () => effectNode.remove();
+        effectNode.addEventListener("animationend", remove, { once: true });
+        layer.appendChild(effectNode);
+        this.schedule(() => {
+          if (cleanupToken === effectCleanupToken) effectNode.classList.add("is-active");
+        }, effect.delayMs);
+        this.schedule(() => {
+          if (cleanupToken === effectCleanupToken) remove();
+        }, effect.delayMs + effect.durationMs + 80);
+      });
+    },
+  };
+
+  function clearInlineStoryFeedback() {
+    inlineFeedbackTimers.forEach((timer) => window.clearTimeout(timer));
+    inlineFeedbackTimers.clear();
+    app?.querySelector(".story-inline-feedback")?.replaceChildren();
+  }
+
+  function clearStoryTransientVisuals() {
+    SceneEffectController.clear();
+    clearInlineStoryFeedback();
+  }
 
   function getStoryStorageKeys(scriptId = state?.scriptId || "script_rain_call") {
     if (scriptId === "script_rain_call") return STORAGE_KEYS;
@@ -431,6 +545,145 @@
     `;
   }
 
+  function normalizeVisualToken(value, fallback = "center") {
+    const token = String(value || fallback).trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    return token || fallback;
+  }
+
+  function normalizeVisualPercent(value, fallback = 50) {
+    const numeric = Number.parseFloat(value);
+    return `${Number.isFinite(numeric) ? clampNumber(numeric, 0, 100) : fallback}%`;
+  }
+
+  function getVisualCharacterById(characterId, fallbackSpeaker = "旁白") {
+    const requested = String(characterId || "").trim();
+    const character = Object.values(VISUALS.characters || {}).find((item) => (
+      item?.id === requested || item?.name === requested
+    ));
+    return character || getVisualCharacter(requested || fallbackSpeaker);
+  }
+
+  function resolveVisualCastMember(member, fallbackSpeaker, node) {
+    const character = getVisualCharacterById(member?.characterId, fallbackSpeaker);
+    if (!character?.image || character.id === "narrator") return null;
+    const variant = member?.variant && character.variants?.[member.variant]
+      ? member.variant
+      : resolveCharacterVariant(character, String(member?.characterId || fallbackSpeaker || ""), node);
+    return {
+      character,
+      variant,
+      image: character.variants?.[variant] || character.image,
+      position: normalizeVisualToken(member?.position, "center"),
+      framing: normalizeVisualToken(member?.framing, "halfbody"),
+      mobileFraming: normalizeVisualToken(member?.mobileFraming || member?.framing, "bust"),
+      focusX: normalizeVisualPercent(member?.focusX, 50),
+      focusY: normalizeVisualPercent(member?.focusY, 16),
+      zIndex: clampNumber(Number(member?.zIndex ?? 3), 1, 12),
+    };
+  }
+
+  function renderVisualCast(node, speaker = node?.speaker) {
+    if (!Array.isArray(node?.visualCast) || node.visualCast.length === 0) {
+      return renderCharacterLayer(speaker, node);
+    }
+    const cast = node.visualCast
+      .map((member) => resolveVisualCastMember(member, speaker, node))
+      .filter(Boolean);
+    if (!cast.length) return renderCharacterLayer(speaker, node);
+    return `
+      <div class="vn-visual-cast ${cast.length > 1 ? "is-multi-cast" : "is-single-cast"}" aria-hidden="true">
+        ${cast.map((member) => `
+          <figure class="vn-visual-cast-member character-${escapeHTML(member.character.id)} variant-${escapeHTML(member.variant)} position-${escapeHTML(member.position)} framing-${escapeHTML(member.framing)} mobile-framing-${escapeHTML(member.mobileFraming)}" style="--cast-focus-x: ${member.focusX}; --cast-focus-y: ${member.focusY}; --cast-z-index: ${member.zIndex};" data-character-id="${escapeHTML(member.character.id)}" data-position="${escapeHTML(member.position)}" data-framing="${escapeHTML(member.framing)}" data-mobile-framing="${escapeHTML(member.mobileFraming)}">
+            <img src="${escapeHTML(member.image)}" alt="${escapeHTML(member.character.name)}" loading="eager" decoding="async" />
+          </figure>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function normalizePhoneScreen(phoneScreen = {}) {
+    const source = phoneScreen && typeof phoneScreen === "object" ? phoneScreen : {};
+    const kindAliases = {
+      group: "group",
+      "group-chat": "group",
+      private: "private",
+      "private-chat": "private",
+      call: "call",
+      "incoming-call": "call",
+      video: "video",
+      "video-call": "video",
+      team: "system",
+      system: "system",
+      "system-notice": "system",
+    };
+    const kind = kindAliases[source.kind] || kindAliases[source.view] || "system";
+    return {
+      ...source,
+      kind,
+      title: source.title || (kind === "group" ? "宿舍互助群" : kind === "private" ? "私聊" : "手机通知"),
+      time: source.time || "01:13",
+      battery: source.battery ?? 68,
+      signal: source.signal ?? 3,
+      messages: Array.isArray(source.messages) ? source.messages : [],
+      members: Array.isArray(source.members) ? source.members : [],
+      systemNotice: source.systemNotice || source.anomaly || "正在等待新的消息。",
+    };
+  }
+
+  function renderPhoneMedia(media, label = "") {
+    const source = typeof media === "string" ? media : media?.image || media?.thumbnail || media?.poster || media?.src || "";
+    return source
+      ? `<img class="dorm-phone-media" src="${escapeHTML(source)}" alt="${escapeHTML(label)}" loading="lazy" />`
+      : "";
+  }
+
+  function renderPhoneScreen(phoneScreen) {
+    if (!phoneScreen) return "";
+    const screen = normalizePhoneScreen(phoneScreen);
+    const signal = String(screen.signal).trim();
+    const signalLabel = /[\u3400-\u9FFF]/u.test(signal)
+      ? signal
+      : ({ full: "满格信号", strong: "信号良好", weak: "信号微弱", none: "无信号" })[signal.toLowerCase()]
+        || `${signal || "未知"}格信号`;
+    const status = `<span>${escapeHTML(screen.time)}</span><span>${escapeHTML(signalLabel)}</span><span>${escapeHTML(`${screen.battery}%`)}</span>`;
+    const messages = screen.messages.map((message) => {
+      const side = message?.side === "self" || message?.fromSelf ? "is-self" : "is-other";
+      const sender = message?.sender || message?.name || (side === "is-self" ? "我" : "群成员");
+      const text = message?.text || message?.content || "";
+      return `<article class="dorm-phone-message ${side}">
+        <strong>${escapeHTML(sender)}</strong>
+        <p>${escapeHTML(text)}</p>
+        ${renderPhoneMedia(message?.media || message?.image, `${sender}发送的图片`)}
+      </article>`;
+    }).join("");
+    const memberLabel = screen.members.length ? `${screen.members.length} 人` : screen.onlineCount ? `${screen.onlineCount} 人在线` : "";
+    let body = "";
+    if (screen.kind === "group" || screen.kind === "private") {
+      body = `<div class="dorm-phone-messages">${messages || `<p class="dorm-phone-notice">${escapeHTML(screen.systemNotice)}</p>`}</div>${screen.typing ? `<p class="dorm-phone-typing">${escapeHTML(screen.typing)}</p>` : ""}`;
+    } else if (screen.kind === "call") {
+      const call = screen.call || {};
+      body = `<div class="dorm-phone-call">
+        ${renderPhoneMedia(call.avatar || call.image, call.name || screen.title)}
+        <strong>${escapeHTML(call.name || screen.title)}</strong>
+        <p>${escapeHTML(call.status || screen.systemNotice || "来电中")}</p>
+      </div>`;
+    } else if (screen.kind === "video") {
+      const video = screen.video || {};
+      body = `<div class="dorm-phone-video">${renderPhoneMedia(video.thumbnail || video.image || screen.media, screen.title)}<p>${escapeHTML(video.caption || screen.systemNotice)}</p></div>`;
+    } else {
+      body = `<div class="dorm-phone-system"><strong>${escapeHTML(screen.title)}</strong><p>${escapeHTML(screen.systemNotice)}</p></div>`;
+    }
+    return `
+      <aside class="dorm-phone-layer dorm-phone-${escapeHTML(screen.kind)}" aria-label="手机界面：${escapeHTML(screen.title)}">
+        <div class="dorm-phone-screen">
+          <header class="dorm-phone-status">${status}</header>
+          <div class="dorm-phone-header"><strong>${escapeHTML(screen.title)}</strong><small>${escapeHTML(memberLabel)}</small></div>
+          ${body}
+        </div>
+      </aside>
+    `;
+  }
+
   function resolveCharacterVariant(character, rawSpeaker, node = {}) {
     const text = `${node.text || ""} ${rawSpeaker} ${node.scene || ""}`;
     const has = (...words) => words.some((word) => text.includes(word));
@@ -558,6 +811,7 @@
       fontScale: clampNumber(saved.fontScale ?? 1, 0.9, 1.22),
       deepDarkMode: saved.deepDarkMode === true,
       hideUi: saved.hideUi === true,
+      reducedMotion: saved.reducedMotion === true,
     };
   }
 
@@ -612,6 +866,7 @@
   function stopRealAudio(audio) {
     if (!audio) return;
     try {
+      audio.dataset.intentionalStop = "true";
       audio.pause();
       audio.currentTime = 0;
       audio.src = "";
@@ -731,7 +986,8 @@
     audio.dataset.sourceType = descriptor.sourceType || options.sourceType || "external-approved";
     logAudioEvent(options.category || "unknown", options.key || "", audio.dataset.sourceType, descriptor.src, "start", "", "start", options.reason || "node-enter");
     audio.addEventListener("error", () => {
-      console.warn(`[Second Life Audio] Unable to load ${descriptor.src}`);
+      if (audio.dataset.intentionalStop === "true") return;
+      if (getAudioSettings().devAudioDebug) console.warn(`[Second Life Audio] Unable to load ${descriptor.src}`);
       logAudioEvent(options.category || "unknown", options.key || "", audio.dataset.sourceType, descriptor.src, "silent-load-failure", "", "error", options.reason || "node-enter");
     }, { once: true });
     audio.addEventListener("ended", () => {
@@ -740,8 +996,9 @@
     const playPromise = audio.play();
     if (playPromise?.catch) {
       playPromise.catch((error) => {
-        console.warn(`[Second Life Audio] Unable to play ${descriptor.src}`, error);
-        logAudioEvent(options.category || "unknown", options.key || "", audio.dataset.sourceType, descriptor.src, "silent-play-failure", "", "error", options.reason || "node-enter");
+        const blockedByAutoplay = error?.name === "NotAllowedError";
+        if (!blockedByAutoplay && getAudioSettings().devAudioDebug) console.warn(`[Second Life Audio] Unable to play ${descriptor.src}`, error);
+        logAudioEvent(options.category || "unknown", options.key || "", audio.dataset.sourceType, descriptor.src, blockedByAutoplay ? "blocked-autoplay" : "silent-play-failure", "", blockedByAutoplay ? "autoplay" : "error", options.reason || "node-enter");
       });
     }
     return audio;
@@ -1007,6 +1264,11 @@
 
   function getStoryVoiceEntry(entryId, kind = "nodes") {
     return window.SECOND_LIFE_VOICE_MANIFEST?.stories?.[state?.scriptId || "script_rain_call"]?.[kind]?.[entryId] || null;
+  }
+
+  function getReducedMotionPreference() {
+    const systemReduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+    return systemReduce || getReadingSettings().reducedMotion === true;
   }
 
   function isDocumentedRuntimeCue(scriptId, cueId, cue, nodeId) {
@@ -1453,6 +1715,7 @@
   function loadProgress(scriptId = state?.scriptId || "script_rain_call") {
     const progress = readJSON(getStoryStorageKeys(scriptId).progress, null);
     if (!progress || progress.scriptId !== scriptId) return false;
+    clearStoryTransientVisuals();
     state = normalizeState(progress);
     return true;
   }
@@ -1568,11 +1831,15 @@
 
   function bindPageLifecycle() {
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden) stopNodeTransientAudio("backgrounded");
+      if (document.hidden) {
+        stopNodeTransientAudio("backgrounded");
+        clearStoryTransientVisuals();
+      }
     });
   }
 
   function showSplash() {
+    clearStoryTransientVisuals();
     setView(
       "splash",
       `
@@ -1602,6 +1869,7 @@
   }
 
   function showHall() {
+    clearStoryTransientVisuals();
     stopNodeTransientAudio("leave-game");
     stopBgm("return-to-archive");
     stopAmbience("return-to-archive");
@@ -1767,6 +2035,7 @@
 
 
   function startNewGame(scriptId = state?.scriptId || "script_rain_call") {
+    clearStoryTransientVisuals();
     stopNodeTransientAudio("restart");
     stopEntryMusic("story-start");
     visualState = { current: null };
@@ -1777,6 +2046,7 @@
   }
 
   function showGame() {
+    clearStoryTransientVisuals();
     stopEntryMusic("story-enter");
     activateStory(state.scriptId || "script_rain_call");
     const node = getNode();
@@ -1802,7 +2072,7 @@
     setView(
       "game",
       `
-      <section class="game-screen mobile-story-root ${sceneClass} ${gameModeClass} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
+      <section class="game-screen mobile-story-root ${sceneClass} ${gameModeClass} ${state.scriptId === "script_dormitory_rollcall" ? "is-dormitory-story" : ""} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""} ${getReducedMotionPreference() ? "is-reduced-motion" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
         <header class="game-topbar">
           <div class="game-title">
             <span>${escapeHTML(getScript().title)}</span>
@@ -1831,6 +2101,7 @@
         <div class="scene-stage">
           ${sceneMarkup}
         </div>
+        <aside class="story-inline-feedback" aria-live="polite" aria-atomic="false"></aside>
         <section class="dialogue-panel" data-dialogue-advance tabindex="0" aria-label="剧情对话，点击此处继续阅读">
           <div class="speaker-tag">${escapeHTML(getDialogueSpeakerLabel(node))}</div>
           <div class="dialogue-text">${formatText(node.text)}</div>
@@ -1849,6 +2120,7 @@
     renderNodeControls(node);
     bindDialogueAdvance(node);
     bindSceneVisualReadiness();
+    SceneEffectController.play(node);
     preloadUpcomingVisuals(node);
     autoSave();
     processFeedbackQueue();
@@ -2027,7 +2299,17 @@
     if (!Array.isArray(updates) || updates.length === 0) return;
     state.ruleStatuses ||= {};
     updates.forEach((update) => {
-      if (update?.ruleId && update.status) state.ruleStatuses[update.ruleId] = update.status;
+      if (!update?.ruleId || !update.status) return;
+      const previousStatus = state.ruleStatuses[update.ruleId];
+      state.ruleStatuses[update.ruleId] = update.status;
+      if (state.scriptId !== "script_dormitory_rollcall" || previousStatus === update.status) return;
+      const rule = (DATA.rules || []).find((item) => item.ruleId === update.ruleId);
+      enqueueFeedback({
+        type: "rule",
+        feedbackMode: "inline",
+        title: "规则状态更新",
+        text: `${rule?.title || update.ruleId}：${update.status}`,
+      });
     });
   }
 
@@ -2063,6 +2345,7 @@
     });
   }
   function goToNode(nodeId) {
+    clearStoryTransientVisuals();
     stopNodeTransientAudio("node-change");
     if (DATA.endings[nodeId]) {
       showEnding(nodeId);
@@ -2174,18 +2457,59 @@
 
   function enqueueFeedback(item, first = false) {
     if (!item) return;
+    const feedbackMode = item.feedbackMode || (state.scriptId === "script_dormitory_rollcall" ? "inline" : "modal");
+    const feedbackItem = { ...item, feedbackMode };
     if (first) {
-      feedbackQueue.unshift(item);
+      feedbackQueue.unshift(feedbackItem);
     } else {
-      feedbackQueue.push(item);
+      feedbackQueue.push(feedbackItem);
     }
     window.setTimeout(processFeedbackQueue, 0);
   }
 
+  function renderInlineStoryFeedback(item) {
+    const host = app.querySelector(".story-inline-feedback");
+    if (!host) return;
+    let title = item.title || "剧情记录";
+    let text = item.text || "已记入当前故事。";
+    if (item.type === "clue") {
+      const clue = DATA.clues[item.clueId];
+      title = clue?.isKey ? "发现关键线索" : "线索已归档";
+      text = clue ? `${clue.title}：${clue.description}` : text;
+    } else if (item.type === "choice") {
+      title = item.title || "选择已记录";
+      text = item.text || item.choiceText || text;
+    } else if (item.type === "chapter") {
+      title = item.title || "章节完成";
+      text = item.recap?.title || `下一章：${item.nextTitle || "继续前进"}`;
+    }
+    const feedback = document.createElement("article");
+    feedback.className = `story-inline-feedback-item tone-${normalizeVisualToken(item.tone, "neutral")}`;
+    feedback.innerHTML = `<strong>${escapeHTML(title)}</strong><p>${escapeHTML(text)}</p>`;
+    host.appendChild(feedback);
+    while (host.children.length > 3) host.firstElementChild?.remove();
+    window.requestAnimationFrame(() => feedback.classList.add("is-visible"));
+    const timer = window.setTimeout(() => {
+      inlineFeedbackTimers.delete(timer);
+      feedback.classList.remove("is-visible");
+      window.setTimeout(() => feedback.remove(), 180);
+    }, 4400);
+    inlineFeedbackTimers.add(timer);
+  }
+
   function processFeedbackQueue() {
-    if (!feedbackQueue.length || !modalRoot.classList.contains("hidden")) return;
+    if (!feedbackQueue.length) return;
     const item = feedbackQueue.shift();
     if (!item) return;
+    if (item.feedbackMode === "inline") {
+      renderInlineStoryFeedback(item);
+      window.setTimeout(processFeedbackQueue, 0);
+      return;
+    }
+    if (!modalRoot.classList.contains("hidden")) {
+      feedbackQueue.unshift(item);
+      return;
+    }
     if (item.type === "clue") {
       openClueRevealFeedback(item.clueId);
       return;
@@ -2254,6 +2578,7 @@
   }
 
   function showEnding(endingId) {
+    clearStoryTransientVisuals();
     stopNodeTransientAudio("ending");
     const ending = DATA.endings[endingId] || DATA.endings.ending_d || Object.values(DATA.endings)[0];
     state.endingId = ending.endingId;
@@ -2442,7 +2767,7 @@
   function renderKeyChoiceReport() {
     if (state.scriptId === "script_dormitory_rollcall") {
       const rows = (state.importantChoices || []).slice(-6).map((entry) => entry.text || entry.choiceText).filter(Boolean);
-      return (rows.length ? rows : ["No critical decision was recorded."]).map((row) => `<li>${escapeHTML(row)}</li>`).join("");
+      return (rows.length ? rows : ["尚未记录关键选择。"]).map((row) => `<li>${escapeHTML(row)}</li>`).join("");
     }
     const rows = [
       `许知晚：${state.flags.trusted_zhuwan_early || state.flags.verified_zhuwan_identity ? "选择接近并核验她" : "保持距离或尚未完全确认"}`,
@@ -2799,6 +3124,7 @@
         <label class="settings-toggle"><input type="checkbox" data-reading-setting="skipRead" ${settings.skipRead ? "checked" : ""} /> 跳过已读</label>
         <label class="settings-toggle"><input type="checkbox" data-reading-setting="deepDarkMode" ${settings.deepDarkMode ? "checked" : ""} /> 更深色阅读模式</label>
         <label class="settings-toggle"><input type="checkbox" data-reading-setting="hideUi" ${settings.hideUi ? "checked" : ""} /> 隐藏部分 UI 看画面</label>
+        <label class="settings-toggle"><input type="checkbox" data-reading-setting="reducedMotion" ${settings.reducedMotion ? "checked" : ""} /> 降低动态效果</label>
         <label class="settings-row">
           <span>字号</span>
           <input type="range" min="0.9" max="1.22" step="0.04" value="${settings.fontScale}" data-reading-setting="fontScale" />
@@ -2987,6 +3313,7 @@
         const slot = slots[index];
         if (!slot) return;
         openConfirm("读取存档", "读取后会覆盖当前临时进度。确认继续吗？", () => {
+          clearStoryTransientVisuals();
           stopNodeTransientAudio("load-save");
           state = normalizeState(slot);
           closeModal();
@@ -3231,6 +3558,7 @@
       if (!(target instanceof HTMLImageElement)) return;
       target.classList.add("is-missing");
       target.alt ||= "资源暂未加载";
+      target.closest(".scene-asset-shell")?.classList.add("has-missing-asset");
       target.removeAttribute("src");
     }, true);
   }
@@ -3285,22 +3613,57 @@
     const sources = [];
     const snapshot = getSceneSnapshot(node);
     if (snapshot.bg) sources.push(snapshot.bg);
-    const visualSpeaker = node.visualCharacter || node.speaker;
-    const character = getVisualCharacter(visualSpeaker);
-    if (character?.image && character.id !== "narrator") {
-      const variant = node.characterVariant && character.variants?.[node.characterVariant]
-        ? node.characterVariant
-        : resolveCharacterVariant(character, String(visualSpeaker || ""), node);
-      sources.push(character.variants?.[variant] || character.image);
+    if (Array.isArray(node.visualCast) && node.visualCast.length) {
+      node.visualCast
+        .map((member) => resolveVisualCastMember(member, node.speaker, node))
+        .filter(Boolean)
+        .forEach((member) => sources.push(member.image));
+    } else {
+      const visualSpeaker = node.visualCharacter || node.speaker;
+      const character = getVisualCharacter(visualSpeaker);
+      if (character?.image && character.id !== "narrator") {
+        const variant = node.characterVariant && character.variants?.[node.characterVariant]
+          ? node.characterVariant
+          : resolveCharacterVariant(character, String(visualSpeaker || ""), node);
+        sources.push(character.variants?.[variant] || character.image);
+      }
     }
+    getPhoneMediaSources(node.phoneScreen).forEach((source) => sources.push(source));
     return sources.filter(Boolean);
   }
 
+  function getPhoneMediaSources(phoneScreen) {
+    if (!phoneScreen || typeof phoneScreen !== "object") return [];
+    const sources = new Set();
+    const collect = (value) => {
+      if (!value || typeof value !== "object") return;
+      ["image", "src", "thumbnail", "poster", "avatar", "media"].forEach((key) => {
+      const source = value[key];
+        if (typeof source === "string") sources.add(source);
+        else if (source && typeof source === "object") collect(source);
+      });
+      ["messages", "members", "call", "video"].forEach((key) => {
+        const nested = value[key];
+        if (Array.isArray(nested)) nested.forEach(collect);
+        else collect(nested);
+      });
+    };
+    collect(phoneScreen);
+    return [...sources];
+  }
+
   function preloadVisualSource(src) {
-    if (!src || preloadedVisuals.has(src)) return;
-    preloadedVisuals.add(src);
+    if (!src || preloadedVisuals.has(src) || preloadingVisuals.has(src)) return;
+    preloadingVisuals.add(src);
     const image = new Image();
     image.decoding = "async";
+    image.addEventListener("load", () => {
+      preloadingVisuals.delete(src);
+      preloadedVisuals.add(src);
+    }, { once: true });
+    image.addEventListener("error", () => {
+      preloadingVisuals.delete(src);
+    }, { once: true });
     image.src = src;
   }
 
@@ -3312,7 +3675,7 @@
 
   function bindSceneVisualReadiness() {
     const shell = app.querySelector(".scene-asset-shell");
-    const images = [...app.querySelectorAll(".scene-bg-image, .vn-character-standee img")];
+    const images = [...app.querySelectorAll(".scene-bg-image, .vn-character-standee img, .vn-visual-cast-member img, .dorm-phone-media")];
     if (!shell || !images.length) return;
     shell.classList.add("is-asset-pending");
     let remaining = images.length;
@@ -3352,19 +3715,26 @@
       .map(({ id, prop }) => `<img class="scene-prop ${highlightedProps.has(id) ? "is-highlighted" : ""}" data-prop-id="${escapeHTML(id)}" src="${escapeHTML(prop.image)}" alt="${escapeHTML(prop.label)}" loading="lazy" />`)
       .join("");
     const hotspots = renderInvestigationHotspots(node);
+    const phoneScreen = node.phoneScreen || (state.scriptId === "script_dormitory_rollcall" ? node.phoneState : null);
+    const usePortraitMaster = state.scriptId === "script_dormitory_rollcall";
+    const sceneContent = `
+      ${showPreviousBackground ? `<img class="scene-bg-previous" src="${escapeHTML(previousVisual.bg)}" alt="" aria-hidden="true" />` : ""}
+      <img class="scene-bg-image" src="${escapeHTML(visual?.bg || "")}" alt="${escapeHTML(title)}" loading="eager" decoding="async" />
+      ${renderVisualCast(node, node.speaker)}
+      ${renderPhoneScreen(phoneScreen)}
+      <div class="scene-overlay-layer">${overlays}</div>
+      <div class="scene-prop-layer">${props}</div>
+      <div class="scene-effect-layer" aria-hidden="true"></div>
+      ${hotspots}
+      <div class="scene-focus-tag">${escapeHTML(renderFocusLabel(focus))}</div>
+      <div class="scene-asset-label">
+        <span>${escapeHTML(title)}</span>
+        <small>${escapeHTML(chapter?.title || node.chapterTitle || "")}</small>
+      </div>
+    `;
     return `
-      <div class="scene-asset-shell ${stateClass} focus-${escapeHTML(focus)} focus-target-${escapeHTML(focusTarget)} shot-${escapeHTML(shotTone)} ${isHeld ? "is-scene-held" : "is-scene-entering"}" data-scene-id="${escapeHTML(scene)}" data-visual-focus="${escapeHTML(focus)}" data-focus-target="${escapeHTML(focusTarget)}" data-transition-style="${escapeHTML(node.transitionStyle || "hold")}">
-        ${showPreviousBackground ? `<img class="scene-bg-previous" src="${escapeHTML(previousVisual.bg)}" alt="" aria-hidden="true" />` : ""}
-        <img class="scene-bg-image" src="${escapeHTML(visual?.bg || "")}" alt="${escapeHTML(title)}" loading="eager" decoding="async" />
-        ${renderCharacterLayer(node.speaker, node)}
-        <div class="scene-overlay-layer">${overlays}</div>
-        <div class="scene-prop-layer">${props}</div>
-        ${hotspots}
-        <div class="scene-focus-tag">${escapeHTML(renderFocusLabel(focus))}</div>
-        <div class="scene-asset-label">
-          <span>${escapeHTML(title)}</span>
-          <small>${escapeHTML(chapter?.title || node.chapterTitle || "")}</small>
-        </div>
+      <div class="scene-asset-shell ${usePortraitMaster ? "is-portrait-master" : ""} ${stateClass} focus-${escapeHTML(focus)} focus-target-${escapeHTML(focusTarget)} shot-${escapeHTML(shotTone)} ${isHeld ? "is-scene-held" : "is-scene-entering"}" data-scene-id="${escapeHTML(scene)}" data-visual-focus="${escapeHTML(focus)}" data-focus-target="${escapeHTML(focusTarget)}" data-transition-style="${escapeHTML(node.transitionStyle || "hold")}">
+        ${usePortraitMaster ? `<div class="scene-ambient-backdrop" aria-hidden="true"><img src="${escapeHTML(visual?.bg || "")}" alt="" /></div><div class="scene-portrait-master">${sceneContent}</div>` : sceneContent}
       </div>
     `;
   }

@@ -24,6 +24,9 @@ const checks = [
   ["node", ["scripts/check-mobile-fullscreen.mjs"]],
   ["node", ["scripts/check-mobile-release-experience.mjs"]],
   ["node", ["scripts/check-dormitory-story-flow.mjs"]],
+  ["node", ["scripts/check-dormitory-formal-rework.mjs"]],
+  ["node", ["scripts/check-dormitory-visual-world.mjs"]],
+  ["node", ["scripts/check-dormitory-experience-runtime.mjs"]],
   ["node", ["scripts/check-dormitory-ending-routes.mjs"]],
   ["node", ["scripts/check-dormitory-rule-board.mjs"]],
   ["node", ["scripts/check-dormitory-audio.mjs"]],
@@ -35,6 +38,11 @@ const checks = [
   ["node", ["scripts/check-voice-review-tool.mjs"]],
   ["node", ["scripts/check-dormitory-release-gates.mjs"]],
   ["node", ["scripts/check-dormitory-asset-library.mjs"]],
+  ["node", ["scripts/check-dormitory-copy-integrity.mjs"]],
+  ["node", ["scripts/check-dormitory-phone-timeline.mjs"]],
+  ["node", ["scripts/check-dormitory-effect-lifecycle.mjs"]],
+  ["node", ["scripts/check-dormitory-mobile-composition.mjs"]],
+  ["node", ["scripts/check-first-story-regression.mjs"]],
   ["node", ["scripts/check-multi-story.mjs"]],
 ];
 

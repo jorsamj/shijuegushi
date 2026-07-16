@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   window.SECOND_LIFE_VOICE_MANIFEST = {
-  "version": 5,
+  "version": 4,
   "stories": {
     "script_rain_call": {
       "nodes": {
@@ -850,11 +850,281 @@
       "cues": {}
     },
     "script_dormitory_rollcall": {
-      "nodes": {},
+      "nodes": {
+        "dorm_01_002": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_01_002__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "9fa6b511d0af941874f63132db5eb8542a3630558d383b2763be572a27b373fd",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts"
+        },
+        "dorm_01_006": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_01_006__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "78d7f82a1b0416c1799592c54895607d0e1b8f89a23b3ea8d235cad266bc8373",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts"
+        },
+        "dorm_02_002": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_02_002__chenlu.wav",
+          "roleId": "chenlu",
+          "textHash": "414b5f8acd84ae9a73e822ad3bc0b6b81c74fb9a6181a797f0470496621bc385",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_shuangkuaisisi_uranus_bigtts"
+        },
+        "dorm_02_007": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_02_007__zhaoqing.wav",
+          "roleId": "zhaoqing",
+          "textHash": "bf6a454363aa2e9e4aec956ca9ef053434161d93c0a7a13d90ce23ceba401eb5",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhishuaiyingzi_uranus_bigtts"
+        },
+        "dorm_03_002": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_03_002__chenlu.wav",
+          "roleId": "chenlu",
+          "textHash": "67613b3d3a09fd89d9cd514c5a31b6c250e20d9a3286b683e40dbb8360387886",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_shuangkuaisisi_uranus_bigtts"
+        },
+        "dorm_03_005": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_03_005__shenyan.wav",
+          "roleId": "shenyan",
+          "textHash": "bb91361cba3eb8e6e0fcce2203866822a6fd51e0535fe34d9d1ada79ce9cf5f4",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_wenjingmaomao_uranus_bigtts"
+        },
+        "dorm_04_009": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_04_009__zhouwanning.wav",
+          "roleId": "zhouwanning",
+          "textHash": "c84d863c47013a60fb75aabecc4f9c23d8dc4ef357c54755bbec90afae2f89e7",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_xiaohe_uranus_bigtts"
+        },
+        "dorm_05_002": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_05_002__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "0eb85d5711fccd38324663e2e61205d36df8605cdeafb90c56d80a068de57a5f",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts"
+        },
+        "dorm_05_003": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_05_003__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "b5681373786c9f4d161a50aa3918432ed361e65dc5934ba445f6652567c6f3d8",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts"
+        },
+        "dorm_05_005": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_05_005__manager_wu.wav",
+          "roleId": "manager_wu",
+          "textHash": "2c9368598feeb02ea8786edb53cc51cb31a0497ec933dda9f37eace76762e39d",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_wenroumama_uranus_bigtts"
+        },
+        "dorm_06_001": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_06_001__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "79f3690a9afe65264baf19e594cc18bd7f00db6755d5f1b9a778907bea344bf3",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts"
+        }
+      },
       "endings": {},
-      "cues": {},
-      "status": "story-restructured-awaiting-regeneration",
-      "note": "Dormitory story text was formally restructured; old generated voices are retained as asset archive only and are not referenced at runtime."
+      "cues": {
+        "dorm_broadcast_lockdown_rule": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_lockdown_rule__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "9fa6b511d0af941874f63132db5eb8542a3630558d383b2763be572a27b373fd",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_lockdown_rule",
+          "nodeId": "dorm_01_002",
+          "nodeIds": [
+            "dorm_01_002"
+          ]
+        },
+        "dorm_broadcast_cleanup_complete": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_cleanup_complete__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "78d7f82a1b0416c1799592c54895607d0e1b8f89a23b3ea8d235cad266bc8373",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_cleanup_complete",
+          "nodeId": "dorm_01_006",
+          "nodeIds": [
+            "dorm_01_006"
+          ]
+        },
+        "dorm_broadcast_full_name_call": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_full_name_call__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "ddee03428c58431e177ca52375a0a750e427cd9a1f122c08c118f2f33d757d2f",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_full_name_call",
+          "nodeId": "dorm_01_010",
+          "nodeIds": [
+            "dorm_01_010"
+          ]
+        },
+        "dorm_broadcast_hold_position": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_hold_position__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "0eb85d5711fccd38324663e2e61205d36df8605cdeafb90c56d80a068de57a5f",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_hold_position",
+          "nodeId": "dorm_05_002",
+          "nodeIds": [
+            "dorm_05_002"
+          ]
+        },
+        "dorm_broadcast_false_east_route": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_false_east_route__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "b5681373786c9f4d161a50aa3918432ed361e65dc5934ba445f6652567c6f3d8",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_false_east_route",
+          "nodeId": "dorm_05_003",
+          "nodeIds": [
+            "dorm_05_003"
+          ]
+        },
+        "dorm_broadcast_ninety_second_window": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_ninety_second_window__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "79f3690a9afe65264baf19e594cc18bd7f00db6755d5f1b9a778907bea344bf3",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_ninety_second_window",
+          "nodeId": "dorm_06_001",
+          "nodeIds": [
+            "dorm_06_001"
+          ]
+        },
+        "dorm_broadcast_final_rollcall_start": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_final_rollcall_start__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "abbff54604d4ce1362fc7e894555622ed149c4cd4e6b0d7b529ec41ecd290571",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_final_rollcall_start",
+          "nodeId": "dorm_06_008",
+          "nodeIds": [
+            "dorm_06_008"
+          ]
+        },
+        "dorm_broadcast_final_names": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_final_names__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "bba829455655a8afbc0b23dc299e8dcb3237c148aa6916aaa2a499a6e2cbbea1",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_final_names",
+          "nodeId": "dorm_06_009",
+          "nodeIds": [
+            "dorm_06_009"
+          ]
+        },
+        "dorm_broadcast_control_room_prompt": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_control_room_prompt__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "f5f0bed9bb07f3883543d55e4b39044291c9abc59c3531e632fe01b3cd37eee2",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_control_room_prompt",
+          "nodeId": "dorm_06_010",
+          "nodeIds": [
+            "dorm_06_010"
+          ]
+        },
+        "dorm_broadcast_gate_archive": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_gate_archive__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "eed96c97332fdc15936d46e6ee4265ce67c09dea35821df520a6b0d75e7fedeb",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_gate_archive",
+          "nodeId": "dorm_06_011",
+          "nodeIds": [
+            "dorm_06_011"
+          ]
+        },
+        "dorm_broadcast_ending_dawn": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_ending_dawn__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "855389b068d2eebadcce95c18f478272c16b99b1a05166c64cf6ab55112d4879",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_ending_dawn",
+          "nodeId": "dorm_ending_true_dawn",
+          "nodeIds": [
+            "dorm_ending_true_dawn"
+          ]
+        },
+        "dorm_broadcast_ending_legal_count": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_ending_legal_count__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "86e0d4b90263f044fea54f289ad3e3bcb52f10ddef6e1ebd3056cf218859ac88",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_ending_legal_count",
+          "nodeId": "dorm_ending_legal_count",
+          "nodeIds": [
+            "dorm_ending_legal_count"
+          ]
+        },
+        "dorm_broadcast_ending_second_xutang": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_ending_second_xutang__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "9edba9dbc3967fddcc49331c1fbead112cdc8b79edb30c9374592d4d5ebf47a4",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_ending_second_xutang",
+          "nodeId": "dorm_ending_second_xutang",
+          "nodeIds": [
+            "dorm_ending_second_xutang"
+          ]
+        },
+        "dorm_broadcast_ending_broken": {
+          "path": "assets/stories/dormitory-rollcall/audio/voice-original/dorm_dorm_broadcast_ending_broken__dorm_broadcast.wav",
+          "roleId": "dorm_broadcast",
+          "textHash": "fb504281540e6854e7dad226d78aabadcae1443ed431134b90647cc30f1ca3ac",
+          "provider": "volcengine-doubao-tts-unidirectional",
+          "model": "seed-tts-2.0",
+          "voiceType": "zh_female_zhixingnv_uranus_bigtts",
+          "cueId": "dorm_broadcast_ending_broken",
+          "nodeId": "dorm_ending_broken_broadcast",
+          "nodeIds": [
+            "dorm_ending_broken_broadcast"
+          ]
+        }
+      }
     }
   }
 };

@@ -24,20 +24,20 @@ const manifest = fs.readFileSync(manifestPath, "utf8");
 const signoff = fs.readFileSync(signoffPath, "utf8");
 const failures = [];
 const requiredIds = [
-  "dorm_broadcast_rollcall_start",
-  "dorm_broadcast_public_rules",
-  "dorm_broadcast_current_count",
-  "dorm_broadcast_bed_call",
-  "dorm_broadcast_unlisted_person",
-  "dorm_broadcast_deadline_0113",
-  "dorm_broadcast_correction_prompt",
-  "dorm_broadcast_restore_zhou",
-  "dorm_broadcast_restore_xutang",
-  "dorm_broadcast_rollcall_complete",
-  "dorm_broadcast_ending_a",
-  "dorm_broadcast_ending_b",
-  "dorm_broadcast_ending_c",
-  "dorm_broadcast_ending_d",
+  "dorm_broadcast_lockdown_rule",
+  "dorm_broadcast_cleanup_complete",
+  "dorm_broadcast_full_name_call",
+  "dorm_broadcast_hold_position",
+  "dorm_broadcast_false_east_route",
+  "dorm_broadcast_ninety_second_window",
+  "dorm_broadcast_final_rollcall_start",
+  "dorm_broadcast_final_names",
+  "dorm_broadcast_control_room_prompt",
+  "dorm_broadcast_gate_archive",
+  "dorm_broadcast_ending_dawn",
+  "dorm_broadcast_ending_legal_count",
+  "dorm_broadcast_ending_second_xutang",
+  "dorm_broadcast_ending_broken",
 ];
 
 const idsIn = (text) => [...text.matchAll(/`(dorm_broadcast_[a-z0-9_]+)`/g)].map((match) => match[1]);

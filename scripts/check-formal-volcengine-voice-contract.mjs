@@ -47,7 +47,12 @@ const stories = [
 ];
 const storiesById = new Map(stories);
 const dormitoryCueContract = new Map((dormitoryBroadcastContract?.cues || []).map((cue) => [cue.audioId, cue]));
-const dormitoryEndingBroadcastIds = new Set(["dorm_ending_a", "dorm_ending_b", "dorm_ending_c", "dorm_ending_d"]);
+const dormitoryEndingBroadcastIds = new Set([
+  "dorm_ending_true_dawn",
+  "dorm_ending_legal_count",
+  "dorm_ending_second_xutang",
+  "dorm_ending_broken_broadcast",
+]);
 const permittedDormitoryCueContentTypes = new Set(["narration", "system", "broadcast"]);
 
 function hash(text) {

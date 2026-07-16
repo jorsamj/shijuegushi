@@ -313,7 +313,19 @@ async function main() {
   manifest.model = model;
   manifest.storyId = story.id;
   manifest.entries ||= {};
+  if (!requestedIds.size) {
+    const targetIds = new Set(targets.map((target) => target.id));
+    for (const entryId of Object.keys(manifest.entries)) {
+      if (!targetIds.has(entryId)) delete manifest.entries[entryId];
+    }
+  }
   fs.mkdirSync(files.original, { recursive: true });
+  if (!requestedIds.size) {
+    const targetFiles = new Set(targets.map((target) => `${story.prefix}_${target.id}__${target.roleId}.wav`));
+    for (const fileName of fs.readdirSync(files.original)) {
+      if (fileName.endsWith(".wav") && !targetFiles.has(fileName)) fs.rmSync(path.join(files.original, fileName));
+    }
+  }
 
   let generated = 0;
   let skipped = 0;

@@ -10,6 +10,7 @@ const data = context.window.MIST_DORMITORY_DATA;
 const failures = [];
 const notes = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
+const audibleContentTypes = new Set(["dialogue", "broadcast", "phone", "recording", "inner-monologue"]);
 
 function allChoices(node) {
   return node.choices?.length ? node.choices : node.question?.choices || [];
@@ -62,8 +63,11 @@ for (const node of Object.values(nodes)) {
   assert(!/\b(TODO|TBD|placeholder|lorem ipsum)\b/i.test(node.text), `${node.nodeId} contains placeholder copy.`);
   assert(nodeEdges(node).every((nodeId) => nodeIds.has(nodeId)), `${node.nodeId} points to a missing node.`);
   assert(!/\b(Chen Lu|Shen Yan|Broadcast|Manager Wu|Xu Tang|Lin Sui|Zhou Wanning|Zhao Qing)\b/.test(JSON.stringify(node)), `${node.nodeId} contains a player-visible English character name.`);
-  if (node.contentType === "dialogue" || node.contentType === "broadcast" || node.contentType === "recording") {
-    assert(node.speaker !== "旁白" && node.voiceEnabled === true && node.spokenText === node.text, `${node.nodeId} audible node must map exactly to its spoken text.`);
+  if (audibleContentTypes.has(node.contentType)) {
+    const hasActiveVoice = node.voiceEnabled === true && node.spokenText === node.text;
+    const hasPendingVoice = node.voiceEnabled === false && node.voiceStatus === "pending-regeneration" && !node.spokenText;
+    assert(node.speaker !== "旁白", `${node.nodeId} audible content must identify its in-world speaker.`);
+    assert(hasActiveVoice || hasPendingVoice, `${node.nodeId} audible content must have an exact active voice mapping or an explicit pending-regeneration state.`);
   }
   if (node.contentType === "narration" || node.contentType === "system") {
     assert(node.voiceEnabled === false && !node.spokenText, `${node.nodeId} ${node.contentType} must remain silent.`);

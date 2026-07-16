@@ -8,14 +8,16 @@ const root = path.resolve(import.meta.dirname, "..");
 const provider = "volcengine-doubao-tts-unidirectional";
 const model = "seed-tts-2.0";
 const dryRun = process.argv.includes("--dry-run");
+const selectedStoryId = process.argv.find((argument) => argument.startsWith("--story="))?.slice(8) || "";
 const audibleTypes = new Set(["dialogue", "broadcast", "phone", "recording", "inner-monologue"]);
 const stories = [
   { scriptId: "script_rain_call", dataFile: "story-data.js", global: "MIST_DATA", audioRoot: "assets/stories/rain-call/audio" },
   { scriptId: "script_dormitory_rollcall", dataFile: "assets/stories/dormitory-rollcall/story-data.js", global: "MIST_DORMITORY_DATA", audioRoot: "assets/stories/dormitory-rollcall/audio" },
 ];
+const selectedStories = selectedStoryId ? stories.filter((story) => story.scriptId === selectedStoryId) : stories;
 
-if (process.argv.some((argument) => argument !== process.argv[0] && argument !== process.argv[1] && argument !== "--dry-run")) {
-  throw new Error("Usage: node scripts/promote-volcengine-voice-delivery.mjs [--dry-run]");
+if (!selectedStories.length || process.argv.some((argument) => argument !== process.argv[0] && argument !== process.argv[1] && argument !== "--dry-run" && !argument.startsWith("--story="))) {
+  throw new Error("Usage: node scripts/promote-volcengine-voice-delivery.mjs [--dry-run] [--story=script_rain_call|script_dormitory_rollcall]");
 }
 
 const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
@@ -72,7 +74,7 @@ function validFormalEntry(entry, sourceRoot, expectedSpeech) {
 function validateStaging() {
   const failures = [];
   const prepared = [];
-  for (const story of stories) {
+  for (const story of selectedStories) {
     const stageDirectory = path.join(root, story.audioRoot, "voice-staging");
     const stageManifest = path.join(root, story.audioRoot, "voice-staging-manifest.json");
     if (!fs.existsSync(stageManifest)) {

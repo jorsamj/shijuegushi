@@ -18,6 +18,7 @@
       script_dormitory_rollcall: {
         speakerAliases: {
           "\u5e7f\u64ad": "dorm_broadcast",
+          "\u5bbf\u820d\u5e7f\u64ad": "dorm_broadcast",
           "\u9648\u9732": "chenlu",
           "\u6c88\u598d": "shenyan",
           "\u5434\u963f\u59e8": "manager_wu",

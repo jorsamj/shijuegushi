@@ -51,10 +51,10 @@ for (const entry of usedKeys) {
 const broadcastNodes = Object.values(data?.nodes || {}).filter((node) => node.contentType === "broadcast" || node.speaker === "宿舍广播");
 assert(broadcastNodes.length > 0, "Dormitory story must retain broadcast nodes.");
 assert(broadcastNodes.every((node) => !node.voiceAudio && !node.narrationAudio && !node.voiceStinger), "Broadcast must never fall back to browser or role-play voice audio.");
-assert(data?.audioProduction?.status === "story-restructured-needs-dormitory-voice-regeneration", "Dormitory audio production must explicitly mark voice regeneration as pending after restructuring.");
-assert(data?.audioProduction?.broadcastVoiceStatus === "stale-after-story-restructure", "Broadcast voice status must mark old masters stale after restructuring.");
-assert(Object.keys(runtime?.stories?.script_dormitory_rollcall?.nodes || {}).length === 0, "Dormitory runtime must not reference stale dialogue voices.");
-assert(Object.keys(runtime?.stories?.script_dormitory_rollcall?.cues || {}).length === 0, "Dormitory runtime must not reference stale broadcast cues.");
+assert(data?.audioProduction?.status === "formal-voice-delivered-awaiting-manual-signoff", "Dormitory audio production must record the promoted formal delivery.");
+assert(data?.audioProduction?.broadcastVoiceStatus === "volcengine-generated-awaiting-listening-signoff", "Broadcast voice status must remain pending until real listening sign-off.");
+assert(Object.keys(runtime?.stories?.script_dormitory_rollcall?.nodes || {}).length === 11, "Dormitory runtime must reference all 11 current audible story nodes.");
+assert(Object.keys(runtime?.stories?.script_dormitory_rollcall?.cues || {}).length === 14, "Dormitory runtime must reference all 14 current broadcast cues.");
 
 const archivedBroadcastEntries = Object.values(archiveVoiceManifest.entries || {}).filter((entry) => entry.kind === "broadcast-cue");
 assert(archivedBroadcastEntries.length === 14, `Archived broadcast delivery should retain 14 rollback cues; got ${archivedBroadcastEntries.length}.`);
@@ -71,4 +71,4 @@ if (failures.length) {
 
 console.log("Dormitory audio check passed.");
 console.log(`approved-cues=${[...usedKeys].sort().join(",")}`);
-console.log(`voiceStatus=${data.audioProduction.broadcastVoiceStatus}; archivedBroadcastCues=${archivedBroadcastEntries.length}`);
+console.log(`voiceStatus=${data.audioProduction.broadcastVoiceStatus}; activeBroadcastCues=${Object.keys(runtime?.stories?.script_dormitory_rollcall?.cues || {}).length}`);
