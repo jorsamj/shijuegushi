@@ -20,4 +20,3 @@ proposed canon changes for explicit approval before implementing them.
 Do not mix legacy characters, rules, clues, images, voices, branches, or endings
 into the new baseline. Keep `Rainy Night Call` runtime behavior isolated unless
 a task explicitly asks for a shared-engine compatibility fix.
-
