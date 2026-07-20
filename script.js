@@ -14,16 +14,19 @@
   let VISUALS = RAIN_VISUALS;
   const DORMITORY_DATA = window.MIST_DORMITORY_DATA;
   const DORMITORY_VISUALS = window.DORMITORY_ROLLCALL_ASSET_MAP || {};
+  const NAMEFLOOR_DATA = window.MIST_DORMITORY_NAMEFLOOR_DATA;
+  const NAMEFLOOR_VISUALS = window.DORMITORY_NAMEFLOOR_ASSET_MAP || {};
   const STORY_DATASETS = {
     script_rain_call: RAIN_DATA,
     ...(DORMITORY_DATA ? { script_dormitory_rollcall: DORMITORY_DATA } : {}),
+    ...(NAMEFLOOR_DATA ? { script_dormitory_namefloor: NAMEFLOOR_DATA } : {}),
   };
   const STORY_CATALOG = {
-    series: [...(RAIN_DATA?.series || []), ...(DORMITORY_DATA?.series ? [DORMITORY_DATA.series] : [])],
-    scripts: [...(RAIN_DATA?.scripts || []), ...(DORMITORY_DATA?.script ? [DORMITORY_DATA.script] : [])],
+    series: [...(RAIN_DATA?.series || []), ...(NAMEFLOOR_DATA?.series ? [NAMEFLOOR_DATA.series] : DORMITORY_DATA?.series ? [DORMITORY_DATA.series] : [])],
+    scripts: [...(RAIN_DATA?.scripts || []), ...(NAMEFLOOR_DATA?.script ? [NAMEFLOOR_DATA.script] : DORMITORY_DATA?.script ? [DORMITORY_DATA.script] : [])],
   };
 
-  function createDormitoryVisualAdapter(map) {
+  function createDormitoryVisualAdapter(map, dataset = DORMITORY_DATA) {
     const archiveImage = map?.endings?.sharedArchive || "";
     return {
       scenes: map?.scenes || {},
@@ -34,13 +37,14 @@
       props: {},
       audio: map?.audio || { scenes: {} },
       covers: { home: map?.covers?.story || "" },
-      endings: Object.fromEntries(Object.keys(DORMITORY_DATA?.endings || {}).map((id) => [id, { image: map?.endings?.[id] || archiveImage }])),
+      endings: Object.fromEntries(Object.keys(dataset?.endings || {}).map((id) => [id, { image: map?.endings?.[id] || archiveImage }])),
     };
   }
 
   const STORY_VISUALS = {
     script_rain_call: RAIN_VISUALS,
-    ...(DORMITORY_DATA ? { script_dormitory_rollcall: createDormitoryVisualAdapter(DORMITORY_VISUALS) } : {}),
+    ...(DORMITORY_DATA ? { script_dormitory_rollcall: createDormitoryVisualAdapter(DORMITORY_VISUALS, DORMITORY_DATA) } : {}),
+    ...(NAMEFLOOR_DATA ? { script_dormitory_namefloor: createDormitoryVisualAdapter(NAMEFLOOR_VISUALS, NAMEFLOOR_DATA) } : {}),
   };
 
   const STORAGE_KEYS = {
@@ -142,20 +146,25 @@
     endingReport: ENDING_REPORT,
     relationshipDefs: RELATIONSHIP_DEFS,
   };
-  const DORMITORY_PROFILE = DORMITORY_DATA?.profile
-    ? {
-        coreClueIds: [...DORMITORY_DATA.profile.coreClueIds],
-        focusedClueReveals: new Set(DORMITORY_DATA.profile.coreClueIds),
-        clueFilters: ["全部", "关键线索", "广播", "登记", "视频", "镜面", "旧案"],
+  function createDatasetProfile(dataset) {
+    return dataset?.profile
+      ? {
+        coreClueIds: [...(dataset.profile.coreClueIds || [])],
+        focusedClueReveals: new Set(dataset.profile.focusedClueReveals || dataset.profile.coreClueIds || []),
+        clueFilters: dataset.profile.clueFilters || ["全部", "关键线索"],
         milestones: [],
         achievements: [],
-        endingReport: Object.fromEntries(Object.values(DORMITORY_DATA.endings).map((ending) => [ending.endingId, { label: ending.title, type: ending.report?.type || "宿舍记录", comment: ending.report?.pathSummary || "这份名单决定谁会被保留下来。" }])),
-        relationshipDefs: DORMITORY_DATA.profile.relationshipDefs || [],
-        evidenceLinks: DORMITORY_DATA.profile.evidenceLinks || [],
-        endingResolver: DORMITORY_DATA.profile.endingResolver,
-        deductionTotal: DORMITORY_DATA.profile.deductionTotal || 2,
+        endingReport: Object.fromEntries(Object.values(dataset.endings || {}).map((ending) => [ending.endingId, { label: ending.title, type: ending.report?.type || "宿舍记录", comment: ending.report?.pathSummary || "这份记录仍在等待核验。" }])),
+        relationshipDefs: dataset.profile.relationshipDefs || [],
+        evidenceLinks: dataset.profile.evidenceLinks || [],
+        endingResolver: dataset.profile.endingResolver,
+        deductionTotal: dataset.profile.deductionTotal || 0,
+        capabilities: dataset.profile.capabilities || {},
       }
-    : null;
+      : null;
+  }
+  const DORMITORY_PROFILE = createDatasetProfile(DORMITORY_DATA);
+  const NAMEFLOOR_PROFILE = createDatasetProfile(NAMEFLOOR_DATA);
   let activeProfile = RAIN_PROFILE;
 
   function getDataset(scriptId = "script_rain_call") {
@@ -163,7 +172,17 @@
   }
 
   function getProfile(scriptId = "script_rain_call") {
-    return scriptId === "script_dormitory_rollcall" && DORMITORY_PROFILE ? DORMITORY_PROFILE : RAIN_PROFILE;
+    if (scriptId === "script_dormitory_rollcall" && DORMITORY_PROFILE) return DORMITORY_PROFILE;
+    if (scriptId === "script_dormitory_namefloor" && NAMEFLOOR_PROFILE) return NAMEFLOOR_PROFILE;
+    return RAIN_PROFILE;
+  }
+
+  function hasStoryCapability(capability, scriptId = state?.scriptId || "script_rain_call") {
+    return getProfile(scriptId)?.capabilities?.[capability] === true;
+  }
+
+  function isDormitoryStory(scriptId = state?.scriptId || "script_rain_call") {
+    return scriptId === "script_dormitory_rollcall" || scriptId === "script_dormitory_namefloor";
   }
 
   function activateStory(scriptId = "script_rain_call") {
@@ -193,19 +212,21 @@
   let feedbackQueue = [];
   let visualState = { current: null };
   let nodeActionLocked = false;
+  let activeTimedChoice = null;
   let immersiveAttempted = false;
   let dialoguePointerStart = null;
   const preloadedVisuals = new Set();
   const preloadingVisuals = new Set();
   const inlineFeedbackTimers = new Set();
   let effectCleanupToken = 0;
-  const EFFECT_LEVELS = new Set(["light", "medium", "heavy"]);
+  const EFFECT_LEVELS = new Set(["light", "medium", "heavy", "severe"]);
   const EFFECT_TYPES = new Set([
     "lights-out",
     "hallway-shake",
     "blood-edge",
     "door-impact",
     "signal-tear",
+    "signal-glitch",
     "phone-vibration",
     "phone-vibrate",
     "noise",
@@ -224,6 +245,11 @@
     "bad-ending",
     "stairwell-flicker",
     "final-freeze",
+    "light-flicker",
+    "focus-pulse",
+    "scene-shake",
+    "face-dislocate",
+    "name-glitch",
   ]);
   let state = createInitialState();
   let audioState = {
@@ -339,6 +365,7 @@
   function clearStoryTransientVisuals() {
     SceneEffectController.clear();
     clearInlineStoryFeedback();
+    stopTimedChoice({ preserve: true });
   }
 
   function getStoryStorageKeys(scriptId = state?.scriptId || "script_rain_call") {
@@ -379,6 +406,8 @@
       checkedHotspots: [],
       evidenceConnections: [],
       ruleStatuses: {},
+      storyState: structuredCloneSafe(DATA.defaultStoryState || {}),
+      timedChoices: {},
       endingCollection: loadStoredCollection(scriptId).endings,
       galleryUnlocks: loadStoredCollection(scriptId).gallery,
       readNodes: [],
@@ -471,6 +500,16 @@
     return STORY_CATALOG.scripts.find((item) => item.scriptId === scriptId);
   }
 
+  function structuredCloneSafe(value) {
+    try {
+      return typeof structuredClone === "function"
+        ? structuredClone(value)
+        : JSON.parse(JSON.stringify(value));
+    } catch (error) {
+      return {};
+    }
+  }
+
   function getSeries(seriesId = "series_rain_call") {
     return STORY_CATALOG.series.find((item) => item.seriesId === seriesId);
   }
@@ -513,13 +552,13 @@
   function renderCharacterLayer(speaker, node) {
     const visualSpeaker = node?.visualCharacter || speaker;
     const character = getVisualCharacter(visualSpeaker);
-    if (!character?.image || character.id === "narrator") return "";
+    if ((!character?.image && !character?.sampleStyle) || character.id === "narrator") return "";
     const rawSpeaker = String(visualSpeaker || speaker || "");
     const explicitVariant = node?.characterVariant;
     const variant = explicitVariant && character.variants?.[explicitVariant]
       ? explicitVariant
       : resolveCharacterVariant(character, rawSpeaker, node);
-    const image = character.variants?.[variant] || character.image;
+    const image = character.variants?.[variant] || character.image || "";
     const mode = rawSpeaker.includes("声音")
       ? "is-memory"
       : rawSpeaker.includes("消息")
@@ -535,7 +574,9 @@
     return `
       <div class="vn-character-layer character-${escapeHTML(character.id)} variant-${escapeHTML(variant)} scale-${escapeHTML(scale)} position-${escapeHTML(position)} framing-${escapeHTML(framing)} focus-${escapeHTML(focus)} ${headSafe ? "head-safe" : ""} mood-${escapeHTML(mood)} ${mode}" data-speaker="${escapeHTML(character.name)}" data-scene="${escapeHTML(scene)}">
         <figure class="vn-character-standee">
-          <img src="${escapeHTML(image)}" alt="${escapeHTML(character.name)}" loading="eager" decoding="async" />
+          ${image
+            ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(character.name)}" loading="eager" decoding="async" />`
+            : `<div class="sample-character-figure sample-character-${escapeHTML(character.sampleStyle || character.id)}" role="img" aria-label="${escapeHTML(character.name)}样板构图"><span class="sample-character-head"></span><span class="sample-character-body"></span><span class="sample-character-light"></span></div>`}
           <figcaption>
             <strong>${escapeHTML(character.name)}</strong>
             <span>${escapeHTML(character.role)}</span>
@@ -565,14 +606,14 @@
 
   function resolveVisualCastMember(member, fallbackSpeaker, node) {
     const character = getVisualCharacterById(member?.characterId, fallbackSpeaker);
-    if (!character?.image || character.id === "narrator") return null;
+    if ((!character?.image && !character?.sampleStyle) || character.id === "narrator") return null;
     const variant = member?.variant && character.variants?.[member.variant]
       ? member.variant
       : resolveCharacterVariant(character, String(member?.characterId || fallbackSpeaker || ""), node);
     return {
       character,
       variant,
-      image: character.variants?.[variant] || character.image,
+      image: character.variants?.[variant] || character.image || "",
       position: normalizeVisualToken(member?.position, "center"),
       framing: normalizeVisualToken(member?.framing, "halfbody"),
       mobileFraming: normalizeVisualToken(member?.mobileFraming || member?.framing, "bust"),
@@ -594,7 +635,9 @@
       <div class="vn-visual-cast ${cast.length > 1 ? "is-multi-cast" : "is-single-cast"}" aria-hidden="true">
         ${cast.map((member) => `
           <figure class="vn-visual-cast-member character-${escapeHTML(member.character.id)} variant-${escapeHTML(member.variant)} position-${escapeHTML(member.position)} framing-${escapeHTML(member.framing)} mobile-framing-${escapeHTML(member.mobileFraming)}" style="--cast-focus-x: ${member.focusX}; --cast-focus-y: ${member.focusY}; --cast-z-index: ${member.zIndex};" data-character-id="${escapeHTML(member.character.id)}" data-position="${escapeHTML(member.position)}" data-framing="${escapeHTML(member.framing)}" data-mobile-framing="${escapeHTML(member.mobileFraming)}">
-            <img src="${escapeHTML(member.image)}" alt="${escapeHTML(member.character.name)}" loading="eager" decoding="async" />
+            ${member.image
+              ? `<img src="${escapeHTML(member.image)}" alt="${escapeHTML(member.character.name)}" loading="eager" decoding="async" />`
+              : `<div class="sample-character-figure sample-character-${escapeHTML(member.character.sampleStyle || member.character.id)}" role="img" aria-label="${escapeHTML(member.character.name)}样板构图"><span class="sample-character-head"></span><span class="sample-character-body"></span><span class="sample-character-light"></span></div>`}
           </figure>
         `).join("")}
       </div>
@@ -626,6 +669,8 @@
       signal: source.signal ?? 3,
       messages: Array.isArray(source.messages) ? source.messages : [],
       members: Array.isArray(source.members) ? source.members : [],
+      actions: Array.isArray(source.actions) ? source.actions : [],
+      rules: Array.isArray(source.rules) ? source.rules : [],
       systemNotice: source.systemNotice || source.anomaly || "正在等待新的消息。",
     };
   }
@@ -641,7 +686,7 @@
     if (!phoneScreen) return "";
     const screen = normalizePhoneScreen(phoneScreen);
     const signal = String(screen.signal).trim();
-    const signalLabel = /[\u3400-\u9FFF]/u.test(signal)
+    const signalLabel = /[\u3400-\u9FFF]/u.test(signal) || /^(?:\dG|LTE|Wi-?Fi)$/i.test(signal)
       ? signal
       : ({ full: "满格信号", strong: "信号良好", weak: "信号微弱", none: "无信号" })[signal.toLowerCase()]
         || `${signal || "未知"}格信号`;
@@ -656,9 +701,19 @@
         ${renderPhoneMedia(message?.media || message?.image, `${sender}发送的图片`)}
       </article>`;
     }).join("");
-    const memberLabel = screen.members.length ? `${screen.members.length} 人` : screen.onlineCount ? `${screen.onlineCount} 人在线` : "";
+    const memberLabel = Number.isFinite(Number(screen.memberCount))
+      ? `${Number(screen.memberCount)} 人`
+      : screen.members.length
+        ? `${screen.members.length} 人`
+        : screen.onlineCount
+          ? `${screen.onlineCount} 人在线`
+          : "";
     let body = "";
-    if (screen.kind === "group" || screen.kind === "private") {
+    if (screen.view === "rules") {
+      body = `<div class="dorm-phone-rules">${screen.rules.map((rule) => `<article><strong>${escapeHTML(`${rule.number}. ${rule.title}`)}</strong><p>${escapeHTML(rule.text)}</p></article>`).join("")}</div>`;
+    } else if (screen.view === "members") {
+      body = `<div class="dorm-phone-members">${screen.members.map((member) => `<div class="dorm-phone-member ${member.isBlackAvatar ? "is-black-avatar" : ""} ${member.isGlitched ? "is-glitched" : ""}"><span class="dorm-phone-avatar" aria-hidden="true"></span><strong>${escapeHTML(member.name || "未命名成员")}</strong>${member.isOnline ? "<small>在线</small>" : ""}</div>`).join("")}</div>`;
+    } else if (screen.kind === "group" || screen.kind === "private") {
       body = `<div class="dorm-phone-messages">${messages || `<p class="dorm-phone-notice">${escapeHTML(screen.systemNotice)}</p>`}</div>${screen.typing ? `<p class="dorm-phone-typing">${escapeHTML(screen.typing)}</p>` : ""}`;
     } else if (screen.kind === "call") {
       const call = screen.call || {};
@@ -679,6 +734,7 @@
           <header class="dorm-phone-status">${status}</header>
           <div class="dorm-phone-header"><strong>${escapeHTML(screen.title)}</strong><small>${escapeHTML(memberLabel)}</small></div>
           ${body}
+          ${screen.actions.length ? `<nav class="dorm-phone-actions" aria-label="手机操作">${screen.actions.map((action) => `<button type="button" data-phone-action-id="${escapeHTML(action.actionId)}">${escapeHTML(action.label)}</button>`).join("")}</nav>` : ""}
         </div>
       </aside>
     `;
@@ -1757,6 +1813,11 @@
       checkedHotspots: Array.isArray(input.checkedHotspots) ? input.checkedHotspots : [],
       evidenceConnections: Array.isArray(input.evidenceConnections) ? input.evidenceConnections : [],
       ruleStatuses: input.ruleStatuses && typeof input.ruleStatuses === "object" ? input.ruleStatuses : {},
+      storyState: {
+        ...structuredCloneSafe(DATA.defaultStoryState || {}),
+        ...(input.storyState && typeof input.storyState === "object" ? structuredCloneSafe(input.storyState) : {}),
+      },
+      timedChoices: input.timedChoices && typeof input.timedChoices === "object" ? { ...input.timedChoices } : {},
       endingCollection: Array.from(new Set([...(loadStoredCollection(scriptId).endings || []), ...((Array.isArray(input.endingCollection) && input.endingCollection) || [])])),
       galleryUnlocks: Array.from(new Set([...(loadStoredCollection(scriptId).gallery || []), ...((Array.isArray(input.galleryUnlocks) && input.galleryUnlocks) || [])])),
       readNodes: Array.isArray(input.readNodes) ? input.readNodes : [],
@@ -1776,6 +1837,8 @@
       checkedHotspots: [...(state.checkedHotspots || [])],
       evidenceConnections: [...(state.evidenceConnections || [])],
       ruleStatuses: { ...(state.ruleStatuses || {}) },
+      storyState: structuredCloneSafe(state.storyState || {}),
+      timedChoices: { ...(state.timedChoices || {}) },
       endingCollection: [...(state.endingCollection || [])],
       galleryUnlocks: [...(state.galleryUnlocks || [])],
       readNodes: [...(state.readNodes || [])],
@@ -1834,6 +1897,10 @@
       if (document.hidden) {
         stopNodeTransientAudio("backgrounded");
         clearStoryTransientVisuals();
+        autoSave();
+      } else if (currentView === "game") {
+        const node = getNode();
+        if (node?.timedChoice && !activeTimedChoice && !nodeActionLocked) startTimedChoice(node);
       }
     });
   }
@@ -2065,6 +2132,7 @@
     const chapter = getChapter(node.chapterId);
     const sceneClass = `scene-${node.scene || "rental_room_rain_night"}`;
     const gameModeClass = (node.type === "choice" || node.type === "deduction") ? "is-choice-node" : "is-reading-node";
+    const phoneModeClass = node.phoneScreen ? "is-phone-node" : "";
     const readingSettings = getReadingSettings();
     const previousVisual = visualState.current;
     const sceneMarkup = renderSceneVisual(node, previousVisual);
@@ -2072,7 +2140,7 @@
     setView(
       "game",
       `
-      <section class="game-screen mobile-story-root ${sceneClass} ${gameModeClass} ${state.scriptId === "script_dormitory_rollcall" ? "is-dormitory-story" : ""} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""} ${getReducedMotionPreference() ? "is-reduced-motion" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
+      <section class="game-screen mobile-story-root ${sceneClass} ${gameModeClass} ${phoneModeClass} ${isDormitoryStory() ? "is-dormitory-story" : ""} ${hasStoryCapability("interactivePhone") ? "is-namefloor-slice" : ""} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""} ${getReducedMotionPreference() ? "is-reduced-motion" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
         <header class="game-topbar">
           <div class="game-title">
             <span>${escapeHTML(getScript().title)}</span>
@@ -2081,7 +2149,7 @@
           ${renderTruthMeter()}
           <button class="game-menu-button" type="button" data-tool="menu" aria-expanded="false">菜单</button>
           <nav class="toolbox" aria-label="游戏工具栏">
-            ${state.scriptId === "script_dormitory_rollcall" ? `<button type="button" data-tool="rules">规则</button>` : ""}
+            ${isDormitoryStory() || hasStoryCapability("rulesPanel") ? `<button type="button" data-tool="rules">规则</button>` : ""}
             <button type="button" data-tool="clues" class="clue-tool ${state.unreadClues.length ? "has-unread" : ""}">
               线索 <span>${state.clues.length}/${getTotalClueCount()}</span>
             </button>
@@ -2107,7 +2175,6 @@
           <div class="dialogue-text">${formatText(node.text)}</div>
           <div id="choiceArea" class="choice-area"></div>
           <div class="dialogue-actions">
-            <span class="node-id" aria-hidden="true">${escapeHTML(node.nodeId)}</span>
             <button id="continueButton" class="continue-button" type="button">继续</button>
           </div>
         </section>
@@ -2154,6 +2221,40 @@
     const choiceArea = document.getElementById("choiceArea");
     nodeActionLocked = false;
 
+    if (node.type === "phone-interaction" && node.phoneScreen?.actions?.length) {
+      continueButton.classList.add("hidden");
+      bindPhoneInteractions(node);
+      return;
+    }
+
+    if (node.phoneScreen && node.nextNodeId && !["choice", "deduction"].includes(node.type)) {
+      continueButton.classList.add("hidden");
+      const phoneScreen = app.querySelector(".dorm-phone-screen");
+      if (phoneScreen) {
+        const actionTray = document.createElement("nav");
+        actionTray.className = "dorm-phone-actions dorm-phone-continue-actions";
+        actionTray.setAttribute("aria-label", "手机剧情操作");
+        actionTray.innerHTML = '<button type="button" data-phone-continue>继续</button>';
+        phoneScreen.append(actionTray);
+        actionTray.querySelector("[data-phone-continue]")?.addEventListener("click", (event) => {
+          advanceStoryNode(node, event.currentTarget);
+        });
+      }
+      return;
+    }
+
+    if (node.type === "chapter-ending") {
+      continueButton.textContent = "保存并返回书架";
+      continueButton.addEventListener("click", () => {
+        if (!lockNodeAction(continueButton)) return;
+        state.completedObjectives ||= [];
+        if (!state.completedObjectives.includes(node.chapterId)) state.completedObjectives.push(node.chapterId);
+        autoSave();
+        showSeries(getScript()?.seriesId);
+      });
+      return;
+    }
+
     if (node.resolveEnding === true) {
       continueButton.textContent = "查看结局";
       continueButton.addEventListener("click", () => {
@@ -2169,7 +2270,7 @@
     if (node.type === "choice" || node.type === "deduction") {
       continueButton.classList.add("hidden");
       const nodeChoices = (node.choices && node.choices.length ? node.choices : node.question?.choices || []);
-      choiceArea.innerHTML = nodeChoices
+      const choicesMarkup = nodeChoices
         .map((choice) => `
           <button class="choice-button" type="button" data-choice-id="${choice.choiceId}">
             ${choice.choiceIntent ? `<small>${escapeHTML(choice.choiceIntent)}</small>` : ""}
@@ -2177,9 +2278,21 @@
           </button>
         `)
         .join("");
-      choiceArea.querySelectorAll(".choice-button").forEach((button) => {
+      let choiceHost = choiceArea;
+      if (node.phoneScreen) {
+        const phoneScreen = app.querySelector(".dorm-phone-screen");
+        if (phoneScreen) {
+          choiceHost = document.createElement("nav");
+          choiceHost.className = "dorm-phone-actions dorm-phone-choice-actions";
+          choiceHost.setAttribute("aria-label", "手机内选择");
+          phoneScreen.append(choiceHost);
+        }
+      }
+      choiceHost.innerHTML = choicesMarkup;
+      choiceHost.querySelectorAll(".choice-button").forEach((button) => {
         button.addEventListener("click", () => handleChoice(node, button.dataset.choiceId));
       });
+      if (node.timedChoice) startTimedChoice(node, choiceHost);
       return;
     }
 
@@ -2196,6 +2309,80 @@
     continueButton.addEventListener("click", () => advanceStoryNode(node, continueButton));
   }
 
+  function bindPhoneInteractions(node) {
+    const phoneScreen = node.phoneScreen;
+    if (!phoneScreen || !Array.isArray(phoneScreen.actions)) return;
+    app.querySelectorAll("[data-phone-action-id]").forEach((button) => {
+      button.addEventListener("click", () => handlePhoneAction(node, button.dataset.phoneActionId));
+    });
+  }
+
+  function applyInteractionEffects(item = {}) {
+    gainClues(item.gainClues || []);
+    setFlags(item.setFlags || []);
+    applyRuleUpdates(item.ruleUpdates || []);
+    applyRelationshipEffects(item.relationshipEffects || []);
+    recordEndingPathTags(item.endingPathTags || []);
+    if (item.storyState && typeof item.storyState === "object") {
+      state.storyState = { ...(state.storyState || {}), ...structuredCloneSafe(item.storyState) };
+    }
+  }
+
+  function handlePhoneAction(node, actionId) {
+    const action = (node.phoneScreen?.actions || []).find((item) => item.actionId === actionId);
+    if (!action || !lockNodeAction()) return;
+    stopNodeTransientAudio("phone-action");
+    applyInteractionEffects(action);
+    recordChoice(node, { choiceId: action.actionId, text: action.label });
+    addHistory({ type: "choice", speaker: "手机操作", text: action.label, nodeId: node.nodeId });
+    autoSave();
+    if (action.nextNodeId) goToNode(action.nextNodeId);
+  }
+
+  function stopTimedChoice({ preserve = false } = {}) {
+    if (!activeTimedChoice) return;
+    const { nodeId, intervalId, timeoutId, expiresAt } = activeTimedChoice;
+    window.clearInterval(intervalId);
+    window.clearTimeout(timeoutId);
+    if (preserve && state?.nodeId === nodeId) {
+      state.timedChoices ||= {};
+      state.timedChoices[nodeId] = { remainingMs: Math.max(0, expiresAt - Date.now()) };
+    }
+    activeTimedChoice = null;
+  }
+
+  function startTimedChoice(node, meterHost = null) {
+    stopTimedChoice({ preserve: true });
+    const config = node.timedChoice || {};
+    const stored = state.timedChoices?.[node.nodeId];
+    const durationMs = Math.max(1000, Number(stored?.remainingMs || config.durationMs || 0));
+    const expiresAt = Date.now() + durationMs;
+    const choiceArea = meterHost || app.querySelector(".dorm-phone-choice-actions") || document.getElementById("choiceArea");
+    if (!choiceArea) return;
+    choiceArea.querySelector(".timed-choice-meter")?.remove();
+    const meter = document.createElement("div");
+    meter.className = "timed-choice-meter";
+    meter.innerHTML = `<span>时间正在流逝</span><i aria-hidden="true"></i>`;
+    choiceArea.prepend(meter);
+    const update = () => {
+      const remainingMs = Math.max(0, expiresAt - Date.now());
+      const progress = durationMs ? remainingMs / durationMs : 0;
+      meter.style.setProperty("--timed-progress", String(progress));
+      state.timedChoices ||= {};
+      state.timedChoices[node.nodeId] = { remainingMs };
+    };
+    update();
+    const intervalId = window.setInterval(update, 100);
+    const timeoutId = window.setTimeout(() => {
+      if (state.nodeId !== node.nodeId || nodeActionLocked) return;
+      window.clearInterval(intervalId);
+      delete state.timedChoices?.[node.nodeId];
+      activeTimedChoice = null;
+      handleChoice(node, config.fallbackChoiceId);
+    }, durationMs);
+    activeTimedChoice = { nodeId: node.nodeId, intervalId, timeoutId, expiresAt };
+  }
+
   function advanceStoryNode(node, control = null) {
     if (!lockNodeAction(control)) return;
     stopNodeTransientAudio("continue");
@@ -2208,7 +2395,7 @@
   }
 
   function bindDialogueAdvance(node) {
-    if (node.type === "choice" || node.type === "deduction" || node.resolveEnding === true || node.type === "ending") return;
+    if (["choice", "deduction", "phone-interaction", "chapter-ending", "ending"].includes(node.type) || node.resolveEnding === true) return;
     const panel = app.querySelector("[data-dialogue-advance]");
     const continueButton = document.getElementById("continueButton");
     if (!panel || !continueButton) return;
@@ -2243,7 +2430,7 @@
     if (nodeActionLocked) return false;
     nodeActionLocked = true;
     button?.setAttribute("aria-busy", "true");
-    document.querySelectorAll("#continueButton, #choiceArea .choice-button").forEach((control) => {
+    document.querySelectorAll("#continueButton, #choiceArea .choice-button, [data-phone-action-id]").forEach((control) => {
       control.disabled = true;
     });
     return true;
@@ -2253,6 +2440,8 @@
     if (!lockNodeAction()) return;
     const choice = (node.choices && node.choices.length ? node.choices : node.question?.choices || []).find((item) => item.choiceId === choiceId);
     if (!choice) return;
+    stopTimedChoice();
+    if (state.timedChoices) delete state.timedChoices[node.nodeId];
     stopNodeTransientAudio("choice");
     recordChoice(node, choice);
     addHistory({
@@ -2261,11 +2450,7 @@
       text: choice.text,
       nodeId: node.nodeId,
     });
-    gainClues(choice.gainClues || []);
-    setFlags(choice.setFlags || []);
-    applyRuleUpdates(choice.ruleUpdates || []);
-    applyRelationshipEffects(choice.relationshipEffects || []);
-    recordEndingPathTags(choice.endingPathTags || []);
+    applyInteractionEffects(choice);
     if (node.type === "deduction" && choice.isCorrect === true) {
       state.deductionScore += 1;
     }
@@ -2273,16 +2458,18 @@
       .concat(choice.sfxOnChoice || [])
       .concat(node.sfxOnChoice || [])
       .filter(Boolean);
-    enqueueFeedback({
-      type: "choice",
-      title: choice.feedbackTitle || (node.type === "deduction" ? (choice.isCorrect ? "推理成立" : "推理偏差") : "选择留下痕迹"),
-      tone: choice.feedbackTone || (node.type === "deduction" ? (choice.isCorrect ? "correct" : "wrong") : "neutral"),
-      isDeduction: node.type === "deduction",
-      choiceText: choice.text,
-      text: choice.choiceImpactText || "这个选择已被记录。",
-      relationshipEffects: choice.relationshipEffects || [],
-      gainClues: choice.gainClues || [],
-    });
+    if (choice.feedbackMode !== "none" && node.feedbackMode !== "none" && !hasStoryCapability("quietFeedback")) {
+      enqueueFeedback({
+        type: "choice",
+        title: choice.feedbackTitle || (node.type === "deduction" ? (choice.isCorrect ? "推理成立" : "推理偏差") : "选择留下痕迹"),
+        tone: choice.feedbackTone || (node.type === "deduction" ? (choice.isCorrect ? "correct" : "wrong") : "neutral"),
+        isDeduction: node.type === "deduction",
+        choiceText: choice.text,
+        text: choice.choiceImpactText || "这个选择已被记录。",
+        relationshipEffects: choice.relationshipEffects || [],
+        gainClues: choice.gainClues || [],
+      });
+    }
     evaluateProgressTriggers();
     evaluateAchievements();
     autoSave();
@@ -2331,7 +2518,7 @@
         time: new Date().toISOString(),
       };
       state.relationshipEvents.push(event);
-      if (event.delta !== 0) {
+      if (event.delta !== 0 && !hasStoryCapability("quietFeedback")) {
         showToast(`人物关系变化：${def.character}${def.label} ${event.delta > 0 ? "+" : ""}${event.delta}`, "relationship");
       }
     });
@@ -2822,9 +3009,13 @@
     const labels = {
       "unverified": "未验证",
       "partly-credible": "基本可信",
+      "temporarily-trusted": "暂时可信",
       "verified": "已验证",
       "contradiction": "存在矛盾",
+      "ambiguous": "存在歧义",
+      "polluted": "已被污染",
       "forged": "确认伪造",
+      "false": "明确错误",
       "hidden-correction": "隐藏修正",
     };
     const rows = rules.map((rule) => {
@@ -2837,7 +3028,7 @@
         </button>
       `;
     }).join("");
-    openModal("417 夜间规则", "规则板", `<section class="rule-board"><p class="panel-note">规则是证据，不是命令。只有经过现场验证，它们才值得相信。</p>${rows}</section>`);
+    openModal(`${getScript()?.title || "宿舍"}规则记录`, "规则板", `<section class="rule-board"><p class="panel-note">规则是证据，不是命令。只有经过现场验证，它们才值得相信。</p>${rows}</section>`);
     modalBody.querySelectorAll("[data-rule-detail]").forEach((button) => {
       button.addEventListener("click", () => openRuleDetail(button.dataset.ruleDetail));
     });
@@ -2846,17 +3037,21 @@
   function openRuleDetail(ruleId) {
     const rule = [...(DATA.rules || []), ...(DATA.hiddenRules || [])].find((item) => item.ruleId === ruleId);
     const detail = DATA.rulePlaybook?.[ruleId];
-    if (!rule || !detail) return;
+    if (!rule) return;
     const statusLabels = {
       "unverified": "未验证",
       "partly-credible": "基本可信",
+      "temporarily-trusted": "暂时可信",
       "verified": "已验证",
       "contradiction": "存在矛盾",
+      "ambiguous": "存在歧义",
+      "polluted": "已被污染",
       "forged": "确认伪造",
+      "false": "明确错误",
       "hidden-correction": "隐藏修正",
     };
     const status = state.ruleStatuses?.[rule.ruleId] || rule.status || "unverified";
-    const clueRows = (detail.clueIds || [])
+    const clueRows = (detail?.clueIds || [])
       .map((clueId) => DATA.clues?.[clueId])
       .filter(Boolean)
       .map((clue) => `<li class="${state.clues.includes(clue.clueId) ? "is-owned" : "is-locked"}">${escapeHTML(state.clues.includes(clue.clueId) ? clue.title : "尚未获得的证据")}</li>`)
@@ -2870,11 +3065,11 @@
         <blockquote>${escapeHTML(rule.text)}</blockquote>
         <dl>
           <div><dt>相关证据</dt><dd><ul>${clueRows || "<li>暂无</li>"}</ul></dd></div>
-          <div><dt>验证事件</dt><dd>${escapeHTML(nodeLabel(detail.verificationNodeId))}</dd></div>
+          ${detail ? `<div><dt>验证事件</dt><dd>${escapeHTML(nodeLabel(detail.verificationNodeId))}</dd></div>
           <div><dt>矛盾事件</dt><dd>${escapeHTML(nodeLabel(detail.contradictionNodeId))}</dd></div>
           <div><dt>当前判断</dt><dd>${escapeHTML(detail.playerJudgment || "尚待判断")}</dd></div>
           <div><dt>最终真实性</dt><dd>${escapeHTML(detail.finalTruth || "尚待确认")}</dd></div>
-          <div><dt>最终推理</dt><dd>${escapeHTML(detail.endingImpact || "尚未影响结局")}</dd></div>
+          <div><dt>最终推理</dt><dd>${escapeHTML(detail.endingImpact || "尚未影响结局")}</dd></div>` : `<div><dt>当前记录</dt><dd>第一章样板中，这条规则仍需通过现场事件继续核验。</dd></div>`}
         </dl>
         <button class="case-button" type="button" data-rule-detail-close>我知道啦</button>
       </section>`
@@ -3716,10 +3911,14 @@
       .join("");
     const hotspots = renderInvestigationHotspots(node);
     const phoneScreen = node.phoneScreen || (state.scriptId === "script_dormitory_rollcall" ? node.phoneState : null);
-    const usePortraitMaster = state.scriptId === "script_dormitory_rollcall";
+    const usePortraitMaster = isDormitoryStory() || hasStoryCapability("portraitMaster");
+    const background = visual?.bg || "";
+    const sampleSceneClass = normalizeVisualToken(visual?.cssClass, "");
     const sceneContent = `
       ${showPreviousBackground ? `<img class="scene-bg-previous" src="${escapeHTML(previousVisual.bg)}" alt="" aria-hidden="true" />` : ""}
-      <img class="scene-bg-image" src="${escapeHTML(visual?.bg || "")}" alt="${escapeHTML(title)}" loading="eager" decoding="async" />
+      ${background
+        ? `<img class="scene-bg-image" src="${escapeHTML(background)}" alt="${escapeHTML(title)}" loading="eager" decoding="async" />`
+        : `<div class="scene-sample-backdrop ${escapeHTML(sampleSceneClass)}" role="img" aria-label="${escapeHTML(title)}"><span class="sample-room-depth"></span><span class="sample-room-door"></span><span class="sample-room-sign"></span></div>`}
       ${renderVisualCast(node, node.speaker)}
       ${renderPhoneScreen(phoneScreen)}
       <div class="scene-overlay-layer">${overlays}</div>
@@ -3733,8 +3932,8 @@
       </div>
     `;
     return `
-      <div class="scene-asset-shell ${usePortraitMaster ? "is-portrait-master" : ""} ${stateClass} focus-${escapeHTML(focus)} focus-target-${escapeHTML(focusTarget)} shot-${escapeHTML(shotTone)} ${isHeld ? "is-scene-held" : "is-scene-entering"}" data-scene-id="${escapeHTML(scene)}" data-visual-focus="${escapeHTML(focus)}" data-focus-target="${escapeHTML(focusTarget)}" data-transition-style="${escapeHTML(node.transitionStyle || "hold")}">
-        ${usePortraitMaster ? `<div class="scene-ambient-backdrop" aria-hidden="true"><img src="${escapeHTML(visual?.bg || "")}" alt="" /></div><div class="scene-portrait-master">${sceneContent}</div>` : sceneContent}
+      <div class="scene-asset-shell ${usePortraitMaster ? "is-portrait-master" : ""} ${sampleSceneClass ? "has-sample-scene" : ""} ${stateClass} focus-${escapeHTML(focus)} focus-target-${escapeHTML(focusTarget)} shot-${escapeHTML(shotTone)} ${isHeld ? "is-scene-held" : "is-scene-entering"}" data-scene-id="${escapeHTML(scene)}" data-visual-focus="${escapeHTML(focus)}" data-focus-target="${escapeHTML(focusTarget)}" data-transition-style="${escapeHTML(node.transitionStyle || "hold")}">
+        ${usePortraitMaster ? `<div class="scene-ambient-backdrop" aria-hidden="true">${background ? `<img src="${escapeHTML(background)}" alt="" />` : ""}</div><div class="scene-portrait-master">${sceneContent}</div>` : sceneContent}
       </div>
     `;
   }
