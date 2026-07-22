@@ -179,7 +179,7 @@
   line("nf01_032_count", "namefloor_red_inspection", "旁白", "那三个字落下后，门锁内侧随即响起细密的刮擦，像有一支笔刚填好人数。", "nf01_033");
   line("nf01_032_open", "namefloor_red_inspection", "旁白", "房门只开了一线，一根冰冷的手指便抵住门沿。周朝阳拽着林峰后退，门缝却再也合不上。", "nf01_033");
   line("nf01_033", "namefloor_red_inspection", "旁白", "温柔的脸在猫眼里停得太久。眼白被血丝填满，嘴角先向两边裂开，四肢随后沿着门框拉长。", "nf01_034", { effects: [{ type: "face-dislocate", level: "severe", durationMs: 1200 }, { type: "light-flicker", level: "heavy", durationMs: 900 }] });
-  line("nf01_034", "namefloor_red_inspection", "红色马甲宿管", "同学，你们宿舍都到齐了吗？", "nf01_035", { contentType: "dialogue", visualCharacter: "红色马甲宿管" });
+  line("nf01_034", "namefloor_red_inspection", "门外的女声", "同学，你们宿舍都到齐了吗？", "nf01_035", { contentType: "door-voice" });
   choice("nf01_035", "namefloor_stairwell", "旁白", "门锁被长指甲顶得向内弯。周朝阳推开消防门，三个人冲进楼梯间。", [
     option("run_down", "沿楼层数字向下跑", "nf01_036", { setFlags: ["followed_floor_numbers"] }),
     option("follow_zhou", "跟紧周朝阳，不看身后", "nf01_036", { relationshipEffects: [{ id: "trust_zhouchaoyang", delta: 8, reason: "追逐中接受周朝阳判断" }] }),
