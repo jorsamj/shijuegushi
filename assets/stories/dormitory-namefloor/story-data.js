@@ -43,7 +43,7 @@
     { chapterId: "namefloor_chapter_07", title: "第七章：谁是林峰", order: 7, status: "blueprint-only" },
   ];
 
-  line("nf01_001", "namefloor_dorm_midnight", "旁白", "午夜十二点，十一楼男生宿舍只剩手机屏幕的冷光。宋明披着毛巾下床，林峰以为他又要去洗手间。", "nf01_002", { effects: [{ type: "light-flicker", level: "light", durationMs: 500 }] });
+  line("nf01_001", "namefloor_dorm_midnight", "旁白", "午夜十二点，十一楼男生宿舍只剩手机屏幕的冷光。宋明披着毛巾下床，林峰以为他又要去洗手间。", "nf01_002", { effects: [{ type: "light-flicker", level: "light", durationMs: 500 }], sfxOnEnter: [{ key: "phone_vibrate", volume: 0.2 }] });
   line("nf01_002", "namefloor_phone_glow", "旁白", "一条没有号码、没有头像的短信压过短视频画面。手机在掌心震了一下。", "nf01_003", { effects: [{ type: "phone-vibrate", level: "light", durationMs: 380 }] });
   add({
     nodeId: "nf01_003", scene: "namefloor_phone_glow", speaker: "旁白", text: "短信只有一句：不要忘记你的名字。", type: "phone-interaction",
@@ -61,17 +61,20 @@
   line("nf01_004", "namefloor_dorm_midnight", "宋明", "我去趟洗手间。门卡在桌上，别锁死。", "nf01_005", { contentType: "dialogue", visualCharacter: "宋明" });
   line("nf01_005", "namefloor_dorm_door", "旁白", "门没有合严。刺白的走廊灯从缝里切进来，一条瘦得不合比例的影子贴着地面掠过。", "nf01_006", { effects: [{ type: "focus-pulse", level: "medium", durationMs: 850 }] });
   choice("nf01_006", "namefloor_dorm_door", "旁白", "门缝还在扩大。", [
-    option("close_now", "立刻把门推上", "nf01_007", { setFlags: ["door_closed_in_time"] }),
-    option("call_songming", "先叫住宋明", "nf01_007", { setFlags: ["called_songming_name", "mimic_heard_songming"] }),
-    option("freeze_at_door", "盯着影子，没有动", "nf01_007", { setFlags: ["door_closed_late", "mimic_heard_room"] }),
-  ], { timedChoice: { durationMs: 5000, fallbackChoiceId: "freeze_at_door" }, effects: [{ type: "door-impact", level: "medium", durationMs: 700 }] });
+    option("close_now", "立刻把门推上", "nf01_006_close", { setFlags: ["door_closed_in_time"] }),
+    option("call_songming", "先叫住宋明", "nf01_006_call", { setFlags: ["called_songming_name", "mimic_heard_songming"] }),
+    option("freeze_at_door", "盯着影子，没有动", "nf01_006_freeze", { setFlags: ["door_closed_late", "mimic_heard_room"] }),
+  ], { timedChoice: { durationMs: 12000, fallbackChoiceId: "freeze_at_door" }, effects: [{ type: "door-impact", level: "medium", durationMs: 700 }] });
+  line("nf01_006_close", "namefloor_dorm_door", "旁白", "林峰一把压住门板。影子在门缝外停了一瞬，锁舌已经咬合。", "nf01_007");
+  line("nf01_006_call", "namefloor_dorm_door", "旁白", "林峰刚要叫住宋明，影子便朝门缝偏过头。声音出口后，他才猛地把门推上。", "nf01_007");
+  line("nf01_006_freeze", "namefloor_dorm_door", "旁白", "影子停在门口，像在等屋里先发出声音。门板自行撞回时，林峰才伸手扣住锁舌。", "nf01_007");
   line("nf01_007", "namefloor_dorm_door", "旁白", "门终于扣住锁舌。周朝阳和谷雨被声音惊醒，宋明的床已经空了。", "nf01_008", { visualCast: [{ characterId: "周朝阳", position: "left", framing: "bust" }, { characterId: "谷雨", position: "right", framing: "bust" }] });
   choice("nf01_008", "namefloor_dorm_midnight", "林峰", "刚才门外有个影子。", [
     option("trust_zhou_check", "先听周朝阳的，别喊人", "nf01_009", { relationshipEffects: [{ id: "trust_zhouchaoyang", delta: 8, reason: "先让周朝阳检查异常" }] }),
     option("ask_gu_message", "让谷雨马上联系宋明", "nf01_009", { relationshipEffects: [{ id: "trust_guyu", delta: 6, reason: "重视谷雨的办法" }] }),
     option("dismiss_shadow", "可能只是楼道里的同学", "nf01_009", { relationshipEffects: [{ id: "trust_zhouchaoyang", delta: -4, reason: "忽视现场异常" }] }),
   ]);
-  line("nf01_009", "namefloor_phone_glow", "旁白", "班群通知突然顶到屏幕最上方。群聊已经全体禁言，一个全黑头像发布了《宿舍文明守则》。", "nf01_010", { effects: [{ type: "phone-vibrate", level: "light", durationMs: 420 }] });
+  line("nf01_009", "namefloor_phone_glow", "旁白", "班群通知突然顶到屏幕最上方。群聊已经全体禁言，一个全黑头像发布了《宿舍文明守则》。", "nf01_010", { effects: [{ type: "phone-vibrate", level: "light", durationMs: 420 }], sfxOnEnter: [{ key: "message_pop_cold", volume: 0.2 }] });
   add({
     nodeId: "nf01_010", scene: "namefloor_phone_glow", speaker: "旁白", text: "八条规则在同一条消息里完整出现。", type: "phone-interaction", ruleReview: true,
     phoneScreen: phone("rules", "班级群 · 宿舍文明守则", "00:08", {
@@ -98,7 +101,7 @@
       ],
     }),
   });
-  line("nf01_013", "namefloor_dorm_door", "门外的宋明", "林峰，快开门，我忘了带门卡。", "nf01_014", { contentType: "phone", visualCharacter: "宋明", effects: [{ type: "door-impact", level: "light", durationMs: 650 }] });
+  line("nf01_013", "namefloor_dorm_door", "门外的宋明", "林峰，快开门，我忘了带门卡。", "nf01_014", { contentType: "phone", visualCharacter: "宋明", effects: [{ type: "door-impact", level: "light", durationMs: 650 }], sfxOnEnter: [{ key: "dorm_knock_wood", volume: 0.24 }, { key: "dorm_knock_wood", volume: 0.24, delayMs: 460, suppressMs: 0 }, { key: "dorm_knock_wood", volume: 0.24, delayMs: 920, suppressMs: 0 }] });
   choice("nf01_014", "namefloor_dorm_door", "旁白", "三下敲门声很规整。谷雨已经张开嘴，周朝阳先抬手示意安静。", [
     option("stop_guyu", "按住谷雨的手，别回应", "nf01_015", { relationshipEffects: [{ id: "trust_zhouchaoyang", delta: 5, reason: "遵守沉默判断" }], setFlags: ["stopped_guyu_response"] }),
     option("let_guyu_ask", "让谷雨低声问一句", "nf01_015", { setFlags: ["mimic_learned_guyu_voice"] }),
@@ -112,11 +115,12 @@
         { actionId: "send_where", label: "发送：你在哪？", nextNodeId: "nf01_016", setFlags: ["messaged_songming"] },
         { actionId: "send_private_code", label: "发送未公开的约定短句", nextNodeId: "nf01_016", setFlags: ["kept_private_songming_test"] },
         { actionId: "send_full_name", label: "发送宋明的完整姓名", nextNodeId: "nf01_016", setFlags: ["said_songming_full_name", "mimic_heard_songming"] },
-        { actionId: "send_nothing", label: "不发送", nextNodeId: "nf01_016" },
+        { actionId: "send_nothing", label: "不发送", nextNodeId: "nf01_016_none" },
       ],
     }),
   });
   line("nf01_016", "namefloor_phone_glow", "旁白", "消息转了很久，最后变成灰色的“未送达”。门外的人却准确地转向了林峰手机亮起的位置。", "nf01_017", { phoneScreen: phone("message", "宋明", "00:14", { messages: [{ sender: "林峰", text: "消息未送达", status: "发送失败" }] }), effects: [{ type: "signal-glitch", level: "light", durationMs: 600 }] });
+  line("nf01_016_none", "namefloor_dorm_door", "旁白", "林峰没有按下发送。他熄灭屏幕，门外的肩膀仍停在猫眼正中，像在等一束光重新亮起。", "nf01_017");
   choice("nf01_017", "namefloor_peephole", "旁白", "猫眼外只能看见搭着毛巾的肩膀。那道影子却同时朝左右两个方向延伸。", [
     option("inspect_peephole", "继续按住猫眼检查", "nf01_018", { gainClues: ["namefloor_clue_split_shadow"] }),
     option("step_back_silent", "后退，保持沉默", "nf01_018", { setFlags: ["kept_distance_from_door"] }),
@@ -127,7 +131,7 @@
     option("tap_nonsense", "在门板上敲两下，不说话", "nf01_019", { setFlags: ["used_nonverbal_test"] }),
     option("try_handle", "试着压下门把", "nf01_019", { setFlags: ["door_cracked_open", "mimic_confirmed_room"] }),
     option("speak_songming", "喊出宋明的完整姓名", "nf01_019", { setFlags: ["said_songming_full_name", "mimic_heard_songming"] }),
-  ], { timedChoice: { durationMs: 7000, fallbackChoiceId: "speak_songming" }, effects: [{ type: "door-impact", level: "medium", durationMs: 900 }] });
+  ], { timedChoice: { durationMs: 12000, fallbackChoiceId: "speak_songming" }, effects: [{ type: "door-impact", level: "medium", durationMs: 900 }] });
   line("nf01_019", "namefloor_dorm_door", "周朝阳", "别开门，也别再叫他的名字。它在等我们替它补全。", "nf01_020", { contentType: "dialogue", visualCharacter: "周朝阳" });
   choice("nf01_020", "namefloor_phone_glow", "旁白", "周朝阳把第 1、4、5 条规则并排放在屏幕上：门外的人违反了第一条；第四条要求不开门；现在还没到查房时间。", [
     option("mark_door_trusted", "暂时相信“不要开门”", "nf01_021", { ruleUpdates: [{ ruleId: "namefloor_rule_no_open", status: "temporarily-trusted" }] }),
@@ -136,33 +140,38 @@
   ], { ruleReview: true, phoneScreen: phone("rules", "个人规则记录", "00:17", { rules: rules.filter((rule) => [1, 4, 5].includes(rule.number)) }) });
   line("nf01_021", "namefloor_dorm_door", "谷雨", "可如果真的是宋明呢？我们就让他一直站在外面？", "nf01_022", { contentType: "dialogue", visualCharacter: "谷雨" });
   line("nf01_022", "namefloor_dorm_door", "旁白", "回答从门缝、窗边和衣柜后同时响起。每一道都是宋明的声音，连喘息的停顿都一样。", "nf01_023", { effects: [{ type: "signal-glitch", level: "medium", durationMs: 1200 }] });
-  line("nf01_023", "namefloor_dorm_door", "旁白", "指甲沿着铁皮门缓慢刮过。门板连震三次，灯灭了半秒；再亮起时，影子已经贴到天花板。", "nf01_024", { effects: [{ type: "blackout", level: "severe", durationMs: 700 }, { type: "door-impact", level: "severe", durationMs: 1600 }, { type: "blood-edge", level: "heavy", durationMs: 1000 }] });
-  line("nf01_024", "namefloor_dorm_door", "旁白", "十分钟后，声音突然停了。隔壁宿舍却把门打开了。", "nf01_025");
-  choice("nf01_025", "namefloor_corridor_attack", "旁白", "墙外传来一句迟疑的询问、几步脚步和一声很轻的笑。", [
+  line("nf01_023", "namefloor_dorm_door", "旁白", "指甲沿着铁皮门缓慢刮过。门板连震三次，灯灭了半秒；再亮起时，影子已经贴到天花板。", "nf01_024", { effects: [{ type: "blackout", level: "severe", durationMs: 700 }, { type: "door-impact", level: "severe", durationMs: 1600 }], sfxOnEnter: [{ key: "recording_static_short", volume: 0.18 }, { key: "dorm_knock_wood", volume: 0.3, delayMs: 320 }, { key: "dorm_knock_wood", volume: 0.32, delayMs: 700, suppressMs: 0 }] });
+  line("nf01_024", "namefloor_dorm_door", "旁白", "十分钟后，门外恢复安静。隔壁先传来压低的盘问；门外的声音逐一答出床位、门卡和一双没洗的球鞋。争执还没停，锁舌已经弹开。", "nf01_025");
+  choice("nf01_025", "namefloor_corridor_attack", "旁白", "隔壁有人认定门外就是舍友。第一步刚跨出门，一声很轻的笑便贴着墙滑了过来。", [
     option("warn_neighbor", "隔墙警告他们别开门", "nf01_026", { setFlags: ["warned_neighbor"], relationshipEffects: [{ id: "trust_guyu", delta: 4, reason: "试图救隔壁学生" }] }),
     option("stay_silent_neighbor", "遵守安静，不出声", "nf01_026", { setFlags: ["kept_silent_during_attack"] }),
     option("record_attack", "用手机录下声音", "nf01_026", { gainClues: ["namefloor_clue_neighbor_attack"] }),
-  ], { timedChoice: { durationMs: 5500, fallbackChoiceId: "stay_silent_neighbor" } });
-  line("nf01_026", "namefloor_corridor_attack", "旁白", "门外先是重物撞墙，随后是被拖远的摩擦声。灯光恢复时，一道血迹停在 1107 门外。", "nf01_027", { effects: [{ type: "blackout", level: "heavy", durationMs: 450 }, { type: "scene-shake", level: "heavy", durationMs: 1450 }, { type: "blood-edge", level: "medium", durationMs: 1250 }] });
+  ], { timedChoice: { durationMs: 12000, fallbackChoiceId: "stay_silent_neighbor" } });
+  line("nf01_026", "namefloor_corridor_attack", "旁白", "门外先是重物撞墙，随后是被拖远的摩擦声。灯光恢复时，一道血迹停在 1107 门外。谷雨猛地捂住嘴，林峰胃里一阵翻涌；周朝阳撑住门，把两个人挡在身后。", "nf01_027", { effects: [{ type: "blackout", level: "heavy", durationMs: 450 }, { type: "scene-shake", level: "heavy", durationMs: 1450 }, { type: "blood-edge", level: "medium", durationMs: 1250 }], sfxOnEnter: [{ key: "dorm_knock_wood", volume: 0.36, duckBgmMs: 700 }, { key: "box_drag_soft", volume: 0.27, delayMs: 420 }] });
   line("nf01_027", "namefloor_phone_glow", "旁白", "禁言的班群里，宋明的在线点亮了一瞬。黑色头像撤回一条消息；群人数仍然没有变化。", "nf01_028", { phoneScreen: phone("group", "班级群", "00:47", { memberCount: 42, members: [{ name: "黑色头像", isBlackAvatar: true }, { name: "宋明", isOnline: true }], messages: [{ sender: "系统", text: "黑色头像撤回了一条消息" }] }) });
   line("nf01_028", "namefloor_phone_glow", "旁白", "成员列表刷新时，林峰的位置变成空白，黑色头像仍留在原处。屏幕顶部只剩两个字：林?。", "nf01_029", { identityDisplay: "林?", effects: [{ type: "name-glitch", level: "medium", durationMs: 900 }] });
-  line("nf01_029", "namefloor_dorm_midnight", "周朝阳", "看着我。你叫什么名字？", "nf01_030", { contentType: "dialogue", visualCharacter: "周朝阳" });
-  line("nf01_030", "namefloor_dorm_midnight", "林峰", "我叫林……峰。", "nf01_031", { contentType: "dialogue", visualCharacter: "林峰", identityDisplay: "林?" });
-  line("nf01_031", "namefloor_red_inspection", "门外女声", "同学，查房时间到了，请打开门。", "nf01_032", { contentType: "broadcast", visualCharacter: "红色马甲宿管", effects: [{ type: "door-impact", level: "light", durationMs: 520 }] });
+  line("nf01_029", "namefloor_dorm_midnight", "周朝阳", "先别盯着那两个字。把今晚发生过的事记住。", "nf01_030", { contentType: "dialogue", visualCharacter: "周朝阳" });
+  line("nf01_030", "namefloor_dorm_midnight", "旁白", "林峰还没回答，手机和墙上的电子钟同时跳到 01:00。门外再次响起三下敲门，节奏和刚才一模一样。", "nf01_031", { effects: [{ type: "phone-vibrate", level: "light", durationMs: 360 }] });
+  line("nf01_031", "namefloor_red_inspection", "门外女声", "同学，查房时间到了，请打开门。", "nf01_032", { contentType: "dialogue", visualCharacter: "红色马甲宿管", effects: [{ type: "door-impact", level: "light", durationMs: 520 }], sfxOnEnter: [{ key: "dorm_knock_wood", volume: 0.2 }] });
   choice("nf01_032", "namefloor_red_inspection", "旁白", "猫眼外是一角红色马甲。规则说，正常宿管只穿绿色。", [
-    option("stay_silent_red", "保持沉默，示意所有人离门", "nf01_033", { setFlags: ["recognized_red_manager"], ruleUpdates: [{ ruleId: "namefloor_rule_vest", status: "verified" }] }),
-    option("ask_vest_color", "隔门问她穿什么颜色", "nf01_033", { setFlags: ["spoke_to_red_manager", "red_manager_learned_linfeng"] }),
-    option("answer_all_present", "回答宿舍人员已经到齐", "nf01_033", { setFlags: ["answered_red_manager", "red_manager_learned_room_count"] }),
-    option("open_for_inspection", "打开房门接受查房", "nf01_033", { setFlags: ["opened_for_red_manager", "red_manager_inside_threshold"] }),
-  ], { timedChoice: { durationMs: 6500, fallbackChoiceId: "answer_all_present" }, ruleReview: true });
+    option("stay_silent_red", "保持沉默，示意所有人离门", "nf01_032_silent", { setFlags: ["recognized_red_manager"], ruleUpdates: [{ ruleId: "namefloor_rule_vest", status: "verified" }] }),
+    option("ask_vest_color", "隔门问她穿什么颜色", "nf01_032_ask", { setFlags: ["spoke_to_red_manager", "red_manager_learned_linfeng"] }),
+    option("answer_all_present", "回答宿舍人员已经到齐", "nf01_032_count", { setFlags: ["answered_red_manager", "red_manager_learned_room_count"] }),
+    option("open_for_inspection", "打开房门接受查房", "nf01_032_open", { setFlags: ["opened_for_red_manager", "red_manager_inside_threshold"] }),
+  ], { timedChoice: { durationMs: 12000, fallbackChoiceId: "answer_all_present" }, ruleReview: true });
+  line("nf01_032_silent", "namefloor_red_inspection", "旁白", "三个人同时后退。门外的女人仍保持微笑，门把却在无人触碰时缓慢压了下去。", "nf01_033");
+  line("nf01_032_ask", "namefloor_red_inspection", "旁白", "问题刚出口，门外便用林峰的语气复述了一遍。她没有回答颜色，只把脸贴得更近。", "nf01_033");
+  line("nf01_032_count", "namefloor_red_inspection", "旁白", "她轻声重复“三个人”，像终于填好一格表。门锁内侧随即响起细密的刮擦。", "nf01_033");
+  line("nf01_032_open", "namefloor_red_inspection", "旁白", "房门只开了一线，一根冰冷的手指便抵住门沿。周朝阳拽着林峰后退，门缝却再也合不上。", "nf01_033");
   line("nf01_033", "namefloor_red_inspection", "旁白", "温柔的脸在猫眼里停得太久。眼白被血丝填满，嘴角先向两边裂开，四肢随后沿着门框拉长。", "nf01_034", { effects: [{ type: "face-dislocate", level: "severe", durationMs: 1200 }, { type: "light-flicker", level: "heavy", durationMs: 900 }] });
-  line("nf01_034", "namefloor_red_inspection", "红色马甲宿管", "同学，你们宿舍都到齐了吗？", "nf01_035", { contentType: "broadcast", visualCharacter: "红色马甲宿管" });
+  line("nf01_034", "namefloor_red_inspection", "红色马甲宿管", "同学，你们宿舍都到齐了吗？", "nf01_035", { contentType: "dialogue", visualCharacter: "红色马甲宿管" });
   choice("nf01_035", "namefloor_stairwell", "旁白", "门锁被长指甲顶得向内弯。周朝阳推开消防门，三个人冲进楼梯间。", [
     option("run_down", "沿楼层数字向下跑", "nf01_036", { setFlags: ["followed_floor_numbers"] }),
     option("follow_zhou", "跟紧周朝阳，不看身后", "nf01_036", { relationshipEffects: [{ id: "trust_zhouchaoyang", delta: 8, reason: "追逐中接受周朝阳判断" }] }),
     option("pull_guyu", "拉住落后的谷雨", "nf01_036", { relationshipEffects: [{ id: "trust_guyu", delta: 10, reason: "追逐中没有丢下谷雨" }] }),
-  ], { timedChoice: { durationMs: 6000, fallbackChoiceId: "run_down" }, effects: [{ type: "scene-shake", level: "severe", durationMs: 1700 }, { type: "focus-pulse", level: "heavy", durationMs: 1000 }] });
-  line("nf01_036", "namefloor_stairwell", "旁白", "向下的一段楼梯比整栋楼还长。墙上的数字一会儿是 11，一会儿是 3，最后在视野中央定格成 4。", "nf01_037", { effects: [{ type: "signal-glitch", level: "heavy", durationMs: 1250 }, { type: "focus-pulse", level: "medium", durationMs: 1000 }] });
+  ], { timedChoice: { durationMs: 12000, fallbackChoiceId: "run_down" }, effects: [{ type: "scene-shake", level: "severe", durationMs: 1700 }, { type: "focus-pulse", level: "heavy", durationMs: 1000 }], sfxOnEnter: [{ key: "footstep_corridor_wet", volume: 0.3, duckBgmMs: 900 }] });
+  line("nf01_036", "namefloor_stairwell", "旁白", "向下的一段楼梯比整栋楼还长。墙上的数字一会儿是 11，一会儿是 3，最后在视野中央定格成 4。", "nf01_036_context", { effects: [{ type: "signal-glitch", level: "heavy", durationMs: 1250 }, { type: "focus-pulse", level: "medium", durationMs: 1000 }] });
+  line("nf01_036_context", "namefloor_floor_four", "旁白", "周朝阳停在数字 4 前，抬起手机想靠近观察。林峰一把抓住他的肩，谷雨也从另一侧挡住去路。", "nf01_037");
   line("nf01_037", "namefloor_floor_four", "林峰", "规则写了学校没有四楼。你到底在干什么？", "nf01_038", { contentType: "dialogue", visualCharacter: "林峰" });
   choice("nf01_038", "namefloor_floor_four", "周朝阳", "先别看门牌。回答我：你叫什么名字？", [
     option("answer_linfeng", "我叫林峰", "nf01_039", { setFlags: ["name_anchor_spoken"] }),
@@ -170,7 +179,7 @@
     option("cannot_answer", "张了张嘴，名字卡在喉咙里", "nf01_039", { setFlags: ["first_name_block"] }),
   ]);
   line("nf01_039", "namefloor_floor_four", "旁白", "林峰能听见自己的姓，却迟了很久才找回最后一个字。数字 4 后方的走廊，和他们居住的十一楼一模一样。", "nf01_040", { identityDisplay: "林?", effects: [{ type: "name-glitch", level: "heavy", durationMs: 1100 }] });
-  add({ nodeId: "nf01_040", scene: "namefloor_floor_four", speaker: "旁白", text: "走廊尽头，三楼宿管宿舍的门牌竟挂在不存在的四楼上。门缝里没有灯，只有翻动纸页的声音。", type: "chapter-ending", chapterEnding: { title: "第一章 · 不要忘记你的名字", text: "他们找到了宿管宿舍，也第一次失去了对楼层和姓名的把握。" }, effects: [{ type: "focus-pulse", level: "medium", durationMs: 900 }] });
+  add({ nodeId: "nf01_040", scene: "namefloor_floor_four", speaker: "旁白", text: "走廊尽头，三楼宿管宿舍的门牌竟挂在不存在的四楼上。门缝里没有灯，只有翻动纸页的声音。", type: "chapter-ending", chapterEnding: { title: "第一章 · 不要忘记你的名字", text: "他们找到了宿管宿舍，也第一次失去了对楼层和姓名的把握。", ctaLabel: "第一章结束 · 返回书架" }, effects: [{ type: "focus-pulse", level: "medium", durationMs: 900 }] });
 
   const clues = {
     namefloor_clue_split_shadow: { clueId: "namefloor_clue_split_shadow", title: "分成两道的影子", category: "身份", description: "门外的宋明只有一个轮廓，影子却同时朝两个方向延伸。", isKey: true },
@@ -225,7 +234,7 @@
     endings: {},
     nodes,
     profile: {
-      capabilities: { rulesPanel: true, portraitMaster: true, interactivePhone: true, quietFeedback: true, chapterEnding: true },
+      capabilities: { rulesPanel: true, portraitMaster: true, interactivePhone: true, quietFeedback: true, chapterEnding: true, hideTruthMeter: true, hideRelationshipNumbers: true },
       coreClueIds: Object.keys(clues),
       focusedClueReveals: [],
       clueFilters: ["全部", "关键线索", "身份", "规则", "手机"],

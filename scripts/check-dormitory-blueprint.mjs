@@ -48,7 +48,7 @@ for (const ending of ["记得回宿舍", "它也叫宋明", "请记住谷雨", "
 assert(state.includes("九阶段状态机"), "State model must define the nine-stage name-pollution state machine.");
 assert(state.includes("dormitory-state/v1"), "State model must define a namespaced save schema.");
 assert(slice.includes("红色马甲") && slice.includes("数字 4") && slice.includes("宿管宿舍"), "Chapter-one slice must continue through the red-vest chase and number 4 hook.");
-assert(slice.includes("有效选择：12 个") && slice.includes("限时互动：2 次"), "Chapter-one design counts are incomplete.");
+assert(slice.includes("有效选择：14 个") && slice.includes("限时互动：5 次"), "Chapter-one design counts are incomplete.");
 assert(shots.includes("林峰") && shots.includes("周朝阳") && shots.includes("谷雨") && shots.includes("宋明"), "Visual shot list is missing a core character.");
 assert(shots.includes("降低动态") && shots.includes("后台恢复"), "Visual/effect plan must cover reduced motion and background recovery.");
 assert(shots.includes("C1-S46") && shots.includes("共 `46` 个"), "Chapter-one shot list must cover all 46 planned shots.");

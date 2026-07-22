@@ -366,7 +366,7 @@
     animation: mobile-choice-panel-in 160ms ease-out both;
   }
 
-  .mobile-story-root.is-reduced-motion .scene-effect-layer { display: none; }
+  .mobile-story-root.is-reduced-motion .scene-effect-layer { display: block; }
 }
 
 @keyframes mobile-choice-panel-in {
@@ -435,8 +435,13 @@
     max-height: 10dvh;
   }
 
+  .is-namefloor-slice.is-choice-node .dialogue-panel {
+    max-height: min(62dvh, 480px);
+    overflow-y: auto;
+  }
+
   .is-namefloor-slice .choice-area {
-    max-height: 24dvh;
+    max-height: min(34dvh, 286px);
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-bottom: 2px;

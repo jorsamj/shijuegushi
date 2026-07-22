@@ -5169,7 +5169,7 @@ body[data-view="series"] {
   transition: none;
 }
 
-.is-reduced-motion .scene-effect-layer { display: none; }
+.is-reduced-motion .scene-effect-layer { display: block; }
 
 @media (prefers-reduced-motion: reduce) {
   .scene-effect,
@@ -5245,6 +5245,12 @@ body[data-view="series"] {
   --nf-cold: #6f92a8;
   --nf-alert: #9b2f32;
   --nf-green: #607c68;
+}
+
+.is-local-acceptance-capture .game-topbar,
+.is-local-acceptance-capture .dialogue-panel,
+.is-local-acceptance-capture .dorm-phone-layer {
+  position: absolute !important;
 }
 
 .is-namefloor-slice .scene-stage,
@@ -5430,6 +5436,28 @@ body[data-view="series"] {
   display: none;
 }
 
+.is-namefloor-slice.is-choice-node .dialogue-panel {
+  max-height: min(62dvh, 520px);
+  overflow-y: auto;
+}
+
+.is-namefloor-slice.is-choice-node .dialogue-text {
+  min-height: 0;
+  max-height: 104px;
+  overflow-y: auto;
+}
+
+.is-namefloor-slice.is-choice-node .choice-area {
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.is-namefloor-slice.is-choice-node .choice-button {
+  min-height: 48px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
 .is-namefloor-slice .dorm-phone-screen {
   width: min(430px, 92%);
   height: min(720px, calc(100% - 20px));
@@ -5488,6 +5516,22 @@ body[data-view="series"] {
 .scene-effect.effect-face-dislocate.is-active { animation: nf-face-dislocate var(--scene-effect-duration) steps(3, end); }
 .scene-effect.effect-name-glitch.is-active { animation: nf-name-glitch var(--scene-effect-duration) steps(2, end); }
 
+.scene-effect.effect-light-flicker.is-active,
+.scene-effect.effect-focus-pulse.is-active,
+.scene-effect.effect-scene-shake.is-active,
+.scene-effect.effect-face-dislocate.is-active,
+.scene-effect.effect-name-glitch.is-active { opacity: 1; }
+
+.scene-effect.effect-scene-shake {
+  border: 8px solid rgba(219, 226, 217, 0.12);
+  background: radial-gradient(circle at 50% 45%, transparent 0 42%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+.scene-effect.effect-face-dislocate {
+  background: linear-gradient(90deg, transparent 0 38%, rgba(142, 33, 36, 0.22) 39% 44%, transparent 45% 61%, rgba(111, 146, 168, 0.18) 62% 66%, transparent 67%);
+  mix-blend-mode: screen;
+}
+
 @keyframes nf-light-flicker { 0%, 38%, 78%, 100% { background: transparent; } 22%, 62% { background: rgba(220, 230, 224, .2); } 48%, 84% { background: rgba(0,0,0,.7); } }
 @keyframes nf-focus-pulse { 0% { backdrop-filter: blur(0); } 42% { backdrop-filter: blur(5px); } 100% { backdrop-filter: blur(0); } }
 @keyframes nf-scene-shake { 0%, 100% { transform: translate(0); } 18% { transform: translate(-7px, 2px); } 37% { transform: translate(5px, -3px); } 58% { transform: translate(-3px, 4px); } 79% { transform: translate(4px, 1px); } }
@@ -5501,3 +5545,16 @@ body[data-view="series"] {
 }
 
 @keyframes nf-reduced-cue { from { background: rgba(101, 31, 33, .28); } to { background: transparent; } }
+
+.is-reduced-motion .scene-effect.is-reduced-cue.is-active {
+  animation: nf-reduced-effect-cue var(--scene-effect-duration, 180ms) ease-out;
+}
+
+@keyframes nf-reduced-effect-cue {
+  from { opacity: 0.34; transform: none; filter: none; }
+  to { opacity: 0; transform: none; filter: none; }
+}
+
+.is-namefloor-slice .scene-focus-tag {
+  display: none;
+}

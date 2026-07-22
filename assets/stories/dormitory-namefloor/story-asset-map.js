@@ -30,7 +30,18 @@
     clues: {},
     chapters: {},
     props: {},
-    audio: { scenes: {} },
+    audio: {
+      scenes: {
+        namefloor_dorm_midnight: { bgm: "dormitory_room_air" },
+        namefloor_phone_glow: { bgm: "dormitory_room_air" },
+        namefloor_dorm_door: { bgm: "dormitory_room_air" },
+        namefloor_peephole: { bgm: "dormitory_corridor_air" },
+        namefloor_corridor_attack: { bgm: "dormitory_corridor_air" },
+        namefloor_red_inspection: { bgm: "dormitory_corridor_air" },
+        namefloor_stairwell: { bgm: "dormitory_corridor_air" },
+        namefloor_floor_four: { bgm: "dormitory_corridor_air" },
+      },
+    },
     endings: {},
   };
 })();

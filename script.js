@@ -1,6 +1,9 @@
 (() => {
   "use strict";
 
+  const isLocalAcceptanceCapture = ["127.0.0.1", "localhost"].includes(window.location.hostname)
+    && new URLSearchParams(window.location.search).get("acceptanceCapture") === "1";
+
   const RAIN_DATA = window.MIST_DATA;
   let DATA = RAIN_DATA;
   const RAIN_VISUALS = window.SECOND_LIFE_VISUALS || {
@@ -212,6 +215,8 @@
   let feedbackQueue = [];
   let visualState = { current: null };
   let nodeActionLocked = false;
+  let lastNodeActionAt = 0;
+  const NODE_ACTION_GUARD_MS = 320;
   let activeTimedChoice = null;
   let immersiveAttempted = false;
   let dialoguePointerStart = null;
@@ -329,9 +334,9 @@
 
     play(node = {}) {
       this.clear();
-      if (getReducedMotionPreference()) return;
       const layer = app?.querySelector(".scene-effect-layer");
       if (!layer) return;
+      const reducedMotion = getReducedMotionPreference();
       const cleanupToken = effectCleanupToken;
       let heavyUsed = false;
       getNodeSceneEffects(node).forEach((effect) => {
@@ -340,8 +345,9 @@
           heavyUsed = true;
         }
         const effectNode = document.createElement("div");
-        effectNode.className = `scene-effect effect-${effect.type} effect-level-${effect.level} effect-target-${effect.target}`;
-        effectNode.style.setProperty("--scene-effect-duration", `${effect.durationMs}ms`);
+        effectNode.className = `scene-effect effect-${effect.type} effect-level-${effect.level} effect-target-${effect.target}${reducedMotion ? " is-reduced-cue" : ""}`;
+        const effectDuration = reducedMotion ? Math.min(220, effect.durationMs) : effect.durationMs;
+        effectNode.style.setProperty("--scene-effect-duration", `${effectDuration}ms`);
         effectNode.style.setProperty("--scene-effect-delay", `${effect.delayMs}ms`);
         const remove = () => effectNode.remove();
         effectNode.addEventListener("animationend", remove, { once: true });
@@ -351,7 +357,7 @@
         }, effect.delayMs);
         this.schedule(() => {
           if (cleanupToken === effectCleanupToken) remove();
-        }, effect.delayMs + effect.durationMs + 80);
+        }, effect.delayMs + effectDuration + 80);
       });
     },
   };
@@ -2140,13 +2146,13 @@
     setView(
       "game",
       `
-      <section class="game-screen mobile-story-root ${sceneClass} ${gameModeClass} ${phoneModeClass} ${isDormitoryStory() ? "is-dormitory-story" : ""} ${hasStoryCapability("interactivePhone") ? "is-namefloor-slice" : ""} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""} ${getReducedMotionPreference() ? "is-reduced-motion" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
+      <section class="game-screen mobile-story-root ${sceneClass} ${gameModeClass} ${phoneModeClass} ${isDormitoryStory() ? "is-dormitory-story" : ""} ${hasStoryCapability("interactivePhone") ? "is-namefloor-slice" : ""} ${readingSettings.deepDarkMode ? "is-deep-dark" : ""} ${readingSettings.hideUi ? "is-ui-hidden" : ""} ${getReducedMotionPreference() ? "is-reduced-motion" : ""} ${isLocalAcceptanceCapture ? "is-local-acceptance-capture" : ""}" style="--reader-scale: ${readingSettings.fontScale}">
         <header class="game-topbar">
           <div class="game-title">
             <span>${escapeHTML(getScript().title)}</span>
             <strong>${escapeHTML(chapter?.title || node.chapterTitle || "")}</strong>
           </div>
-          ${renderTruthMeter()}
+          ${hasStoryCapability("hideTruthMeter") ? "" : renderTruthMeter()}
           <button class="game-menu-button" type="button" data-tool="menu" aria-expanded="false">菜单</button>
           <nav class="toolbox" aria-label="游戏工具栏">
             ${isDormitoryStory() || hasStoryCapability("rulesPanel") ? `<button type="button" data-tool="rules">规则</button>` : ""}
@@ -2154,7 +2160,7 @@
               线索 <span>${state.clues.length}/${getTotalClueCount()}</span>
             </button>
             <button type="button" data-tool="evidence">证据板</button>
-            <button type="button" data-tool="relationships">人物</button>
+            ${hasStoryCapability("hideRelationshipNumbers") ? "" : '<button type="button" data-tool="relationships">人物</button>'}
             <button type="button" data-tool="audio">声音</button>
             <button type="button" data-tool="reader">阅读</button>
             <button type="button" data-tool="archive">档案馆</button>
@@ -2244,7 +2250,7 @@
     }
 
     if (node.type === "chapter-ending") {
-      continueButton.textContent = "保存并返回书架";
+      continueButton.textContent = node.chapterEnding?.ctaLabel || "保存并返回书架";
       continueButton.addEventListener("click", () => {
         if (!lockNodeAction(continueButton)) return;
         state.completedObjectives ||= [];
@@ -2427,8 +2433,10 @@
   }
 
   function lockNodeAction(button = null) {
-    if (nodeActionLocked) return false;
+    const now = Date.now();
+    if (nodeActionLocked || now - lastNodeActionAt < NODE_ACTION_GUARD_MS) return false;
     nodeActionLocked = true;
+    lastNodeActionAt = now;
     button?.setAttribute("aria-busy", "true");
     document.querySelectorAll("#continueButton, #choiceArea .choice-button, [data-phone-action-id]").forEach((control) => {
       control.disabled = true;
