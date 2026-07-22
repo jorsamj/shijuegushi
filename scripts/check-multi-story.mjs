@@ -63,8 +63,23 @@ assert(namefloor?.script?.title === "宿舍规则怪谈", "Canonical dormitory t
 assert((namefloor?.chapters || []).length === 7, "Canonical dormitory runtime must contain seven chapters.");
 assert((namefloor?.rules || []).filter((rule) => rule.ruleId?.startsWith("namefloor_rule_")).length === 8, "Canonical dormitory runtime must contain eight student rules.");
 assert((namefloor?.rules || []).filter((rule) => rule.ruleId?.startsWith("namefloor_manager_rule_")).length === 7, "Canonical dormitory runtime must contain seven manager rules.");
-assert(Object.keys(namefloor?.endings || {}).length === 8, "Canonical dormitory runtime must contain eight endings.");
-assert(Object.keys(namefloor?.nodes || {}).length >= 300, "Canonical dormitory runtime is unexpectedly incomplete.");
+const canonicalEndingCount = Object.keys(namefloor?.endings || {}).length;
+assert(canonicalEndingCount === 0 || canonicalEndingCount === 8, "Canonical dormitory runtime must either be the current Chapter 1-3 Draft phase or the final eight-ending runtime.");
+if (canonicalEndingCount === 8) {
+  assert(Object.keys(namefloor?.nodes || {}).length >= 300, "Canonical dormitory runtime is unexpectedly incomplete.");
+} else {
+  assert(namefloor?.nodes?.nf03_050?.type === "chapter-ending", "Canonical dormitory Chapter 1-3 Draft phase must stop at the Chapter 3 hook.");
+  assert(Object.keys(namefloor?.nodes || {}).length >= 160, "Canonical dormitory Chapter 1-3 Draft phase is unexpectedly incomplete.");
+  for (const chapterId of ["namefloor_chapter_02", "namefloor_chapter_03"]) {
+    const chapter = namefloor.chapters.find((item) => item.chapterId === chapterId);
+    assert(chapter?.status === "runtime", `${chapterId} must be runtime in the Chapter 1-3 Draft phase.`);
+  }
+  for (const chapterId of ["namefloor_chapter_04", "namefloor_chapter_05", "namefloor_chapter_06", "namefloor_chapter_07"]) {
+    const chapter = namefloor.chapters.find((item) => item.chapterId === chapterId);
+    assert(chapter?.status !== "runtime", `${chapterId} must remain blueprint-only in the Chapter 1-3 Draft phase.`);
+    assert(!Object.values(namefloor.nodes || {}).some((node) => node.chapterId === chapterId), `${chapterId} must not export runtime nodes in the Chapter 1-3 Draft phase.`);
+  }
+}
 assert(!JSON.stringify(namefloor).match(/许棠|林穗|赵晴|陈露|沈妍|周婉宁|417宿舍|01:13/u), "Canonical dormitory runtime must not mix legacy female-dormitory content.");
 assert(rainScript?.startNodeId !== namefloor?.script?.startNodeId, "Rain Call and the canonical dormitory story must use distinct start nodes.");
 

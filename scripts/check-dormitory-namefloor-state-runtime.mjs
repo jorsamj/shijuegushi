@@ -267,17 +267,32 @@ for (const [routeName, plan] of Object.entries(data.routePlans || {})) {
   assert.doesNotMatch(reportText, /许知晚|周屿|最终推理|关系变化|namePollutionStage|\b(?:E[1-8]|c\d+_[a-z]+)\b|\b\d+\s*\/\s*\d+\b/i, `${routeName} report exposed legacy, numeric, or internal state.`);
   reached.push(first);
 }
-assert.deepEqual(new Set(reached), new Set(["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8"]), "All eight endings must remain reachable.");
-
-runtime.setState({
-  ...runtime.createInitialState(scriptId),
-  scriptId,
-  nodeId: "E3",
-  endingId: "E3",
-  storyState: { ...data.defaultStoryState, namePollutionStage: 9 },
-});
-current = runtime.getState();
-assert.equal(JSON.stringify(runtime.getRestoredStoryView()), JSON.stringify({ type: "ending", endingId: "E3" }), "Ending saves must restore the ending view.");
+if (Object.keys(data.routePlans || {}).length > 0) {
+  assert.deepEqual(new Set(reached), new Set(["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8"]), "All eight endings must remain reachable.");
+  runtime.setState({
+    ...runtime.createInitialState(scriptId),
+    scriptId,
+    nodeId: "E3",
+    endingId: "E3",
+    storyState: { ...data.defaultStoryState, namePollutionStage: 9 },
+  });
+  current = runtime.getState();
+  assert.equal(JSON.stringify(runtime.getRestoredStoryView()), JSON.stringify({ type: "ending", endingId: "E3" }), "Ending saves must restore the ending view.");
+} else {
+  assert.equal(data.nodes.nf03_050?.type, "chapter-ending", "Current Chapter 1-3 phase must stop at the Chapter 3 hook.");
+  ["namefloor_chapter_04", "namefloor_chapter_05", "namefloor_chapter_06", "namefloor_chapter_07"].forEach((chapterId) => {
+    const chapter = data.chapters.find((item) => item.chapterId === chapterId);
+    assert.ok(!chapter || chapter.status !== "runtime", `${chapterId} must not be runtime during the Chapter 1-3 phase.`);
+    assert.equal(Object.values(data.nodes).some((node) => node.chapterId === chapterId), false, `${chapterId} must not export runtime nodes during the Chapter 1-3 phase.`);
+  });
+  runtime.setState({
+    ...runtime.createInitialState(scriptId),
+    scriptId,
+    nodeId: "nf03_050",
+    storyState: { ...data.defaultStoryState, namePollutionStage: 9 },
+  });
+  current = runtime.getState();
+}
 const saveText = visibleText(runtime.renderSaveSlot({ ...current, savedAt: "2026-07-22T00:00:00.000Z" }, 0, "load"));
 assert.match(saveText, /黑色头像/, "Late pollution must visibly alter the save title.");
 assert.doesNotMatch(saveText, /第\s*9\s*阶段|污染值|namePollutionStage|\b9\s*\/\s*9\b/i, "Save titles must not expose internal or numeric state.");
