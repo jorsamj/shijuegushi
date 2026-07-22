@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "storyId": "script_dormitory_namefloor",
+  "storyTitle": "宿舍规则怪谈",
+  "auditDate": "2026-07-22",
+  "scope": "Canonical audible story lines only. Narration, phone text, and UI/system content are silent.",
+  "sourceFiles": {
+    "assets/stories/dormitory-namefloor/story-data.js": "2b9b0358417e3df9919e36968deec722b2506e3e445ab085fcf93cb031420bbf",
+    "assets/stories/dormitory-namefloor/story-chapters-2-7.js": "acb97d796cc04581fe87726fc8592e0d9c16ad7e56d481c6cf87c580f47cd737"
+  },
+  "targetSummary": {
+    "total": 21,
+    "byContentType": {
+      "dialogue": 16,
+      "door-voice": 4,
+      "world-audio": 1
+    },
+    "silentByContentType": {
+      "narration": 305,
+      "phone-text": 8,
+      "system": 41
+    }
+  },
+  "requiredSpeakerSources": [
+    { "speaker": "宋明", "source": "现场对白", "targets": 1, "voiceType": "zh_male_yangguangqingnian_uranus_bigtts" },
+    { "speaker": "林峰", "source": "现场对白", "targets": 2, "voiceType": "zh_male_kailangxuezhang_uranus_bigtts" },
+    { "speaker": "周朝阳", "source": "现场对白 / 周朝阳", "targets": 6, "voiceType": "zh_male_qingshuangnanda_uranus_bigtts" },
+    { "speaker": "谷雨", "source": "现场对白 / 谷雨", "targets": 4, "voiceType": "zh_male_wenrouxiaoge_uranus_bigtts" },
+    { "speaker": "门外的声音", "source": "门外的声音", "targets": 2, "voiceType": "zh_male_yangguangqingnian_uranus_bigtts" },
+    { "speaker": "门外的女声", "source": "门外的女声", "targets": 2, "voiceType": "zh_female_gaolengyujie_uranus_bigtts" },
+    { "speaker": "红色马甲宿管", "source": "现场对白", "targets": 1, "voiceType": "zh_female_gaolengyujie_uranus_bigtts" },
+    { "speaker": "吴阿姨", "source": "吴阿姨", "targets": 2, "voiceType": "zh_female_wenroumama_uranus_bigtts" },
+    { "speaker": "校园广播", "source": "校园广播", "targets": 1, "voiceType": "zh_female_zhixingnv_uranus_bigtts" }
+  ],
+  "generation": {
+    "status": "generated",
+    "generated": 21,
+    "failed": 0,
+    "retry": 0,
+    "wavPresent": 21,
+    "blockers": []
+  },
+  "targets": [
+    { "id": "nf01_004", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "dialogue", "speaker": "宋明", "voiceSource": "现场对白", "spokenText": "我去趟洗手间。门卡在桌上，别锁死。", "textHash": "0e2eb6f3759c150b8bc95453b168791605425d1653717e54d498fa5387ddbaf7" },
+    { "id": "nf01_008", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "dialogue", "speaker": "林峰", "voiceSource": "现场对白", "spokenText": "刚才门外有个影子。", "textHash": "b9be3fd5b798446e14910de4e9517e71d2ac84c748a91c3858159e759420dfdd" },
+    { "id": "nf01_011", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "dialogue", "speaker": "周朝阳", "voiceSource": "现场对白", "spokenText": "别只看内容。发消息的人是谁？", "textHash": "28f86ce7bb2858d0f60970dbb119ecab59421a9e97494c2cb2b14a281847835b" },
+    { "id": "nf01_013", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "door-voice", "speaker": "门外的声音", "voiceSource": "门外的声音", "spokenText": "林峰，快开门，我忘了带门卡。", "textHash": "a98a373daffd2172fefe05a02b754df92198024fd8e6aab40040e331cb77f9c3" },
+    { "id": "nf01_018", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "door-voice", "speaker": "门外的声音", "voiceSource": "门外的声音", "spokenText": "林峰。开门。", "textHash": "c4793ad688c34918baa563ae08ec90c7ea01c29d6973d4ec0f7c0f9f87f598ce" },
+    { "id": "nf01_019", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "dialogue", "speaker": "周朝阳", "voiceSource": "现场对白", "spokenText": "别开门，也别再叫他的名字。它在等我们替它补全。", "textHash": "11af3d758d12e2b5f20116466291a25c3fb56ab7faa03bcf4de92391dac26dd7" },
+    { "id": "nf01_021", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "dialogue", "speaker": "谷雨", "voiceSource": "现场对白", "spokenText": "可如果真的是宋明呢？我们就让他一直站在外面？", "textHash": "1c2bc15333c2a709d624aa81ecd78092e76277b0204cdb97888c6d19b384964c" },
+    { "id": "nf01_029", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "dialogue", "speaker": "周朝阳", "voiceSource": "现场对白", "spokenText": "先别盯着那两个字。把今晚发生过的事记住。", "textHash": "fc9413dd120dc07af71186554cbdd623cfec1064de638861188934076ead33dc" },
+    { "id": "nf01_031", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "door-voice", "speaker": "门外的女声", "voiceSource": "门外的女声", "spokenText": "同学，查房时间到了，请打开门。", "textHash": "b6a51ae9ba7fe02646200dbb065d9d9ad2aedcf9432881c0cef33eb9b1ea5dec" },
+    { "id": "nf01_032_count_voice", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "door-voice", "speaker": "门外的女声", "voiceSource": "门外的女声", "spokenText": "三个人。", "textHash": "3c9204ced75a220fa209ab2f342c96efe2867f8645e244f0d10e2d8b6267ca8f" },
+    { "id": "nf01_034", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "dialogue", "speaker": "红色马甲宿管", "voiceSource": "现场对白", "spokenText": "同学，你们宿舍都到齐了吗？", "textHash": "d946e6d68a55a49d2ff873c1849814ab388dcd2765a72f03d1c654804467b0e8" },
+    { "id": "nf01_037", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "dialogue", "speaker": "林峰", "voiceSource": "现场对白", "spokenText": "规则写了学校没有四楼。你到底在干什么？", "textHash": "6b470d7a3a526d72c8fe24113a546f106a732d06d4d909a693164c2c542265e0" },
+    { "id": "nf01_038", "chapterId": "namefloor_chapter_01", "module": "story-data.js", "contentType": "dialogue", "speaker": "周朝阳", "voiceSource": "现场对白", "spokenText": "先别看门牌。回答我：你叫什么名字？", "textHash": "881397e55d07045dd2468c0e03f5929457bc5a9ddf2deb539fd3a58780d60816" },
+    { "id": "nf02_020", "chapterId": "namefloor_chapter_02", "module": "story-chapters-2-7.js", "contentType": "dialogue", "speaker": "周朝阳", "voiceSource": "周朝阳", "spokenText": "学生规则说三点可以进食，宿管规则却要把拿到羽毛的学生送去不存在的四楼。这里没有一句话写明，谁在吃。", "textHash": "69339dde289a9e7ae2ff70ad294ceaa6c9b5138e7b9dcff1030f1d88b501661b" },
+    { "id": "nf02_c15", "chapterId": "namefloor_chapter_02", "module": "story-chapters-2-7.js", "contentType": "dialogue", "speaker": "周朝阳", "voiceSource": "周朝阳", "spokenText": "先定一个假设，但别把假设当答案。三点以后，究竟是谁可以进食？", "textHash": "f9f3b163eb0378002f94e0d396c92f4c6021ae4ab7c77583dab58a12a0e18c1e" },
+    { "id": "nf04_010", "chapterId": "namefloor_chapter_04", "module": "story-chapters-2-7.js", "contentType": "dialogue", "speaker": "吴阿姨", "voiceSource": "吴阿姨", "spokenText": "羽毛不是护身符。拿得越久，四楼越快找到你；交给别人，债也跟着过去。现在，把它还给我。", "textHash": "a3eb1cad2d4ce9c26e136169bd7314569bb207d321c9ae75bba5b652825847ba" },
+    { "id": "nf04_c27", "chapterId": "namefloor_chapter_04", "module": "story-chapters-2-7.js", "contentType": "dialogue", "speaker": "吴阿姨", "voiceSource": "吴阿姨", "spokenText": "你们可以不信我，但要先决定这笔债落在谁身上。", "textHash": "aef84ac3719760acbffa703c4c0a36137bfd78222ad9d917810675134b7faf71" },
+    { "id": "nf05_020", "chapterId": "namefloor_chapter_05", "module": "story-chapters-2-7.js", "contentType": "dialogue", "speaker": "谷雨", "voiceSource": "谷雨", "spokenText": "峰哥，我们是不是……今天才认识？我知道我信你，可我想不起为什么。", "textHash": "ae213cd8d7ae57bfe05a7e367604aa3331c1f063c4b6c5395af44ec3e8b4163f" },
+    { "id": "nf05_c36", "chapterId": "namefloor_chapter_05", "module": "story-chapters-2-7.js", "contentType": "dialogue", "speaker": "谷雨", "voiceSource": "谷雨", "spokenText": "我记得害怕，也记得不想丢下你。可共同经历全乱了。现在怎么办？", "textHash": "d5aad2b1a3e46eec7bd82e320ed9fda6c39f565c8380a74d77284c9e0aeb45b0" },
+    { "id": "nf06_c46", "chapterId": "namefloor_chapter_06", "module": "story-chapters-2-7.js", "contentType": "world-audio", "speaker": "校园广播", "voiceSource": "校园广播", "spokenText": "请确认本层学生全员到齐。确认后，出口将按正确人数开放。", "textHash": "4658ff9e78cc8567e0011f27f2168ca577746d2207e83664c95921d82745b8b6" },
+    { "id": "nf07_c52", "chapterId": "namefloor_chapter_07", "module": "story-chapters-2-7.js", "contentType": "dialogue", "speaker": "谷雨", "voiceSource": "谷雨", "spokenText": "我可以一直叫你的名字。可吴阿姨说过，喊得越久，污染越会转到我身上。", "textHash": "64fe8929fb3e30704bfc244aca3d37d69c9afb78af2eccdb53c0dee8133d887a" }
+  ]
+}

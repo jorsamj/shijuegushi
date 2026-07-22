@@ -460,6 +460,7 @@
     height: auto;
     max-height: none;
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    overflow: hidden;
     background: #070b0d;
     backdrop-filter: none;
   }
@@ -467,15 +468,35 @@
   .is-namefloor-slice .dorm-phone-screen {
     width: 100%;
     height: 100%;
+    min-width: 0;
     max-height: none;
     border: 0;
     border-radius: 0;
     box-shadow: none;
   }
 
+  .is-namefloor-slice.is-phone-node .vn-character-layer,
+  .is-namefloor-slice.is-phone-node .vn-visual-cast,
+  .is-namefloor-slice.is-phone-node .sample-character-figure,
+  .is-namefloor-slice.is-phone-node .scene-prop-layer,
+  .is-namefloor-slice.is-phone-node .story-inline-feedback {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .is-namefloor-slice.is-phone-node .scene-stage,
+  .is-namefloor-slice.is-phone-node .scene-asset-shell,
+  .is-namefloor-slice.is-phone-node .dorm-phone-screen,
+  .is-namefloor-slice.is-phone-node .dorm-phone-messages,
+  .is-namefloor-slice.is-phone-node .dorm-phone-rules,
+  .is-namefloor-slice.is-phone-node .dorm-phone-members,
+  .is-namefloor-slice.is-phone-node .dorm-phone-actions {
+    overflow-x: hidden;
+  }
+
   .is-namefloor-slice .dorm-phone-actions {
     grid-template-columns: 1fr;
-    max-height: min(44dvh, 380px);
+    max-height: min(46dvh, 380px);
     overflow-y: auto;
     gap: 6px;
     padding: 10px 16px max(12px, env(safe-area-inset-bottom));
@@ -483,7 +504,7 @@
 
   .is-namefloor-slice .dorm-phone-actions button,
   .is-namefloor-slice .dorm-phone-actions .choice-button {
-    min-height: 44px;
+    min-height: 48px;
   }
 
   .is-namefloor-slice.is-phone-node .game-topbar,
@@ -515,8 +536,15 @@
   }
 
   .is-namefloor-slice .choice-button {
-    min-height: 42px;
+    min-height: 46px;
     padding-block: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-namefloor-slice.is-phone-node .dorm-phone-layer,
+  .is-namefloor-slice.is-phone-node .dorm-phone-screen {
+    transition: none;
   }
 }
 

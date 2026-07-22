@@ -5245,6 +5245,11 @@ body[data-view="series"] {
   --nf-cold: #6f92a8;
   --nf-alert: #9b2f32;
   --nf-green: #607c68;
+  --nf-phone-frame: #111518;
+  --nf-book-paper: #c8c0b0;
+  --nf-book-charcoal: #1b1d1e;
+  --nf-book-red: #542729;
+  --nf-book-gray: #aaa399;
 }
 
 .is-local-acceptance-capture .game-topbar,
@@ -5495,6 +5500,101 @@ body[data-view="series"] {
 .is-namefloor-slice .dorm-phone-choice-actions { grid-template-columns: 1fr; }
 .is-namefloor-slice .dorm-phone-choice-actions .choice-button { width: 100%; }
 .is-namefloor-slice .dorm-phone-continue-actions button { grid-column: 1 / -1; }
+
+/* Keep both archive entries as restrained physical volumes, not bright category tiles. */
+.story-book {
+  border-color: rgba(200, 192, 176, 0.24);
+  background: var(--nf-book-charcoal, #1b1d1e);
+}
+
+.story-book-cover img {
+  filter: saturate(0.32) contrast(1.04) brightness(0.62) sepia(0.12);
+}
+
+.story-book-veil {
+  background:
+    linear-gradient(180deg, rgba(22, 24, 24, 0.12), rgba(22, 24, 24, 0.28) 40%, rgba(22, 24, 24, 0.94)),
+    linear-gradient(135deg, rgba(84, 39, 41, 0.32), transparent 52%);
+}
+
+.story-book-copy small,
+.story-book-copy em {
+  color: var(--nf-book-gray, #aaa399);
+}
+
+.story-book:hover,
+.story-book:focus-visible {
+  border-color: rgba(200, 192, 176, 0.58);
+  box-shadow: -8px 0 0 rgba(11, 12, 13, 0.68), 0 30px 46px rgba(0, 0, 0, 0.46), 0 0 0 1px rgba(84, 39, 41, 0.24);
+}
+
+.book-detail {
+  border-color: rgba(142, 132, 116, 0.48);
+  background: var(--nf-book-paper, #c8c0b0);
+}
+
+.book-detail-cover {
+  background: var(--nf-book-charcoal, #1b1d1e);
+}
+
+.book-detail-cover img {
+  filter: saturate(0.28) contrast(1.04) brightness(0.6) sepia(0.14);
+}
+
+.book-detail-cover::after {
+  background: linear-gradient(90deg, rgba(20, 22, 22, 0.6), rgba(84, 39, 41, 0.16) 38%, rgba(20, 22, 22, 0.68));
+}
+
+.book-page {
+  color: #292824;
+  background:
+    linear-gradient(90deg, rgba(83, 75, 65, 0.18), transparent 8%),
+    linear-gradient(180deg, #d3ccbd, var(--nf-book-paper, #c8c0b0));
+}
+
+.book-page-actions .case-button,
+.book-restart-confirm .case-button {
+  border-color: rgba(84, 39, 41, 0.86);
+  background: var(--nf-book-red, #542729);
+}
+
+@media (min-width: 761px) {
+  .is-namefloor-slice.is-phone-node .scene-stage {
+    padding: 0;
+  }
+
+  .is-namefloor-slice.is-phone-node .vn-character-layer,
+  .is-namefloor-slice.is-phone-node .vn-visual-cast,
+  .is-namefloor-slice.is-phone-node .sample-character-figure,
+  .is-namefloor-slice.is-phone-node .scene-prop-layer,
+  .is-namefloor-slice.is-phone-node .scene-asset-label,
+  .is-namefloor-slice.is-phone-node .objective-panel,
+  .is-namefloor-slice.is-phone-node .story-inline-feedback {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .is-namefloor-slice.is-phone-node .dorm-phone-layer {
+    position: fixed;
+    inset: clamp(16px, 3vh, 30px) clamp(20px, 4vw, 64px);
+    z-index: 20;
+    display: grid;
+    width: auto;
+    height: auto;
+    max-height: none;
+    place-items: center;
+    background: rgba(5, 7, 8, 0.78);
+    backdrop-filter: blur(9px);
+  }
+
+  .is-namefloor-slice.is-phone-node .dorm-phone-screen {
+    width: min(560px, calc(100vw - 160px));
+    height: min(820px, calc(100dvh - 48px));
+    max-height: 100%;
+    border-radius: 30px;
+    background: var(--nf-phone-frame);
+  }
+}
 
 .timed-choice-meter {
   display: grid;

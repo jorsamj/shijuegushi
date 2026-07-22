@@ -17,7 +17,44 @@
   let VISUALS = RAIN_VISUALS;
   const DORMITORY_DATA = window.MIST_DORMITORY_DATA;
   const DORMITORY_VISUALS = window.DORMITORY_ROLLCALL_ASSET_MAP || {};
-  const NAMEFLOOR_DATA = window.MIST_DORMITORY_NAMEFLOOR_DATA;
+  const mergeById = (baseItems = [], expansionItems = [], key = "chapterId") => {
+    const items = new Map(baseItems.map((item) => [item?.[key], item]));
+    expansionItems.forEach((item) => items.set(item?.[key], { ...(items.get(item?.[key]) || {}), ...item }));
+    return [...items.values()].filter(Boolean).sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+  };
+  const mergeNamefloorRuntime = (base, expansion) => {
+    if (!base || !expansion) return base;
+    const script = { ...(base.script || {}) };
+    delete script.sliceLabel;
+    const managerRules = expansion.managerRules || [];
+    const merged = {
+      ...base,
+      ...expansion,
+      schemaVersion: expansion.schemaVersion || base.schemaVersion,
+      script,
+      series: base.series,
+      chapters: mergeById(
+        (base.chapters || []).map((chapter) => chapter.order === 1 ? { ...chapter, status: "runtime", startNodeId: base.script?.startNodeId } : chapter),
+        expansion.chapters || []
+      ),
+      rules: [...(base.rules || []), ...managerRules],
+      managerRules,
+      hiddenRules: base.hiddenRules || [],
+      clues: { ...(base.clues || {}), ...(expansion.clues || {}) },
+      endings: { ...(base.endings || {}), ...(expansion.endings || {}) },
+      defaultFlags: { ...(base.defaultFlags || {}), ...(expansion.defaultFlags || {}) },
+      defaultStoryState: { ...(base.defaultStoryState || {}), ...(expansion.defaultStoryState || {}) },
+      nodes: { ...(base.nodes || {}), ...(expansion.nodes || {}) },
+      profile: { ...(base.profile || {}), ...(expansion.profile || {}) },
+    };
+    window.MIST_DORMITORY_NAMEFLOOR_DATA = merged;
+    return merged;
+  };
+  const NAMEFLOOR_DATA = mergeNamefloorRuntime(
+    window.MIST_DORMITORY_NAMEFLOOR_DATA,
+    window.MIST_DORMITORY_NAMEFLOOR_CHAPTERS_2_7
+  );
+  const NAMEFLOOR_SCRIPT_ID = "script_dormitory_namefloor";
   const NAMEFLOOR_VISUALS = window.DORMITORY_NAMEFLOOR_ASSET_MAP || {};
   const STORY_DATASETS = {
     script_rain_call: RAIN_DATA,
@@ -161,6 +198,7 @@
         relationshipDefs: dataset.profile.relationshipDefs || [],
         evidenceLinks: dataset.profile.evidenceLinks || [],
         endingResolver: dataset.profile.endingResolver,
+        endingPriority: dataset.profile.endingPriority || [],
         deductionTotal: dataset.profile.deductionTotal || 0,
         capabilities: dataset.profile.capabilities || {},
       }
@@ -224,6 +262,7 @@
   const preloadingVisuals = new Set();
   const inlineFeedbackTimers = new Set();
   let effectCleanupToken = 0;
+  let lastAutomaticSceneCueId = "";
   const EFFECT_LEVELS = new Set(["light", "medium", "heavy", "severe"]);
   const EFFECT_TYPES = new Set([
     "lights-out",
@@ -292,13 +331,93 @@
       || (EFFECT_LEVELS.has(level) ? level : "light");
   }
 
+  const NAMEFLOOR_SCENE_EFFECT_ALIASES = {
+    "archive-flicker": { type: "signal-glitch", level: "medium" },
+    "paper-drift": { type: "noise", level: "light" },
+    "reflection-lag": { type: "misalignment", level: "medium" },
+    "avatar-pulse": { type: "phone-vibrate", level: "light" },
+    "name-erasure": { type: "name-glitch", level: "medium" },
+    "signal-static": { type: "signal-glitch", level: "light" },
+    "double-exposure": { type: "double-character", level: "medium" },
+    "curtain-shift": { type: "focus-pulse", level: "light" },
+    "paper-scatter": { type: "noise", level: "medium" },
+    "ember-fall": { type: "blood-edge", level: "light" },
+    "photo-replace": { type: "misalignment", level: "medium" },
+    "timestamp-glitch": { type: "signal-glitch", level: "light" },
+    "blackout": { type: "blackout", level: "medium" },
+    "blood-edge": { type: "blood-edge", level: "medium" },
+    "doorway-shake": { type: "door-impact", level: "medium" },
+    "cabinet-open": { type: "focus-pulse", level: "light" },
+    "ink-crawl": { type: "signal-glitch", level: "light" },
+    "shadow-slide": { type: "misalignment", level: "light" },
+    "light-cut": { type: "lights-out", level: "light" },
+    "duplicate-align": { type: "double-character", level: "medium" },
+    "vest-color-shift": { type: "misalignment", level: "light" },
+    "ink-wet": { type: "signal-glitch", level: "light" },
+    "rule-underline": { type: "focus-pulse", level: "light" },
+    "light-open": { type: "lighting-change", level: "light" },
+    "paper-settle": { type: "noise", level: "light" },
+    "sign-erasure": { type: "name-glitch", level: "medium" },
+    "depth-loop": { type: "signal-tear", level: "medium" },
+    "era-crossfade": { type: "signal-glitch", level: "medium" },
+    "door-breath": { type: "focus-pulse", level: "light" },
+    "dust-fall": { type: "noise", level: "light" },
+    "exit-flare": { type: "lighting-change", level: "light" },
+    "ink-vein": { type: "name-glitch", level: "medium" },
+    "feather-ash": { type: "blood-edge", level: "light" },
+    "feather-rise": { type: "focus-pulse", level: "light" },
+    "name-return": { type: "lighting-change", level: "light" },
+    "mirror-offset": { type: "double-character", level: "medium" },
+    "paper-lift": { type: "noise", level: "light" },
+    "roster-scratch": { type: "signal-glitch", level: "light" },
+    "cabinet-flicker": { type: "light-flicker", level: "light" },
+    "key-glint": { type: "focus-pulse", level: "light" },
+    "ink-transfer": { type: "name-glitch", level: "medium" },
+    "green-approach": { type: "focus-pulse", level: "light" },
+    "feather-react": { type: "signal-glitch", level: "light" },
+    "soft-focus": { type: "focus-pulse", level: "light" },
+    "name-fade": { type: "name-glitch", level: "medium" },
+    "number-lock": { type: "signal-glitch", level: "medium" },
+    "name-glitch": { type: "name-glitch", level: "medium" },
+    "key-split": { type: "noise", level: "light" },
+    "signature-fade": { type: "name-glitch", level: "medium" },
+    "photo-wall-shift": { type: "misalignment", level: "medium" },
+    "send-pulse": { type: "phone-vibrate", level: "light" },
+    "time-rewind": { type: "signal-tear", level: "medium" },
+    "avatar-lock": { type: "name-glitch", level: "medium" },
+    "handprint-spread": { type: "blood-edge", level: "medium" },
+    "moon-pressure": { type: "focus-pulse", level: "medium" },
+    "name-transfer": { type: "name-glitch", level: "medium" },
+    "contact-blank": { type: "signal-glitch", level: "light" },
+    "collar-erasure": { type: "name-glitch", level: "medium" },
+    "faceless-rise": { type: "mimic-reveal", level: "medium" },
+    "lens-breathe": { type: "focus-pulse", level: "light" },
+    "split-shadow": { type: "double-character", level: "medium" },
+    "phone-vibrate": { type: "phone-vibrate", level: "light" },
+    "call-overlap": { type: "signal-tear", level: "medium" },
+    "memory-flash": { type: "misalignment", level: "light" },
+    "vest-reveal": { type: "focus-pulse", level: "light" },
+    "face-dislocate": { type: "face-dislocate", level: "medium" },
+  };
+
+  function getNamefloorSceneEffects(node = {}) {
+    if (state?.scriptId !== NAMEFLOOR_SCRIPT_ID || !node.scene || lastAutomaticSceneCueId === node.scene) return [];
+    const visual = NAMEFLOOR_VISUALS?.scenes?.[node.scene];
+    if (!Array.isArray(visual?.effects)) return [];
+    return visual.effects
+      .map((effect) => NAMEFLOOR_SCENE_EFFECT_ALIASES[effect] || { type: "signal-glitch", level: "light" })
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((effect, index) => ({ ...effect, durationMs: index === 0 ? 520 : 360, delayMs: index * 100, target: "scene" }));
+  }
+
   function getNodeSceneEffects(node = {}) {
     const source = Array.isArray(node.effects)
       ? node.effects
       : node.effect
         ? [{ type: node.effect, level: node.effectIntensity }]
         : [];
-    return source.map((effect) => {
+    const normalized = source.map((effect) => {
       const type = String(effect?.type || effect?.effect || "").trim().toLowerCase();
       if (!EFFECT_TYPES.has(type)) return null;
       return {
@@ -309,6 +428,7 @@
         target: normalizeVisualToken(effect?.target, "scene"),
       };
     }).filter(Boolean);
+    return normalized.length ? normalized : getNamefloorSceneEffects(node);
   }
 
   const SceneEffectController = {
@@ -339,7 +459,9 @@
       const reducedMotion = getReducedMotionPreference();
       const cleanupToken = effectCleanupToken;
       let heavyUsed = false;
-      getNodeSceneEffects(node).forEach((effect) => {
+      const effects = getNodeSceneEffects(node);
+      if (state?.scriptId === NAMEFLOOR_SCRIPT_ID && node.scene) lastAutomaticSceneCueId = node.scene;
+      effects.forEach((effect) => {
         if (effect.level === "heavy") {
           if (heavyUsed) return;
           heavyUsed = true;
@@ -372,6 +494,21 @@
     SceneEffectController.clear();
     clearInlineStoryFeedback();
     stopTimedChoice({ preserve: true });
+  }
+
+  function resetStorySessionTransients({ preserveTimedChoice = false, resetVisual = false } = {}) {
+    SceneEffectController.clear();
+    clearInlineStoryFeedback();
+    stopTimedChoice({ preserve: preserveTimedChoice });
+    feedbackQueue.length = 0;
+    dialoguePointerStart = null;
+    nodeActionLocked = false;
+    lastNodeActionAt = 0;
+    app?.querySelectorAll(".dorm-phone-layer").forEach((layer) => layer.classList.remove("is-ringing"));
+    if (resetVisual) {
+      visualState = { current: null };
+      lastAutomaticSceneCueId = "";
+    }
   }
 
   function getStoryStorageKeys(scriptId = state?.scriptId || "script_rain_call") {
@@ -412,7 +549,7 @@
       checkedHotspots: [],
       evidenceConnections: [],
       ruleStatuses: {},
-      storyState: structuredCloneSafe(DATA.defaultStoryState || {}),
+      storyState: normalizeStoryState(DATA.defaultStoryState || {}, scriptId),
       timedChoices: {},
       endingCollection: loadStoredCollection(scriptId).endings,
       galleryUnlocks: loadStoredCollection(scriptId).gallery,
@@ -514,6 +651,80 @@
     } catch (error) {
       return {};
     }
+  }
+
+  const BLOCKED_STORY_STATE_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+  const STORY_STATE_ENVELOPE_KEYS = new Set([
+    "scriptId", "nodeId", "flags", "clues", "history", "endingId", "relationships",
+    "importantChoices", "endingPathTags", "ruleStatuses", "storyState",
+  ]);
+
+  function isPlainRecord(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    const prototype = Object.getPrototypeOf(value);
+    return prototype === null || prototype?.constructor?.name === "Object";
+  }
+
+  function cloneStoryStateValue(value) {
+    if (value === null || typeof value === "string" || typeof value === "boolean") return value;
+    if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+    if (Array.isArray(value)) {
+      return value.map(cloneStoryStateValue).filter((entry) => entry !== undefined);
+    }
+    if (!isPlainRecord(value)) return undefined;
+    return Object.entries(value).reduce((result, [key, entry]) => {
+      if (BLOCKED_STORY_STATE_KEYS.has(key)) return result;
+      const cloned = cloneStoryStateValue(entry);
+      if (cloned !== undefined) result[key] = cloned;
+      return result;
+    }, {});
+  }
+
+  function mergeStoryState(base, patch) {
+    const result = isPlainRecord(base) ? cloneStoryStateValue(base) : {};
+    if (!isPlainRecord(patch)) return result;
+    Object.entries(patch).forEach(([key, value]) => {
+      if (BLOCKED_STORY_STATE_KEYS.has(key)) return;
+      const cloned = cloneStoryStateValue(value);
+      if (cloned === undefined) return;
+      result[key] = isPlainRecord(result[key]) && isPlainRecord(cloned)
+        ? mergeStoryState(result[key], cloned)
+        : cloned;
+    });
+    return result;
+  }
+
+  function setStoryStatePath(target, path, value) {
+    const segments = String(path || "").split(".").map((entry) => entry.trim()).filter(Boolean);
+    if (!segments.length || segments.some((key) => BLOCKED_STORY_STATE_KEYS.has(key))) return;
+    const cloned = cloneStoryStateValue(value);
+    if (cloned === undefined) return;
+    let cursor = target;
+    segments.slice(0, -1).forEach((key) => {
+      if (!isPlainRecord(cursor[key])) cursor[key] = {};
+      cursor = cursor[key];
+    });
+    cursor[segments[segments.length - 1]] = cloned;
+  }
+
+  function normalizeStoryState(input, scriptId) {
+    const defaults = getDataset(scriptId)?.defaultStoryState || {};
+    const normalized = mergeStoryState(defaults, input);
+    if (scriptId === NAMEFLOOR_SCRIPT_ID) {
+      STORY_STATE_ENVELOPE_KEYS.forEach((key) => delete normalized[key]);
+      normalized.namePollutionStage = Math.trunc(clampNumber(Number(normalized.namePollutionStage || 0), 0, 9));
+    }
+    return normalized;
+  }
+
+  function applyStoryStateEffects(item = {}) {
+    if (!isPlainRecord(item.storyState) && !Array.isArray(item.stateUpdates)) return;
+    const nextStoryState = mergeStoryState(state.storyState || {}, item.storyState || {});
+    (item.stateUpdates || []).forEach((update) => {
+      if (!update || (update.operation && update.operation !== "set")) return;
+      setStoryStatePath(nextStoryState, update.key || update.path, update.value);
+    });
+    state.storyState = normalizeStoryState(nextStoryState, state.scriptId);
   }
 
   function getSeries(seriesId = "series_rain_call") {
@@ -650,6 +861,72 @@
     `;
   }
 
+  function getNamePollutionStage(sourceState = state) {
+    if (sourceState?.scriptId !== NAMEFLOOR_SCRIPT_ID) return 0;
+    return Math.trunc(clampNumber(Number(sourceState.storyState?.namePollutionStage || 0), 0, 9));
+  }
+
+  function getNamePollutionPresentation(sourceState = state) {
+    const stage = getNamePollutionStage(sourceState);
+    const presentations = [
+      { contactName: "林峰", dialogueName: "林峰", choiceName: "林峰", saveLabel: "" },
+      { contactName: "林？", dialogueName: "林峰", choiceName: "林峰", saveLabel: "林？的记录", phoneNotice: "通讯录中的姓名变成了“林？”。" },
+      { contactName: "黑色头像", dialogueName: "林峰", choiceName: "林峰", saveLabel: "缺少姓名的记录", phoneNotice: "黑色头像占据了原来的群位置，群人数没有变化。", blackAvatar: true },
+      { contactName: "林？", dialogueName: "林峰", choiceName: "林峰", saveLabel: "缺失共同记录", phoneNotice: "部分共同经历无法读取。" },
+      { contactName: "用户不存在", dialogueName: "林峰", choiceName: "林峰", saveLabel: "用户不存在", phoneNotice: "个人账号：用户不存在。" },
+      { contactName: "林？", dialogueName: "林峰", choiceName: "林峰", saveLabel: "被替换的合照", phoneNotice: "班级合照中的原位置正在被另一张相同的脸覆盖。" },
+      { contactName: "……", dialogueName: "……", choiceName: "林峰", saveLabel: "无人能叫出的记录", phoneNotice: "最近称呼：……" },
+      { contactName: "林……峰", dialogueName: "林……峰", choiceName: "林……峰", saveLabel: "林……峰的记录", phoneNotice: "姓名输入：林……峰。" },
+      { contactName: "无名者", dialogueName: "无名者", choiceName: "……", saveLabel: "无名层记录", phoneNotice: "当前位置：未命名楼层。" },
+      { contactName: "黑色头像", dialogueName: "黑色头像", choiceName: "……", saveLabel: "黑色头像的记录", phoneNotice: "当前账号：黑色头像。", blackAvatar: true },
+    ];
+    return presentations[stage];
+  }
+
+  function getVisibleChoiceText(text, sourceState = state) {
+    const source = String(text || "");
+    const presentation = getNamePollutionPresentation(sourceState);
+    if (getNamePollutionStage(sourceState) < 7) return source;
+    return source.replace(/林峰/g, presentation.choiceName);
+  }
+
+  function applyNamePollutionPhoneCarriers(screen) {
+    if (state?.scriptId !== NAMEFLOOR_SCRIPT_ID) return screen;
+    const presentation = getNamePollutionPresentation();
+    const stage = getNamePollutionStage();
+    if (stage === 0) return screen;
+    const replaceVisibleName = (value) => String(value || "").replace(/林峰/g, presentation.contactName);
+    const members = screen.members.map((member) => {
+      if (!member || typeof member !== "object") return member;
+      if (member.name !== "林峰") return { ...member };
+      return {
+        ...member,
+        name: presentation.contactName,
+        ...(presentation.blackAvatar ? { isBlackAvatar: true } : {}),
+        ...(stage === 1 || stage === 5 || stage === 7 ? { isGlitched: true } : {}),
+      };
+    });
+    const messages = screen.messages.map((message) => {
+      if (!message || typeof message !== "object") return message;
+      return {
+        ...message,
+        ...(message.sender === "林峰" ? { sender: presentation.contactName } : {}),
+        ...(message.name === "林峰" ? { name: presentation.contactName } : {}),
+      };
+    });
+    const call = screen.call && typeof screen.call === "object"
+      ? { ...screen.call, ...(screen.call.name === "林峰" ? { name: presentation.contactName } : {}) }
+      : screen.call;
+    return {
+      ...screen,
+      title: screen.title === "林峰" ? replaceVisibleName(screen.title) : screen.title,
+      members,
+      messages,
+      call,
+      pollutionNotice: presentation.phoneNotice || "",
+    };
+  }
+
   function normalizePhoneScreen(phoneScreen = {}) {
     const source = phoneScreen && typeof phoneScreen === "object" ? phoneScreen : {};
     const kindAliases = {
@@ -666,7 +943,7 @@
       "system-notice": "system",
     };
     const kind = kindAliases[source.kind] || kindAliases[source.view] || "system";
-    return {
+    const normalized = {
       ...source,
       kind,
       title: source.title || (kind === "group" ? "宿舍互助群" : kind === "private" ? "私聊" : "手机通知"),
@@ -679,6 +956,7 @@
       rules: Array.isArray(source.rules) ? source.rules : [],
       systemNotice: source.systemNotice || source.anomaly || "正在等待新的消息。",
     };
+    return applyNamePollutionPhoneCarriers(normalized);
   }
 
   function renderPhoneMedia(media, label = "") {
@@ -739,8 +1017,9 @@
         <div class="dorm-phone-screen">
           <header class="dorm-phone-status">${status}</header>
           <div class="dorm-phone-header"><strong>${escapeHTML(screen.title)}</strong><small>${escapeHTML(memberLabel)}</small></div>
+          ${screen.pollutionNotice ? `<p class="dorm-phone-notice">${escapeHTML(screen.pollutionNotice)}</p>` : ""}
           ${body}
-          ${screen.actions.length ? `<nav class="dorm-phone-actions" aria-label="手机操作">${screen.actions.map((action) => `<button type="button" data-phone-action-id="${escapeHTML(action.actionId)}">${escapeHTML(action.label)}</button>`).join("")}</nav>` : ""}
+          ${screen.actions.length ? `<nav class="dorm-phone-actions" aria-label="手机操作">${screen.actions.map((action) => `<button type="button" data-phone-action-id="${escapeHTML(action.actionId)}">${escapeHTML(getVisibleChoiceText(action.label))}</button>`).join("")}</nav>` : ""}
         </div>
       </aside>
     `;
@@ -1777,7 +2056,7 @@
   function loadProgress(scriptId = state?.scriptId || "script_rain_call") {
     const progress = readJSON(getStoryStorageKeys(scriptId).progress, null);
     if (!progress || progress.scriptId !== scriptId) return false;
-    clearStoryTransientVisuals();
+    resetStorySessionTransients({ resetVisual: true });
     state = normalizeState(progress);
     return true;
   }
@@ -1794,8 +2073,12 @@
     const normalizedUnreadClues = Array.isArray(input.unreadClues)
       ? input.unreadClues.filter((clueId) => validClueIds.has(clueId))
       : [];
-    const normalizedNodeId = DATA.nodes[input.nodeId] ? input.nodeId : (DATA.script?.startNodeId || getScript(scriptId)?.startNodeId || "ch01_001");
     const normalizedEndingId = input.endingId && DATA.endings[input.endingId] ? input.endingId : null;
+    const normalizedNodeId = normalizedEndingId
+      ? normalizedEndingId
+      : DATA.nodes[input.nodeId]
+        ? input.nodeId
+        : (DATA.script?.startNodeId || getScript(scriptId)?.startNodeId || "ch01_001");
     return {
       ...createInitialState(scriptId),
       ...input,
@@ -1819,10 +2102,7 @@
       checkedHotspots: Array.isArray(input.checkedHotspots) ? input.checkedHotspots : [],
       evidenceConnections: Array.isArray(input.evidenceConnections) ? input.evidenceConnections : [],
       ruleStatuses: input.ruleStatuses && typeof input.ruleStatuses === "object" ? input.ruleStatuses : {},
-      storyState: {
-        ...structuredCloneSafe(DATA.defaultStoryState || {}),
-        ...(input.storyState && typeof input.storyState === "object" ? structuredCloneSafe(input.storyState) : {}),
-      },
+      storyState: normalizeStoryState(input.storyState, scriptId),
       timedChoices: input.timedChoices && typeof input.timedChoices === "object" ? { ...input.timedChoices } : {},
       endingCollection: Array.from(new Set([...(loadStoredCollection(scriptId).endings || []), ...((Array.isArray(input.endingCollection) && input.endingCollection) || [])])),
       galleryUnlocks: Array.from(new Set([...(loadStoredCollection(scriptId).gallery || []), ...((Array.isArray(input.galleryUnlocks) && input.galleryUnlocks) || [])])),
@@ -1899,20 +2179,24 @@
   }
 
   function bindPageLifecycle() {
+    const suspendStory = (reason) => {
+      stopNodeTransientAudio(reason);
+      resetStorySessionTransients({ preserveTimedChoice: true });
+      autoSave();
+    };
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
-        stopNodeTransientAudio("backgrounded");
-        clearStoryTransientVisuals();
-        autoSave();
+        suspendStory("backgrounded");
       } else if (currentView === "game") {
         const node = getNode();
         if (node?.timedChoice && !activeTimedChoice && !nodeActionLocked) startTimedChoice(node);
       }
     });
+    window.addEventListener?.("pagehide", () => suspendStory("pagehide"));
   }
 
   function showSplash() {
-    clearStoryTransientVisuals();
+    resetStorySessionTransients({ resetVisual: true });
     setView(
       "splash",
       `
@@ -1942,7 +2226,7 @@
   }
 
   function showHall() {
-    clearStoryTransientVisuals();
+    resetStorySessionTransients({ resetVisual: true });
     stopNodeTransientAudio("leave-game");
     stopBgm("return-to-archive");
     stopAmbience("return-to-archive");
@@ -2010,6 +2294,7 @@
   }
 
   function showSeries(seriesId) {
+    resetStorySessionTransients({ resetVisual: true });
     const series = getSeries(seriesId);
     const scripts = series.scriptIds.map((id) => getScript(id)).filter(Boolean);
     const openScript = scripts.find((script) => script.status === "open") || scripts[0];
@@ -2091,7 +2376,7 @@
     stopEntryMusic("story-entry");
     try {
       if (mode === "continue" && loadProgress(scriptId)) {
-        showGame();
+        showRestoredStory();
         return;
       }
       if (mode === "continue") showToast("未找到可用进度，已从第一章开始。", "warn");
@@ -2106,12 +2391,27 @@
     }
   }
 
+  function getRestoredStoryView() {
+    if (state.endingId && DATA.endings[state.endingId]) {
+      return { type: "ending", endingId: state.endingId };
+    }
+    return { type: "game", nodeId: state.nodeId };
+  }
+
+  function showRestoredStory() {
+    const target = getRestoredStoryView();
+    if (target.type === "ending") {
+      showEnding(target.endingId);
+    } else {
+      showGame();
+    }
+  }
+
 
   function startNewGame(scriptId = state?.scriptId || "script_rain_call") {
-    clearStoryTransientVisuals();
+    resetStorySessionTransients({ resetVisual: true });
     stopNodeTransientAudio("restart");
     stopEntryMusic("story-start");
-    visualState = { current: null };
     unlockAudio();
     state = createInitialState(scriptId);
     autoSave();
@@ -2202,6 +2502,9 @@
   function getDialogueSpeakerLabel(node) {
     if (node?.contentType === "system") return "系统提示";
     if (node?.contentType === "broadcast") return "宿舍广播";
+    if (state.scriptId === NAMEFLOOR_SCRIPT_ID && node?.speaker === "林峰") {
+      return getNamePollutionPresentation().dialogueName;
+    }
     return node?.speaker || "旁白";
   }
 
@@ -2212,6 +2515,7 @@
     gainClues(node.gainClues || []);
     setFlags(node.setFlags || []);
     applyRuleUpdates(node.ruleUpdates || []);
+    applyStoryStateEffects(node);
     if (node.type !== "choice" && node.type !== "deduction") {
       addHistory({
         type: node.type === "ending" ? "system" : "dialogue",
@@ -2250,13 +2554,19 @@
     }
 
     if (node.type === "chapter-ending") {
-      continueButton.textContent = node.chapterEnding?.ctaLabel || "保存并返回书架";
+      continueButton.textContent = node.nextNodeId
+        ? node.chapterEnding?.ctaLabel || "进入下一章"
+        : node.chapterEnding?.ctaLabel || "保存并返回书架";
       continueButton.addEventListener("click", () => {
         if (!lockNodeAction(continueButton)) return;
         state.completedObjectives ||= [];
         if (!state.completedObjectives.includes(node.chapterId)) state.completedObjectives.push(node.chapterId);
         autoSave();
-        showSeries(getScript()?.seriesId);
+        if (node.nextNodeId) {
+          goToNode(node.nextNodeId);
+        } else {
+          showSeries(getScript()?.seriesId);
+        }
       });
       return;
     }
@@ -2280,7 +2590,7 @@
         .map((choice) => `
           <button class="choice-button" type="button" data-choice-id="${choice.choiceId}">
             ${choice.choiceIntent ? `<small>${escapeHTML(choice.choiceIntent)}</small>` : ""}
-            <span>${escapeHTML(choice.text)}</span>
+            <span>${escapeHTML(getVisibleChoiceText(choice.text))}</span>
           </button>
         `)
         .join("");
@@ -2329,9 +2639,7 @@
     applyRuleUpdates(item.ruleUpdates || []);
     applyRelationshipEffects(item.relationshipEffects || []);
     recordEndingPathTags(item.endingPathTags || []);
-    if (item.storyState && typeof item.storyState === "object") {
-      state.storyState = { ...(state.storyState || {}), ...structuredCloneSafe(item.storyState) };
-    }
+    applyStoryStateEffects(item);
   }
 
   function handlePhoneAction(node, actionId) {
@@ -2549,6 +2857,7 @@
     const previousNode = getNode();
     const nextNode = DATA.nodes[nodeId];
     const chapterFeedback =
+      !hasStoryCapability("quietFeedback") &&
       previousNode && nextNode && previousNode.chapterId !== nextNode.chapterId
         ? buildChapterSummaryFeedback(previousNode.chapterId, nextNode.chapterId, previousNode.chapterRecap)
         : null;
@@ -2740,7 +3049,15 @@
 
   function resolveEnding() {
     if (typeof activeProfile.endingResolver === "function") {
-      return activeProfile.endingResolver(state);
+      try {
+        const resolved = activeProfile.endingResolver(structuredCloneSafe(state));
+        if (resolved && DATA.endings[resolved]) return resolved;
+        const matchingEntry = Object.entries(DATA.endings || {}).find(([, ending]) => ending?.endingId === resolved);
+        if (matchingEntry) return matchingEntry[0];
+      } catch (error) {
+        console.warn("[Second Life] Ending resolver failed; using the story fallback.", error);
+      }
+      if (state.scriptId === NAMEFLOOR_SCRIPT_ID && DATA.endings.E8) return "E8";
     }
     const clues = new Set(state.clues);
     const flags = state.flags;
@@ -2773,9 +3090,16 @@
   }
 
   function showEnding(endingId) {
-    clearStoryTransientVisuals();
+    resetStorySessionTransients({ resetVisual: true });
     stopNodeTransientAudio("ending");
-    const ending = DATA.endings[endingId] || DATA.endings.ending_d || Object.values(DATA.endings)[0];
+    const ending = DATA.endings[endingId]
+      || (state.scriptId === NAMEFLOOR_SCRIPT_ID ? DATA.endings.E8 : DATA.endings.ending_d)
+      || Object.values(DATA.endings)[0];
+    if (!ending) {
+      showToast("结局记录缺失，已返回人生档案。", "warn");
+      showHall();
+      return;
+    }
     state.endingId = ending.endingId;
     state.nodeId = ending.endingId;
     state.endingCollection ||= [];
@@ -2821,6 +3145,7 @@
   }
 
   function renderEndingReport(ending) {
+    if (state.scriptId === NAMEFLOOR_SCRIPT_ID) return renderNamefloorEndingReport(ending);
     const report = ENDING_REPORT[ending.endingId] || ENDING_REPORT.ending_d || Object.values(ENDING_REPORT)[0] || { label: ending.title, type: "Ending", comment: "This life has been archived." };
     const coreCount = getCoreClueCount();
     const keyClues = Object.values(DATA.clues).filter((clue) => clue.isKey && state.clues.includes(clue.clueId)).length;
@@ -2863,6 +3188,43 @@
         </article>
         ${renderEndingRoadmap(ending.endingId)}
         <blockquote>${escapeHTML(report.comment)}</blockquote>
+      </section>
+    `;
+  }
+
+  function renderNamefloorEndingReport(ending) {
+    const recentChoices = [...new Set((state.importantChoices || [])
+      .map((entry) => getVisibleChoiceText(entry?.text || entry?.choiceText || ""))
+      .filter(Boolean))]
+      .slice(-6);
+    const choiceRows = (recentChoices.length ? recentChoices : ["这条路线没有留下可公开的选择记录。"])
+      .map((text) => `<li>${escapeHTML(text)}</li>`)
+      .join("");
+    const report = ENDING_REPORT[ending.endingId] || { label: ending.title, type: ending.tone || "宿舍记录" };
+    return `
+      <section class="ending-report namefloor-ending-report">
+        <figure class="ending-art">
+          <img src="${escapeHTML(VISUALS.endings?.[ending.endingId]?.image || "")}" alt="${escapeHTML(ending.title)}" loading="lazy" />
+        </figure>
+        <div class="report-head">
+          <p class="eyebrow">宿舍记录</p>
+          <h2>${escapeHTML(report.label || ending.title)}</h2>
+          <span>${escapeHTML(ending.tone || report.type || "结局已归档")}</span>
+        </div>
+        <div class="report-grid">
+          <article>
+            <h3>留下的选择</h3>
+            <ul>${choiceRows}</ul>
+          </article>
+          <article>
+            <h3>结局后的手机</h3>
+            <p>${escapeHTML(ending.phoneState || "手机记录停在天亮前的最后一刻。")}</p>
+          </article>
+        </div>
+        <article class="ending-path-report">
+          <h3>最后留下的话</h3>
+          <blockquote>${escapeHTML(ending.finalLine || ending.text || "记录到此结束。")}</blockquote>
+        </article>
       </section>
     `;
   }
@@ -3003,6 +3365,7 @@
     bindTool("hall", () => {
         openConfirm("返回人生档案", "返回前会自动保存当前进度。要离开当前故事吗？", () => {
         stopNodeTransientAudio("leave-game");
+        resetStorySessionTransients({ preserveTimedChoice: true });
         autoSave();
         showHall();
       });
@@ -3515,19 +3878,30 @@
         const index = Number(button.dataset.loadSlot);
         const slot = slots[index];
         if (!slot) return;
+        if (slot.scriptId !== state.scriptId) {
+          showToast("该记录不属于当前故事，无法在这里读取。", "warn");
+          return;
+        }
         openConfirm("读取存档", "读取后会覆盖当前临时进度。确认继续吗？", () => {
-          clearStoryTransientVisuals();
+          resetStorySessionTransients({ resetVisual: true });
           stopNodeTransientAudio("load-save");
           state = normalizeState(slot);
           closeModal();
-          if (state.endingId && DATA.endings[state.endingId]) {
-            showEnding(state.endingId);
-          } else {
-            showGame();
-          }
+          showRestoredStory();
         }, openLoadModal);
       });
     });
+  }
+
+  function getSaveTitle(slot) {
+    const scriptTitle = getScript(slot?.scriptId)?.title || "当前故事";
+    if (slot?.scriptId !== NAMEFLOOR_SCRIPT_ID) return `《${scriptTitle}》`;
+    const presentation = getNamePollutionPresentation(slot);
+    let label = presentation.saveLabel;
+    if (slot.flags?.black_avatar_owns_save === true || getNamePollutionStage(slot) >= 9) label = "黑色头像的记录";
+    else if (slot.flags?.saved_under_guyu === true) label = "谷？的记录";
+    else if (slot.flags?.typed_linfeng_save_title === true) label = "两份“林峰”记录";
+    return label ? `《${scriptTitle}》· ${label}` : `《${scriptTitle}》`;
   }
 
   function renderSaveSlot(slot, index, mode) {
@@ -3549,7 +3923,7 @@
     return `
       <article class="save-slot">
           <h3>人生节点 ${index + 1}</h3>
-        <p class="save-title">《${escapeHTML(getScript(slot.scriptId).title)}》</p>
+        <p class="save-title">${escapeHTML(getSaveTitle(slot))}</p>
         <p>${escapeHTML(chapter)}</p>
         <p>${escapeHTML(summary || "剧情节点记录")}</p>
         <p>${clueCount} 条线索 · ${formatDate(slot.savedAt || slot.updatedAt)}</p>

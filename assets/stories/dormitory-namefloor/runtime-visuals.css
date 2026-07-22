@@ -1,0 +1,177 @@
+/* Canonical name-floor fallback art. Formal bitmap production remains intentionally absent. */
+.scene-asset-shell[data-scene-id^="namefloor_"] .scene-sample-backdrop[class*="nf-scene-"] {
+  --nf-sky: #15222c;
+  --nf-wall: #293536;
+  --nf-floor: #101417;
+  --nf-accent: #a8c6bd;
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, transparent 0 16%, rgba(0, 0, 0, .27) 16% 17%, transparent 17% 83%, rgba(0, 0, 0, .28) 83% 84%, transparent 84%),
+    linear-gradient(180deg, var(--nf-sky), var(--nf-wall) 48%, var(--nf-floor) 100%);
+}
+
+.scene-asset-shell[data-scene-id^="namefloor_"] .scene-sample-backdrop[class*="nf-scene-"]::before,
+.scene-asset-shell[data-scene-id^="namefloor_"] .scene-sample-backdrop[class*="nf-scene-"]::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.scene-asset-shell[data-scene-id^="namefloor_"] .scene-sample-backdrop[class*="nf-scene-"]::before {
+  inset: 8% 16% 20%;
+  border: 1px solid color-mix(in srgb, var(--nf-accent) 40%, transparent);
+  box-shadow: inset 0 0 0 20vmax rgba(0, 0, 0, .15), 0 0 42px color-mix(in srgb, var(--nf-accent) 20%, transparent);
+}
+
+.scene-asset-shell[data-scene-id^="namefloor_"] .scene-sample-backdrop[class*="nf-scene-"]::after {
+  right: 18%;
+  bottom: 20%;
+  width: 26%;
+  height: 48%;
+  border: 1px solid color-mix(in srgb, var(--nf-accent) 60%, transparent);
+  background: linear-gradient(135deg, transparent 44%, color-mix(in srgb, var(--nf-accent) 26%, transparent) 45% 47%, transparent 48%);
+  box-shadow: 0 0 28px rgba(0, 0, 0, .5);
+}
+
+.nf-scene-dorm-midnight,
+.nf-scene-dorm-door,
+.nf-scene-phone-glow,
+.nf-scene-peephole,
+.nf-scene-corridor-attack,
+.nf-scene-red-inspection,
+.nf-scene-stairwell,
+.nf-scene-floor-four,
+.nf-scene-copy-dorm,
+.nf-scene-endless-floor,
+.nf-scene-era-doors,
+.nf-scene-name-feast,
+.nf-scene-two-linfengs,
+.nf-scene-two-songmings {
+  --nf-sky: #15262d;
+  --nf-wall: #293b3c;
+  --nf-accent: #9ac7b6;
+}
+
+.nf-scene-manager-room,
+.nf-scene-dual-rules,
+.nf-scene-feather-drawer,
+.nf-scene-torn-diary,
+.nf-scene-stopped-clock,
+.nf-scene-moon-window,
+.nf-scene-green-vest,
+.nf-scene-double-wu,
+.nf-scene-feather-debt,
+.nf-scene-wu-accounts,
+.nf-scene-green-no-answer,
+.nf-scene-successor-door {
+  --nf-sky: #27312e;
+  --nf-wall: #4c5143;
+  --nf-accent: #c7ba7d;
+}
+
+.nf-scene-blank-contacts,
+.nf-scene-black-avatar,
+.nf-scene-changed-photo,
+.nf-scene-guyu-forgets,
+.nf-scene-midnight-return {
+  --nf-sky: #17222e;
+  --nf-wall: #2c3345;
+  --nf-accent: #9ab8d9;
+}
+
+.nf-scene-archive-corridors,
+.nf-scene-fixed-count,
+.nf-scene-deep-cabinet,
+.nf-scene-name-exchange,
+.nf-scene-restoration-roster,
+.nf-scene-restore-one,
+.nf-scene-roster-break,
+.nf-scene-final-two-lins,
+.nf-scene-exit-threshold,
+.nf-scene-linfeng-positions,
+.nf-scene-ending-resolve {
+  --nf-sky: #302832;
+  --nf-wall: #443b43;
+  --nf-accent: #d6b77f;
+}
+
+.nf-scene-stair-echo {
+  --nf-sky: #18242c;
+  --nf-wall: #365052;
+  --nf-accent: #d5e0d2;
+}
+
+.nf-scene-dorm-midnight .sample-room-depth,
+.nf-scene-copy-dorm .sample-room-depth,
+.nf-scene-two-linfengs .sample-room-depth {
+  opacity: .82;
+  background: repeating-linear-gradient(90deg, rgba(232, 240, 233, .08) 0 1px, transparent 1px 20%);
+}
+
+.nf-scene-phone-glow .sample-room-sign,
+.nf-scene-blank-contacts .sample-room-sign,
+.nf-scene-black-avatar .sample-room-sign,
+.nf-scene-changed-photo .sample-room-sign,
+.nf-scene-midnight-return .sample-room-sign {
+  color: #c8ddf1;
+  text-shadow: 0 0 18px rgba(157, 205, 247, .72);
+}
+
+.nf-scene-red-inspection,
+.nf-scene-name-feast,
+.nf-scene-successor-door {
+  --nf-accent: #bd7777;
+}
+
+.nf-scene-moon-window::before,
+.nf-scene-feather-drawer::before,
+.nf-scene-feather-debt::before {
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 20vmax rgba(0, 0, 0, .22), 0 0 58px rgba(239, 229, 183, .26);
+}
+
+.nf-scene-archive-corridors::after,
+.nf-scene-fixed-count::after,
+.nf-scene-deep-cabinet::after,
+.nf-scene-wu-accounts::after {
+  width: 34%;
+  height: 58%;
+  border-radius: 2px;
+  background: repeating-linear-gradient(180deg, rgba(220, 188, 130, .18) 0 2px, transparent 2px 13%);
+}
+
+.nf-scene-stairwell::before,
+.nf-scene-floor-four::before,
+.nf-scene-stair-echo::before {
+  transform: perspective(260px) rotateX(25deg);
+  transform-origin: bottom;
+}
+
+.nf-ending-breakfast,
+.nf-ending-song-guard,
+.nf-ending-guyu-voice,
+.nf-ending-betrayal-message,
+.nf-ending-all-present,
+.nf-ending-second-linfeng,
+.nf-ending-fifth-shadow,
+.nf-ending-midnight-loop {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 9 / 16;
+  background: linear-gradient(180deg, #1a2730, #151516 58%, #08090a);
+}
+
+.nf-ending-breakfast,
+.nf-ending-guyu-voice,
+.nf-ending-second-linfeng,
+.nf-ending-fifth-shadow { background: linear-gradient(180deg, #8ca6b3, #4d625e 54%, #18211e); }
+.nf-ending-song-guard,
+.nf-ending-betrayal-message { background: linear-gradient(180deg, #26342f, #202529 58%, #101111); }
+.nf-ending-all-present { background: linear-gradient(180deg, #69756c, #424941 58%, #131514); }
+.nf-ending-midnight-loop { background: linear-gradient(180deg, #111925, #15131c 55%, #030405); }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-asset-shell[data-scene-id^="namefloor_"] .scene-sample-backdrop[class*="nf-scene-"]::before,
+  .scene-asset-shell[data-scene-id^="namefloor_"] .scene-sample-backdrop[class*="nf-scene-"]::after { transition: none; }
+}

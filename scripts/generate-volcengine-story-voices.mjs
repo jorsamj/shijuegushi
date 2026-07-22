@@ -9,6 +9,7 @@ const storyName = process.argv.find((argument) => argument.startsWith("--story="
 const stage = process.argv.includes("--stage");
 const force = process.argv.includes("--force");
 const requestedIds = new Set((process.argv.find((argument) => argument.startsWith("--ids="))?.slice(6) || "").split(",").filter(Boolean));
+const namefloorAudibleTypes = new Set(["dialogue", "door-voice", "world-audio"]);
 const stories = {
   dormitory: {
     id: "script_dormitory_rollcall",
@@ -24,13 +25,20 @@ const stories = {
     prefix: "rain",
     audioRoot: "assets/stories/rain-call/audio",
   },
+  namefloor: {
+    id: "script_dormitory_namefloor",
+    prefix: "namefloor",
+    audioRoot: "assets/stories/dormitory-namefloor",
+    loadData: loadNamefloorData,
+    audibleTypes: namefloorAudibleTypes,
+  },
 };
 const story = stories[storyName];
 const audibleTypes = new Set(["dialogue", "broadcast", "phone", "recording", "inner-monologue"]);
 const provider = "volcengine-doubao-tts-unidirectional";
 const model = "seed-tts-2.0";
 
-if (!story) throw new Error("Use --story=dormitory or --story=rain-call.");
+if (!story) throw new Error("Use --story=dormitory, --story=rain-call, or --story=namefloor.");
 if (!stage) throw new Error("Formal generation must use --stage before promotion.");
 
 const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
@@ -40,6 +48,19 @@ function loadScript(file, globalName) {
   const context = { window: {} };
   vm.runInNewContext(fs.readFileSync(path.join(root, file), "utf8"), context, { filename: file });
   return context.window[globalName];
+}
+
+function loadNamefloorData() {
+  const context = { window: {} };
+  for (const file of [
+    "assets/stories/dormitory-namefloor/story-data.js",
+    "assets/stories/dormitory-namefloor/story-chapters-2-7.js",
+  ]) {
+    vm.runInNewContext(fs.readFileSync(path.join(root, file), "utf8"), context, { filename: file });
+  }
+  const base = context.window.MIST_DORMITORY_NAMEFLOOR_DATA;
+  const expansion = context.window.MIST_DORMITORY_NAMEFLOOR_CHAPTERS_2_7;
+  return { ...base, nodes: { ...(base?.nodes || {}), ...(expansion?.nodes || {}) } };
 }
 
 function loadCasting() {
@@ -96,9 +117,9 @@ function targetFromNode(node, storyCasting, verifiedVoiceTypes) {
   };
 }
 
-function targetsFor(data, storyCasting, verifiedVoiceTypes) {
+function targetsFor(data, storyCasting, verifiedVoiceTypes, targetAudibleTypes = audibleTypes) {
   return Object.values(data.nodes || {})
-    .filter((node) => audibleTypes.has(node.contentType) && node.voiceEnabled === true && node.spokenText)
+    .filter((node) => targetAudibleTypes.has(node.contentType) && node.voiceEnabled === true && node.spokenText)
     .map((node) => targetFromNode(node, storyCasting, verifiedVoiceTypes));
 }
 
@@ -273,28 +294,27 @@ async function synthesize(target, options) {
     clearTimeout(timeout);
     throw new Error(`Volcengine HTTP request failed: ${error.message}`);
   }
-  const logId = response.headers.get("x-tt-logid") || "";
   const body = await response.text();
   clearTimeout(timeout);
   if (!response.ok) {
     const detail = safeServerDetail(body);
-    throw new Error(`Volcengine HTTP synthesis failed: status=${response.status}${detail ? `: ${detail}` : ""}${logId ? `; X-Tt-Logid=${logId}` : ""}.`);
+    throw new Error(`Volcengine HTTP synthesis failed: status=${response.status}${detail ? `: ${detail}` : ""}.`);
   }
   const payloads = parseJsonObjects(body);
   if (!payloads.length) {
-    throw new Error(`Volcengine HTTP synthesis returned unparsable chunks${logId ? `; X-Tt-Logid=${logId}` : ""}.`);
+    throw new Error("Volcengine HTTP synthesis returned unparsable chunks.");
   }
   const chunks = [];
   for (const payload of payloads) {
     const code = payload.code ?? payload.Code ?? 0;
     if (![0, 20000000].includes(Number(code))) {
       const message = payload.message || payload.Message || payload.msg || "unknown";
-      throw new Error(`Volcengine HTTP synthesis failed (${code}): ${message}${logId ? `; X-Tt-Logid=${logId}` : ""}.`);
+      throw new Error(`Volcengine HTTP synthesis failed (${code}): ${message}.`);
     }
     if (payload.data) chunks.push(Buffer.from(payload.data, "base64"));
   }
   if (!chunks.length) {
-    throw new Error(`Volcengine HTTP synthesis returned no audio${logId ? `; X-Tt-Logid=${logId}` : ""}.`);
+    throw new Error("Volcengine HTTP synthesis returned no audio.");
   }
   return Buffer.concat(chunks);
 }
@@ -303,8 +323,8 @@ async function main() {
   const options = config();
   const storyCasting = currentStoryCasting();
   const verifiedVoiceTypes = loadVerifiedVoiceTypes();
-  const data = loadScript(story.file, story.global);
-  const targets = [...targetsFor(data, storyCasting, verifiedVoiceTypes), ...dormitoryBroadcastTargets(storyCasting, verifiedVoiceTypes)]
+  const data = story.loadData ? story.loadData() : loadScript(story.file, story.global);
+  const targets = [...targetsFor(data, storyCasting, verifiedVoiceTypes, story.audibleTypes), ...dormitoryBroadcastTargets(storyCasting, verifiedVoiceTypes)]
     .filter((target) => !requestedIds.size || requestedIds.has(target.id));
   const files = stagingPaths();
   const manifest = readManifest(files.manifest);

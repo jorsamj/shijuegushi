@@ -10,7 +10,7 @@
   });
 
   window.SECOND_LIFE_VOICE_CASTING = {
-    version: 3,
+    version: 4,
     provider: "volcengine-doubao-tts-unidirectional",
     model: "seed-tts-2.0",
     selectionPolicy: "verified-uranus-bigtts-only",
@@ -36,6 +36,33 @@
           shenyan: role("shenyan", "沈妍", "zh_female_wenjingmaomao_uranus_bigtts", "宿舍内年轻学生", "安静、慢、停顿多；真正害怕时是原有平静被打破，不做鬼声。"),
           manager_wu: role("manager_wu", "吴阿姨", "zh_female_wenroumama_uranus_bigtts", "中年宿管", "直接、有生活感；旧案相关台词带回避和愧疚，不神秘化。"),
           zhouwanning: role("zhouwanning", "周婉宁", "zh_female_xiaohe_uranus_bigtts", "2014年旧录音", "真实年轻女性的旧录音，疲惫、害怕、克制，不做鬼叫或空灵女鬼。"),
+        },
+      },
+      script_dormitory_namefloor: {
+        identityBasis: {
+          songMingDoorMimic: "门外的声音是对宋明的刻意模仿；它与宋明共享经批准的基础声纹，但保留独立的角色与演出方向。",
+          redVestDoorVoice: "门外的女声与红色马甲宿管属于同一红马甲威胁来源；它们共享经批准的基础声纹。",
+        },
+        speakerAliases: {
+          "林峰": "namefloor_linfeng",
+          "周朝阳": "namefloor_zhouchaoyang",
+          "谷雨": "namefloor_guyu",
+          "宋明": "namefloor_songming",
+          "门外的声音": "namefloor_songming_door_mimic",
+          "吴阿姨": "namefloor_manager_wu",
+          "门外的女声": "namefloor_red_vest",
+          "红色马甲宿管": "namefloor_red_vest",
+          "校园广播": "namefloor_campus_broadcast",
+        },
+        roles: {
+          namefloor_linfeng: role("namefloor_linfeng", "林峰", "zh_male_kailangxuezhang_uranus_bigtts", "男生宿舍中的学生", "自然、紧绷但不莽撞；恐惧里保留普通学生的犹豫和突然的愤怒。"),
+          namefloor_zhouchaoyang: role("namefloor_zhouchaoyang", "周朝阳", "zh_male_qingshuangnanda_uranus_bigtts", "逻辑型男大学生", "冷静、清楚、观察先于情绪；关键提问像帮人锚定姓名，不像审问。"),
+          namefloor_guyu: role("namefloor_guyu", "谷雨", "zh_male_wenrouxiaoge_uranus_bigtts", "敏感的男生宿舍同伴", "温和、紧张时声音会发虚；关键时刻仍能说出愿意承担的选择。"),
+          namefloor_songming: role("namefloor_songming", "宋明", "zh_male_yangguangqingnian_uranus_bigtts", "林峰的舍友", "自然的年轻男声，半夜离开宿舍时放低音量；不提前怪物化。"),
+          namefloor_songming_door_mimic: role("namefloor_songming_door_mimic", "门外的宋明模仿声", "zh_male_yangguangqingnian_uranus_bigtts", "模仿宋明的门外声音", "与宋明保持同一基础声纹，但语句更短、更平，压迫感来自不自然的笃定，不做兽化或鬼叫。"),
+          namefloor_manager_wu: role("namefloor_manager_wu", "吴阿姨", "zh_female_wenroumama_uranus_bigtts", "知道宿管旧账的历任宿管", "直接、有生活感，也带克制的愧疚；不把复杂性演成绝对善意或反派。"),
+          namefloor_red_vest: role("namefloor_red_vest", "红色马甲宿管", "zh_female_gaolengyujie_uranus_bigtts", "红色马甲的查房威胁", "表面温柔、节奏机械，裂缝从过分平稳的礼貌里出现；不使用夸张女鬼腔。"),
+          namefloor_campus_broadcast: role("namefloor_campus_broadcast", "校园广播", "zh_female_zhixingnv_uranus_bigtts", "校园内真实广播", "清楚、制度化、没有情绪渲染；可怕感来自措辞与正确人数，而非语气。"),
         },
       },
       script_rain_call: {
