@@ -102,6 +102,8 @@
       contentType: config.contentType,
       choices,
       ...(config.phoneScreen ? { phoneScreen: config.phoneScreen } : {}),
+      ...(config.effectTags ? { effectTags: config.effectTags } : {}),
+      ...(config.effects ? { effects: config.effects } : {}),
       ...(config.durationMs ? {
         timedChoice: {
           durationMs: config.durationMs,
@@ -498,108 +500,201 @@
     scene: "namefloor_green_vest",
     blueprintSceneId: "DR-C3-S06",
     speaker: "旁白",
-    text: "咀嚼声忽然退开。走廊尽头，一件绿色马甲从黑暗里缓慢靠近。吴阿姨没有先看他们的脸，只看谁手里拿着羽毛。",
+    text: "咀嚼声忽然退开。走廊尽头，一件绿色马甲从黑暗里缓慢靠近。胸牌被划得只剩姓氏，她没有先看他们的脸，只看谁手里拿着羽毛。",
     type: "chapter-ending",
     contentType: "narration",
+    nextNodeId: "nf04_001",
     chapterEnding: {
       title: "第三章结束",
       subtitle: "三年聘用制和羽毛债被摆到队伍面前。",
-      cta: "保存并返回书架",
+      cta: "继续前往值班室",
+      nextNodeId: "nf04_001",
     },
     effectTags: ["feather-surge", "space-loop"],
     effects: [{ type: "focus-pulse", durationMs: 1000, intensity: 0.28 }],
   });
 
+  line("nf04_001", chapterIds[4], "namefloor_green_vest", "旁白", "他们跟着羽毛的冷光绕过原本的三楼宿管宿舍，来到一间年份互相叠压的值班室。墙钟在三个年份之间跳动，合同、照片、名单和羽毛柜同时发出纸张翻页声。", "nf04_c25w", {
+    blueprintSceneId: "DR-C4-S01",
+    effectTags: ["year-overlap-duty-room", "contract-date-shift", "manager-photo-fade", "name-record-fade", "three-year-flashback"],
+    effects: [{ type: "signal-glitch", durationMs: 1100, intensity: 0.32 }, { type: "focus-pulse", durationMs: 1200, intensity: 0.34 }],
+  });
+  decision({
+    code: "C25W", nodeId: "nf04_c25w", chapterId: chapterIds[4], scene: "namefloor_green_vest", blueprintSceneId: "DR-C4-S01",
+    text: "值班室只允许先碰一处记录。先碰的东西会决定宿管愿意从哪里开始说真话。", nextNodeId: "nf04_c26", defaultKey: "A",
+    phoneScreen: phoneScreen({
+      kind: "system", view: "documents", title: "叠年值班室", time: "03:33", signal: "none",
+      messages: [
+        { sender: "合同柜", text: "三年聘用合同：姓名、照片、社会关系逐年褪色。" },
+        { sender: "羽毛柜", text: "羽毛可暂锚姓名，也会转移注意力与污染。" },
+        { sender: "值班牌", text: "当前宿管：吴阿姨；稳定状态不足一年。" },
+        { sender: "旧路线", text: "名单消失时前往校长室。" },
+      ],
+      systemNotice: "不同年份的纸张正在同一页上翻动。",
+    }),
+    options: [
+      option("A", "先对齐三份合同日期", "合同日期从高薪招聘、第一年稳定、第三年缺名依次对齐。林峰确认这不是普通轮岗，而是姓名被岗位磨损。", { flags: ["checked_three_year_contracts", "three_year_cycle_confirmed"], state: { managerTrueName: "吴阿姨", managerNameStability: "waning", managerTrustSignal: "document-first" }, clues: [clue(12)] }),
+      option("B", "先检查历任宿管照片", "照片里的人从脸到姓名逐年消失，最后只剩一件还在摆姿势的绿色马甲。周朝阳把照片顺序抄进笔记。", { flags: ["checked_manager_photos", "manager_photo_fade_seen"], state: { managerNameStability: "waning", managerTrustSignal: "evidence-first" }, clues: [clue(12), clue(16)], relationships: [trust("trust_zhouchaoyang", 4, "先保留照片证据")] }),
+      option("C", "先翻学生名单缺口", "名单缺口旁压着三枚黑羽，几个被送上四楼的学生姓名被折进同一行。固定人数规则开始露出代价。", { flags: ["checked_roster_gaps", "roster_debt_seen"], state: { rosterState: "manager-debt-marked", managerRulesTrust: "partial-trust" }, clues: [clue(7), clue(15)] }),
+      option("D", "先打开羽毛柜", "羽毛柜没有护身符的摆法，每一缕都夹着学生姓名残片。持有者掌心的羽轴短暂分裂，又迅速发黑。", { flags: ["checked_feather_cabinet", "feather_debt_seen"], state: { featherState: "tainted", featherPollutionSource: "manager-debt" }, clues: [clue(11), clue(12)] }),
+      option("E", "先寻找校长室路线", "服务电梯按钮下方写着两种开门条件：宿管旧钥匙，或被名单主动删除的学生账号。林峰的手机亮了一下，又显示用户不存在。", { flags: ["checked_principal_route_early", "principal_route_hint"], state: { principalOfficeRoute: "hinted-by-duty-room", namePollutionStage: 6 }, clues: [clue(7), clue(14)] }),
+    ],
+  });
+
   decision({
     code: "C26", nodeId: "nf04_c26", chapterId: chapterIds[4], scene: "namefloor_green_vest", blueprintSceneId: "DR-C4-S01",
-    text: "吴阿姨停在三步之外：“把日记给我看。羽毛先别动。”绿色马甲可信，不代表穿它的人没有旧账。", nextNodeId: "nf04_010", defaultKey: "A",
+    text: "胸牌上的姓氏恢复成“吴”。她停在三步之外：“把日记给我看。羽毛先别动。”绿色马甲可信，不代表穿它的人没有旧账。", nextNodeId: "nf04_010", defaultKey: "A",
+    phoneScreen: phoneScreen({
+      kind: "system", view: "documents", title: "宿管聘用材料", time: "03:34", signal: "none",
+      messages: [
+        { sender: "招聘启事", text: "高工资，包住宿，三年合同。" },
+        { sender: "合同备注", text: "三年后姓名、照片、社会关系进入交接。" },
+        { sender: "值班记录", text: "绿色马甲相对可信，但不代表绝对善意。" },
+      ],
+      systemNotice: "合同日期在眼前连续改写。",
+    }),
     options: [
-      option("A", "出示日记，但不交羽毛", "吴阿姨看见字迹后闭了闭眼：“是我写的。最后两页不是。”她指出了通往校长室的旧门。", { flags: ["wu_admitted_diary", "wu_route_available"], clues: [clue(7), clue(12)], relationships: [trust("trust_wu", 8, "用日记核对身份但保留羽毛")] }),
-      option("B", "指责她牺牲学生", "吴阿姨没有否认，只把手缩回马甲口袋：“那你来做这个位置，看看能救几个。”", { flags: ["accused_wu_sacrifice", "wu_wants_successor"], relationships: [trust("trust_wu", -10, "只指责而拒绝了解旧账")] }),
-      option("C", "保持沉默，只看马甲颜色", "她按规则避开对视，也不解释任何动机。绿色只能排除一条危险，不能替她证明全部选择。", { flags: ["trusted_wu_vest_only"], clues: [clue(16)], relationships: [trust("trust_zhouchaoyang", 3, "暂缓向吴阿姨泄露信息")] }),
-      option("D", "请她解释三年聘用制度", "吴阿姨掀开历任宿管照片：每三年一张，照片里的人都从姓名最后一笔开始褪色。", { flags: ["learned_three_year_contract", "wu_route_available"], clues: [clue(12)], relationships: [trust("trust_wu", 8, "要求吴阿姨说明制度真相")] }),
-      option("E", "假称已经见过校长", "吴阿姨下意识摸向腰间的旧钥匙。她很快识破谎话，却也暴露了校长室确有另一条入口。", { flags: ["bluffed_wu_about_principal", "saw_principal_key"], state: { namePollutionStage: 6 }, clues: [clue(12)] }),
+      option("A", "出示日记，但不交羽毛", "吴阿姨看见字迹后闭了闭眼：“是我写的。最后两页不是。”她指出了通往校长室的旧门。", { flags: ["wu_admitted_diary", "wu_route_available"], state: { managerTrueName: "吴阿姨", managerTrustSignal: "guarded-cooperation", principalOfficeRoute: "wu-old-door" }, clues: [clue(7), clue(12)], relationships: [trust("trust_wu", 8, "用日记核对身份但保留羽毛")] }),
+      option("B", "指责她牺牲学生", "吴阿姨没有否认，只把手缩回马甲口袋：“那你来做这个位置，看看能救几个。”", { flags: ["accused_wu_sacrifice", "wu_wants_successor"], state: { managerTrueName: "吴阿姨", managerTrustSignal: "accused", managerSuccessorIntent: true }, relationships: [trust("trust_wu", -10, "只指责而拒绝了解旧账")] }),
+      option("C", "保持沉默，只看马甲颜色", "她按规则避开对视，也不解释任何动机。绿色只能排除一条危险，不能替她证明全部选择。", { flags: ["trusted_wu_vest_only"], state: { managerRulesTrust: "partial-trust", managerTrustSignal: "withheld" }, clues: [clue(16)], relationships: [trust("trust_zhouchaoyang", 3, "暂缓向吴阿姨泄露信息")] }),
+      option("D", "请她解释三年聘用制度", "吴阿姨掀开历任宿管照片：每三年一张，照片里的人都从姓名最后一笔开始褪色。", { flags: ["learned_three_year_contract", "wu_route_available"], state: { managerTrueName: "吴阿姨", managerNameStability: "waning", managerTrustSignal: "explained-contract", principalOfficeRoute: "wu-old-door" }, clues: [clue(12)], relationships: [trust("trust_wu", 8, "要求吴阿姨说明制度真相")] }),
+      option("E", "假称已经见过校长", "吴阿姨下意识摸向腰间的旧钥匙。她很快识破谎话，却也暴露了校长室确有另一条入口。", { flags: ["bluffed_wu_about_principal", "saw_principal_key"], state: { namePollutionStage: 6, managerTrustSignal: "lied-to", principalOfficeRoute: "principal-key-seen" }, clues: [clue(12)] }),
     ],
   });
 
-  line("nf04_010", chapterIds[4], "namefloor_feather_debt", "吴阿姨", "羽毛不是护身符。拿得越久，四楼越快找到你；交给别人，债也跟着过去。现在，把它还给我。", "nf04_c27", { blueprintSceneId: "DR-C4-S02", contentType: "dialogue" });
+  line("nf04_010", chapterIds[4], "namefloor_feather_debt", "吴阿姨", "羽毛不是护身符。拿得越久，四楼越快找到你；交给别人，债也跟着过去。现在，把它还给我。", "nf04_c27", { blueprintSceneId: "DR-C4-S02", contentType: "dialogue", effectTags: ["feather-blacken-shed-split"], effects: [{ type: "focus-pulse", durationMs: 950, intensity: 0.3 }] });
   decision({
     code: "C27", nodeId: "nf04_c27", chapterId: chapterIds[4], scene: "namefloor_feather_debt", blueprintSceneId: "DR-C4-S02",
-    speaker: "吴阿姨", contentType: "dialogue", text: "你们可以不信我，但要先决定这笔债落在谁身上。", nextNodeId: "nf04_020", defaultKey: "D",
+    contentType: "phone-text", text: "羽毛柜把每个持有人和债的去向并排显示。现在必须决定这笔债落在谁身上。", nextNodeId: "nf04_020", defaultKey: "D",
+    phoneScreen: phoneScreen({
+      kind: "system", view: "documents", title: "羽毛柜登记", time: "03:37", signal: "none",
+      messages: [
+        { sender: "羽毛柜", text: "锚定姓名：短效。" },
+        { sender: "羽毛柜", text: "污染转移：立即生效。" },
+        { sender: "羽毛柜", text: "四楼注意力：随持有人移动。" },
+      ],
+      systemNotice: "羽轴边缘发黑，绒毛正在脱落。",
+    }),
+    effectTags: ["feather-blacken-shed-split"],
     options: [
-      option("A", "把羽毛原样归还", "吴阿姨的姓名在胸牌上短暂恢复，原持有者手腕却多出一道合同般的墨线。", { flags: ["feather_returned_to_wu", "feather_debt_transferred"], state: { featherHolder: "吴阿姨", featherState: "tainted" }, clues: [clue(11), clue(12)] }),
-      option("B", "拒绝归还", "吴阿姨不再伸手。她看羽毛持有者的眼神，像在看三年前的自己。", { flags: ["refused_wu_feather"], relationships: [trust("trust_wu", -10, "拒绝讨论羽毛污染的去向")] }),
-      option("C", "折下一缕给她", "一缕羽毛让吴阿姨的姓多撑了一会儿，剩下的羽轴却同时在两个人掌心发烫。", { flags: ["shared_feather_with_wu", "feather_debt_shared"], state: { featherState: "split-tainted" }, clues: [clue(11), clue(12)] }),
-      option("D", "让周朝阳记录交换条件后归还", "周朝阳写下只有在场人知道的条件：吴阿姨带路，羽毛暂归她，离门后必须归还。这成为无法从旧日记复制的新事实。", { flags: ["private_wu_exchange", "feather_returned_conditionally"], state: { featherHolder: "吴阿姨", featherState: "tainted" }, clues: [clue(10), clue(11), clue(12)], relationships: [trust("trust_zhouchaoyang", 6, "记录未公开交换条件"), trust("trust_wu", 8, "以可验证条件交换羽毛")] }),
-      option("E", "把羽毛交给伤得最重的人", "伤口停止渗血，墙后的脚步却立刻加快。那个人活了下来，终局钉住名册的机会少了一次。", { flags: ["feather_saved_wounded", "feather_final_use_spent"], state: { featherHolder: "重伤者", featherState: "tainted" }, clues: [clue(11)], relationships: [trust("trust_guyu", 6, "优先救治重伤者")] }),
+      option("A", "把羽毛原样归还", "吴阿姨的姓名在胸牌上短暂恢复，原持有者手腕却多出一道合同般的墨线。", { flags: ["feather_returned_to_wu", "feather_debt_transferred"], state: { featherHolder: "吴阿姨", featherState: "tainted", featherPollutionSource: "original-holder", managerNameStability: "briefly-stabilized" }, clues: [clue(11), clue(12)] }),
+      option("B", "拒绝归还", "吴阿姨不再伸手。她看羽毛持有者的眼神，像在看三年前的自己。", { flags: ["refused_wu_feather"], state: { featherPollutionSource: "kept-by-team", managerTrustSignal: "refused-feather" }, relationships: [trust("trust_wu", -10, "拒绝讨论羽毛污染的去向")] }),
+      option("C", "折下一缕给她", "一缕羽毛让吴阿姨的姓多撑了一会儿，剩下的羽轴却同时在两个人掌心发烫。", { flags: ["shared_feather_with_wu", "feather_debt_shared"], state: { featherState: "split-tainted", featherPollutionSource: "shared-manager-debt", managerNameStability: "shared-anchor" }, clues: [clue(11), clue(12)] }),
+      option("D", "让周朝阳记录交换条件后归还", "周朝阳写下只有在场人知道的条件：吴阿姨带路，羽毛暂归她，离门后必须归还。这成为无法从旧日记复制的新事实。", { flags: ["private_wu_exchange", "feather_returned_conditionally"], state: { featherHolder: "吴阿姨", featherState: "tainted", featherPollutionSource: "conditional-exchange", managerTrustSignal: "conditional-cooperation" }, clues: [clue(10), clue(11), clue(12)], relationships: [trust("trust_zhouchaoyang", 6, "记录未公开交换条件"), trust("trust_wu", 8, "以可验证条件交换羽毛")] }),
+      option("E", "把羽毛交给伤得最重的人", "伤口停止渗血，墙后的脚步却立刻加快。那个人活了下来，终局钉住名册的机会少了一次。", { flags: ["feather_saved_wounded", "feather_final_use_spent"], state: { featherHolder: "重伤者", featherState: "spent-tainted", featherPollutionSource: "wounded-student", rosterState: "quota-tightened" }, clues: [clue(11)], relationships: [trust("trust_guyu", 6, "优先救治重伤者")] }),
     ],
   });
 
-  line("nf04_020", chapterIds[4], "namefloor_wu_old_accounts", "旁白", "历任宿管照片墙后藏着一叠三年合同。吴阿姨的签名从完整、缺笔到只剩一个墨点；每张合同背面都有被送上四楼的学生名字。", "nf04_c28", { blueprintSceneId: "DR-C4-S03" });
+  line("nf04_020", chapterIds[4], "namefloor_wu_old_accounts", "旁白", "历任宿管照片墙后藏着一叠三年合同。吴阿姨的签名从完整、缺笔到只剩一个墨点；每张合同背面都有被送上四楼的学生名字。", "nf04_c28", { blueprintSceneId: "DR-C4-S03", effectTags: ["contract-date-shift", "manager-photo-fade", "name-record-fade", "three-year-flashback"] });
   decision({
     code: "C28", nodeId: "nf04_c28", chapterId: chapterIds[4], scene: "namefloor_wu_old_accounts", blueprintSceneId: "DR-C4-S03",
     text: "吴阿姨承认自己救过人，也按规则送过人。她把钥匙横在掌心，等林峰决定怎样处理这份旧账。", nextNodeId: "nf04_c29", defaultKey: "A",
+    phoneScreen: phoneScreen({
+      kind: "system", view: "documents", title: "旧账分段记录", time: "03:42", signal: "none",
+      messages: [
+        { sender: "救援记录", text: "她确实曾把学生从四楼门缝前拉回。" },
+        { sender: "处分空白", text: "她也曾按羽毛规则送走学生，换取自己姓名延续。" },
+        { sender: "未归档路线", text: "校长室路线可由旧钥匙或删除账号触发。" },
+      ],
+      systemNotice: "录音、人影和照片没有完全同步。",
+    }),
     options: [
-      option("A", "理解旧账，但要求她带路赎罪", "吴阿姨掰开旧钥匙，把带齿的一半交给林峰：“另一半在校长室。我带你们到门口。”", { flags: ["wu_redemption_route", "half_principal_key"], clues: [clue(12)], relationships: [trust("trust_wu", 10, "要求以行动偿还旧账")] }),
-      option("B", "只指责，拒绝合作", "吴阿姨收回钥匙。她没有争辩，也没有再告诉他们名册回廊的捷径。", { flags: ["rejected_wu_cooperation"], relationships: [trust("trust_wu", -12, "拒绝与吴阿姨继续合作")] }),
-      option("C", "强迫她走在最危险的位置", "吴阿姨走到最前面，绿色马甲却始终没有背对学生。她的沉默比服从更像告别。", { flags: ["forced_wu_front", "wu_high_risk"], relationships: [trust("trust_wu", -12, "强迫吴阿姨承担危险")] }),
-      option("D", "自愿提出接任宿管", "羽毛无风转向林峰，合同空白处浮出他的姓。吴阿姨第一次真正慌了：“别替我签。”", { flags: ["lin_offered_manager_succession", "lin_continuity_broken"], state: { namePollutionStage: 7 }, clues: [clue(12), clue(16)] }),
-      option("E", "抛下吴阿姨", "她独自留在照片墙前。走出很远后，钥匙落地的声音才从后方传来。", { flags: ["abandoned_wu", "wu_high_risk"], relationships: [trust("trust_wu", -14, "抛下吴阿姨")] }),
-      option("F", "承诺把她的真名带出去", "吴阿姨在所有设备都关掉后说出未记录的本名，并把另一条校长室路线画在林峰掌心。", { flags: ["promised_remember_wu", "wu_new_name_anchor", "wu_route_available"], clues: [clue(10), clue(12), clue(16)], relationships: [trust("trust_wu", 12, "承诺在制度外记住吴阿姨")] }),
+      option("A", "理解旧账，但要求她带路赎罪", "吴阿姨掰开旧钥匙，把带齿的一半交给林峰：“另一半在校长室。我带你们到门口。”", { flags: ["wu_redemption_route", "half_principal_key"], state: { managerTrustSignal: "redemption-route", principalOfficeRoute: "wu-half-key", managerSuccessorIntent: false }, clues: [clue(12)], relationships: [trust("trust_wu", 10, "要求以行动偿还旧账")] }),
+      option("B", "只指责，拒绝合作", "吴阿姨收回钥匙。她没有争辩，也没有再告诉他们名册回廊的捷径。", { flags: ["rejected_wu_cooperation"], state: { managerTrustSignal: "rejected", principalOfficeRoute: "unknown" }, relationships: [trust("trust_wu", -12, "拒绝与吴阿姨继续合作")] }),
+      option("C", "强迫她走在最危险的位置", "吴阿姨走到最前面，绿色马甲却始终没有背对学生。她的沉默比服从更像告别。", { flags: ["forced_wu_front", "wu_high_risk"], state: { managerTrustSignal: "coerced", managerSaved: false }, relationships: [trust("trust_wu", -12, "强迫吴阿姨承担危险")] }),
+      option("D", "自愿提出接任宿管", "羽毛无风转向林峰，合同空白处浮出他的姓。吴阿姨第一次真正慌了：“别替我签。”", { flags: ["lin_offered_manager_succession", "lin_continuity_broken"], state: { namePollutionStage: 7, promisedManagerSuccession: true, managerSuccessorIntent: true }, clues: [clue(12), clue(16)] }),
+      option("E", "抛下吴阿姨", "她独自留在照片墙前。走出很远后，钥匙落地的声音才从后方传来。", { flags: ["abandoned_wu", "wu_high_risk"], state: { managerSaved: false, managerTrustSignal: "abandoned" }, relationships: [trust("trust_wu", -14, "抛下吴阿姨")] }),
+      option("F", "承诺把她的真名带出去", "吴阿姨在所有设备都关掉后说出未记录的本名，并把另一条校长室路线画在林峰掌心。", { flags: ["promised_remember_wu", "wu_new_name_anchor", "wu_route_available"], state: { managerTrueName: "吴阿姨", managerNameStability: "outside-record-anchor", managerTrustSignal: "trusted", principalOfficeRoute: "palm-route" }, clues: [clue(10), clue(12), clue(16)], relationships: [trust("trust_wu", 12, "承诺在制度外记住吴阿姨")] }),
     ],
   });
 
   decision({
     code: "C29", nodeId: "nf04_c29", chapterId: chapterIds[4], scene: "namefloor_double_wu", blueprintSceneId: "DR-C4-S03",
     text: "转角同时走出两个吴阿姨。两件马甲起初一红一绿，眨眼后却都变成了绿色。", nextNodeId: "nf04_030", durationMs: 5000, fallbackKey: "T", defaultKey: "A",
+    effectTags: ["green-vest-red-shift", "wu-voice-image-desync"],
     options: [
       option("A", "问刚才未公开的羽毛交换条件", "真吴阿姨答出归还羽毛的时机，另一个只会背诵抽屉规则。周朝阳立刻指向真正的带路者。", { flags: ["verified_real_wu_private_exchange", "real_wu_identified"], clues: [clue(10), clue(12), clue(16)], relationships: [trust("trust_zhouchaoyang", 6, "使用未公开新事实验真")] }),
       option("B", "只看马甲颜色", "两件马甲同时变绿，布料纤维甚至一样磨损。颜色规则无法处理复制之后的第二层问题。", { flags: ["wu_tested_by_vest_only"], clues: [clue(16)] }),
       option("C", "询问旧日记里的往事", "两个吴阿姨逐字说出同一段旧事，连哽咽的位置都一样。过去已经被复制。", { flags: ["wu_tested_by_old_memory_only"], clues: [clue(12), clue(16)] }),
       option("D", "让两人各承担一次开门风险", "真吴阿姨先把学生挡到身后，伪装者只会机械背诵返回宿舍的规则。选择把它们分开了。", { flags: ["verified_real_wu_new_choice", "real_wu_identified"], clues: [clue(10), clue(16)], relationships: [trust("trust_zhouchaoyang", 6, "用自愿承担风险区分双吴")] }),
-      option("E", "直接攻击先靠近的人", "靠近者倒下。只有信任已经建立时，林峰才击中了伪装者；否则，钥匙从真正的吴阿姨手中滑落。", { flags: ["attacked_wu_without_test", "possible_real_wu_killed", "misjudged_human"], relationships: [trust("trust_guyu", -10, "未验真便攻击靠近者")] }),
-      option("T", "跟随最先伸手的人", "最先伸手的“吴阿姨”把队伍领进名册回廊。身后的真吴没有追上来，绿色马甲在门缝里慢慢染红。", { timeoutOnly: true, flags: ["followed_fake_wu", "wu_may_die_behind", "roster_corridor_detour"], state: { namePollutionStage: 7 } }),
+      option("E", "直接攻击先靠近的人", "靠近者倒下。只有信任已经建立时，林峰才击中了伪装者；否则，钥匙从真正的吴阿姨手中滑落。", { flags: ["attacked_wu_without_test", "possible_real_wu_killed", "misjudged_human"], state: { managerSaved: false, managerTrustSignal: "attacked-untested" }, relationships: [trust("trust_guyu", -10, "未验真便攻击靠近者")] }),
+      option("T", "跟随最先伸手的人", "最先伸手的“吴阿姨”把队伍领进名册回廊。身后的真吴没有追上来，绿色马甲在门缝里慢慢染红。", { timeoutOnly: true, flags: ["followed_fake_wu", "wu_may_die_behind", "roster_corridor_detour"], state: { namePollutionStage: 7, managerSaved: false, managerTrustSignal: "followed-fake" } }),
     ],
   });
 
-  line("nf04_030", chapterIds[4], "namefloor_successor_door", "旁白", "旋转铁门上没有把手，只有一圈扫描姓名的冷光。它允许队伍通过，却要求一个人最后留下，听完整个名字。", "nf04_c30", { blueprintSceneId: "DR-C4-S04" });
+  line("nf04_030", chapterIds[4], "namefloor_successor_door", "旁白", "旋转铁门上没有把手，只有一圈扫描姓名的冷光。它允许队伍通过，却要求一个人最后留下，听完整个名字。", "nf04_c30", { blueprintSceneId: "DR-C4-S04", effectTags: ["name-record-fade", "fourth-floor-reality-cover"] });
   decision({
     code: "C30", nodeId: "nf04_c30", chapterId: chapterIds[4], scene: "namefloor_successor_door", blueprintSceneId: "DR-C4-S04",
     text: "门开始旋转。最后通过的人会被叫出全名，可能被锁住、复制，或写成下一任宿管。", nextNodeId: "nf04_040", durationMs: 7000, fallbackKey: "T", defaultKey: "D",
+    phoneScreen: phoneScreen({
+      kind: "system", view: "documents", title: "身份门扫描", time: "03:51", signal: "none",
+      messages: [
+        { sender: "门禁", text: "最后通过者将被完整姓名扫描。" },
+        { sender: "名册", text: "可登记下一任宿管，也可锁定被删除学生。" },
+      ],
+      systemNotice: "冷光正在擦淡门牌上的姓名。",
+    }),
     options: [
-      option("A", "林峰最后通过", "冷光读出“林峰”，又在最后一笔停顿。门后走出的人呼吸连续，影子却断过一次。", { flags: ["lin_last_through_identity_door", "lin_continuity_broken"], state: { namePollutionStage: 7 }, clues: [clue(16)] }),
+      option("A", "林峰最后通过", "冷光读出“林峰”，又在最后一笔停顿。门后走出的人呼吸连续，影子却断过一次。", { flags: ["lin_last_through_identity_door", "lin_continuity_broken"], state: { namePollutionStage: 7, promisedManagerSuccession: true }, clues: [clue(16)] }),
       option("B", "周朝阳最后通过", "周朝阳把笔记先扔过门，自己留在最后。扫描光割开他的肩，纸页却完整落到林峰脚边。", { flags: ["zhou_last_through_identity_door", "zhou_severely_wounded"], clues: [clue(16)] }),
       option("C", "谷雨最后通过", "谷雨一边后退一边叫林峰的名字。门记住了他的声音，也从他自己的名字上刮走一笔。", { flags: ["guyu_last_through_identity_door", "guyu_anchor_burden"], relationships: [trust("trust_guyu", 8, "谷雨自愿最后通过")] }),
       option("D", "同行宋明最后通过", "宋明等所有人越门才松手。扫描光叫出他的全名时，他没有回头，只催其他人先走。", { flags: ["song_last_through_identity_door", "song_voluntary_risk"], clues: [clue(10), clue(16)], relationships: [trust("recognition_songming", 10, "宋明自愿承担最后通过风险")] }),
-      option("E", "吴阿姨最后通过", "吴阿姨把绿色马甲卡进门轴。她的姓名被读到只剩一个音，钥匙却从缝里抛给了学生。", { flags: ["wu_last_through_identity_door", "wu_severely_wounded"], clues: [clue(12)] }),
+      option("E", "吴阿姨最后通过", "吴阿姨把绿色马甲卡进门轴。她的姓名被读到只剩一个音，钥匙却从缝里抛给了学生。", { flags: ["wu_last_through_identity_door", "wu_severely_wounded"], state: { managerSaved: false, managerNameStability: "near-erased" }, clues: [clue(12)] }),
       option("F", "让有自我的伪人自愿最后通过", "他先确认这不是命令，才站到门后。旧记录里没有这次选择，门因此迟疑了整整一秒。", { flags: ["mimic_last_through_identity_door", "mimic_voluntary_risk", "song_mimic_self_aware"], clues: [clue(10), clue(16)] }),
-      option("T", "来不及安排，当前羽毛持有者最后通过", "门循着羽毛锁定持有者，完整叫出他的名字。黑羽护住身体一次，姓名却被推进了两层。", { timeoutOnly: true, flags: ["feather_holder_forced_last", "feather_holder_severely_wounded"], state: { featherState: "burned", namePollutionStage: 8 } }),
+      option("T", "来不及安排，当前羽毛持有者最后通过", "门循着羽毛锁定持有者，完整叫出他的名字。黑羽护住身体一次，姓名却被推进了两层。", { timeoutOnly: true, flags: ["feather_holder_forced_last", "feather_holder_severely_wounded"], state: { featherState: "burned", featherPollutionSource: "identity-door", namePollutionStage: 8 } }),
     ],
   });
 
-  line("nf04_040", chapterIds[4], "namefloor_green_no_answer", "旁白", "门合拢后，吴阿姨或她留下的钥匙和录音躺在地上。绿色马甲没有回答身份问题，它只把一任宿管的余债留给活人。", "nf04_c31", { blueprintSceneId: "DR-C4-S05" });
+  line("nf04_040", chapterIds[4], "namefloor_green_no_answer", "旁白", "门合拢后，吴阿姨或她留下的钥匙和录音躺在地上。绿色马甲没有回答身份问题，它只把一任宿管的余债留给活人。", "nf04_c31", { blueprintSceneId: "DR-C4-S05", effectTags: ["manager-photo-fade", "name-record-fade", "wu-voice-image-desync"] });
   decision({
     code: "C31", nodeId: "nf04_c31", chapterId: chapterIds[4], scene: "namefloor_green_no_answer", blueprintSceneId: "DR-C4-S05",
     text: "校长室钥匙和最后两页日记还在。救吴阿姨、留下她，或只带走遗物，都会决定三年循环怎样结束。", nextNodeId: "nf05_001", defaultKey: "C",
+    phoneScreen: phoneScreen({
+      kind: "system", view: "documents", title: "校长室路线", time: "03:58", signal: "none",
+      messages: [
+        { sender: "旧钥匙", text: "钥匙转两次，第三次不要念任何人的名字。" },
+        { sender: "最后日记", text: "名单开始主动删除学生时，必须进校长室。" },
+        { sender: "录音", text: "如果我不在了，别让羽毛替学校找下一个人。" },
+      ],
+      systemNotice: "林峰所在行正在从名单边缘褪色。",
+    }),
     options: [
-      option("A", "用羽毛救她", "羽毛替吴阿姨补回姓名，她从门边站了起来。污染沿羽轴转进原持有者掌心。", { flags: ["wu_saved_with_feather"], state: { featherHolder: "原持有者", featherState: "spent-tainted" }, clues: [clue(11), clue(12)] }),
-      option("B", "只拿钥匙离开", "吴阿姨没有追来。学校随后会把这条走廊上的一切责任重新写到学生名下。", { flags: ["wu_abandoned_for_key", "wu_dead_or_trapped"], relationships: [trust("trust_guyu", -10, "只取钥匙而放弃吴阿姨")] }),
-      option("C", "记录她完整姓名，并承诺公开", "林峰把她的姓名写在校规背面。吴阿姨交出名单缺口：每恢复一个学生，另一个位置就会被挤掉。", { flags: ["wu_name_preserved", "wu_roster_gap_revealed"], clues: [clue(7), clue(12), clue(15)], relationships: [trust("trust_wu", 10, "在学校记录外保留吴阿姨姓名")] }),
-      option("D", "让她自愿留守封门", "吴阿姨主动穿回绿色马甲，反锁旋转门。她留下的不是命令，而是一次不再把债推给学生的选择。", { flags: ["wu_voluntary_last_guard", "wu_redemption_complete"], clues: [clue(7), clue(12)], relationships: [trust("trust_wu", 10, "尊重吴阿姨自愿赎罪")] }),
-      option("E", "若她已死，播放定时录音", "录音在她无法开口后继续：“钥匙转两次，第三次不要念任何人的名字。”死者仍把路线送到了校长室。", { flags: ["played_wu_timed_recording", "principal_password_known"], clues: [clue(7), clue(12)] }),
+      option("A", "用羽毛救她", "羽毛替吴阿姨补回姓名，她从门边站了起来。污染沿羽轴转进原持有者掌心。", { flags: ["wu_saved_with_feather"], state: { managerSaved: true, managerNameStability: "feather-stabilized", featherHolder: "原持有者", featherState: "spent-tainted", featherPollutionSource: "saved-manager", principalOfficeRoute: "wu-led-route" }, clues: [clue(11), clue(12)] }),
+      option("B", "只拿钥匙离开", "吴阿姨没有追来。学校随后会把这条走廊上的一切责任重新写到学生名下。", { flags: ["wu_abandoned_for_key", "wu_dead_or_trapped"], state: { managerSaved: false, managerTrustSignal: "abandoned-at-key", principalOfficeRoute: "key-only", rosterState: "linfeng-erasing" }, relationships: [trust("trust_guyu", -10, "只取钥匙而放弃吴阿姨")] }),
+      option("C", "记录她完整姓名，并承诺公开", "林峰把她的姓名写在校规背面。吴阿姨交出名单缺口：每恢复一个学生，另一个位置就会被挤掉。", { flags: ["wu_name_preserved", "wu_roster_gap_revealed"], state: { managerSaved: true, managerNameStability: "remembered-outside-record", managerTrustSignal: "name-preserved", principalOfficeRoute: "roster-gap-route", rosterState: "linfeng-erasing" }, clues: [clue(7), clue(12), clue(15)], relationships: [trust("trust_wu", 10, "在学校记录外保留吴阿姨姓名")] }),
+      option("D", "让她自愿留守封门", "吴阿姨主动穿回绿色马甲，反锁旋转门。她留下的不是命令，而是一次不再把债推给学生的选择。", { flags: ["wu_voluntary_last_guard", "wu_redemption_complete"], state: { managerSaved: false, managerTrustSignal: "voluntary-guard", principalOfficeRoute: "wu-recording-route", rosterState: "linfeng-erasing" }, clues: [clue(7), clue(12)], relationships: [trust("trust_wu", 10, "尊重吴阿姨自愿赎罪")] }),
+      option("E", "若她已死，播放定时录音", "录音在她无法开口后继续：“钥匙转两次，第三次不要念任何人的名字。”死者仍把路线送到了校长室。", { flags: ["played_wu_timed_recording", "principal_password_known"], state: { managerSaved: false, managerTrustSignal: "recording-only", principalOfficeRoute: "timed-recording", rosterState: "linfeng-erasing" }, clues: [clue(7), clue(12)] }),
     ],
   });
 
-  line("nf05_001", chapterIds[5], "namefloor_blank_contacts", "旁白", "林峰的手机震动。通讯录里没有他，班群里也查不到他发过的消息；四十二名成员中，黑色头像仍占着原来的位置。", "nf05_c32", { blueprintSceneId: "DR-C5-S01" });
+  line("nf05_001", chapterIds[5], "namefloor_blank_contacts", "旁白", "林峰的手机震动。通讯录里没有他，班群里也查不到他发过的消息；四十二名成员中，黑色头像仍占着原来的位置。", "nf05_c32", {
+    blueprintSceneId: "DR-C5-S01",
+    effectTags: ["contact-name-drop", "group-member-replaced", "phone-record-attribution-shift"],
+    phoneScreen: phoneScreen({
+      kind: "group", view: "members", title: "宿舍群", time: "04:06", memberCount: 42,
+      members: [
+        { name: "周朝阳" },
+        { name: "谷雨" },
+        { name: "宋明" },
+        { name: "黑色头像", isBlackAvatar: true },
+      ],
+      messages: [
+        { sender: "系统", text: "林峰：用户不存在。" },
+        { sender: "黑色头像", text: "这句话本来是你会说的。" },
+      ],
+      systemNotice: "原始短信已保存时可读取镜像时间戳；原始短信已删除时只能从他人手机找残留。",
+    }),
+  });
   decision({
     code: "C32", nodeId: "nf05_c32", chapterId: chapterIds[5], scene: "namefloor_blank_contacts", blueprintSceneId: "DR-C5-S01",
     text: "电子记录已经拒绝林峰。接下来用谁的记忆把他留在队伍里？", nextNodeId: "nf05_c33", defaultKey: "B",
+    effectTags: ["contact-name-drop", "group-member-replaced", "phone-record-attribution-shift"],
     options: [
-      option("A", "从开场截图恢复联系人", "号码恢复了，头像却变成另一个林峰的脸。截图只能证明这台手机曾认识一个号码。", { flags: ["restored_contact_from_screenshot"], clues: [clue(1), clue(14), clue(16)] }),
-      option("B", "让周朝阳在纸上重复写名", "周朝阳把“林峰”写进每一段时间线。即使他不能继续走，笔记也会替他保留这个判断。", { flags: ["zhou_repeated_linfeng_on_paper", "lin_logic_anchor"], clues: [clue(14), clue(16)], relationships: [trust("trust_zhouchaoyang", 8, "周朝阳用纸质时间线锚名")] }),
-      option("C", "让谷雨不断口头重复", "谷雨每喊一次，林峰的联系人就亮回一秒；谷雨自己的名字则从未发送语音里少一笔。", { flags: ["guyu_oral_anchor", "guyu_anchor_seed"], relationships: [trust("trust_guyu", 10, "谷雨持续以声音锚定林峰")] }),
-      option("D", "让同行宋明描述林峰", "宋明说出林峰今晚挡门时的动作，却说不出入学时的床位。缺口本身成为判断双宋明的证据。", { flags: ["song_described_linfeng", "song_recognition_test"], clues: [clue(10), clue(16)] }),
-      option("E", "暂不处理，以免泄露姓名", "没有人再叫他。短短十步后，谷雨转身问周朝阳：‘刚才是不是还有个人？’", { flags: ["left_linfeng_unanchored"], state: { namePollutionStage: 6 } }),
+      option("A", "从开场截图恢复联系人", "号码恢复了，头像却变成另一个林峰的脸。截图只能证明这台手机曾认识一个号码。", { flags: ["restored_contact_from_screenshot"], state: { namePollutionStage: 4, linfengPhotoState: "second-face-linked", teamAcceptsLinfeng: true }, clues: [clue(1), clue(14), clue(16)] }),
+      option("B", "让周朝阳在纸上重复写名", "周朝阳把“林峰”写进每一段时间线。即使他不能继续走，笔记也会替他保留这个判断。", { flags: ["zhou_repeated_linfeng_on_paper", "lin_logic_anchor"], state: { namePollutionStage: 4, zhouTrustSignal: "paper-anchor", nameAnchorCompleted: true, teamAcceptsLinfeng: true }, clues: [clue(14), clue(16)], relationships: [trust("trust_zhouchaoyang", 8, "周朝阳用纸质时间线锚名")] }),
+      option("C", "让谷雨不断口头重复", "谷雨每喊一次，林峰的联系人就亮回一秒；谷雨自己的名字则从未发送语音里少一笔。", { flags: ["guyu_oral_anchor", "guyu_anchor_seed"], state: { guyuMemoryDegree: "strained-anchor", nameAnchorCompleted: true, teamAcceptsLinfeng: true }, relationships: [trust("trust_guyu", 10, "谷雨持续以声音锚定林峰")] }),
+      option("D", "让同行宋明描述林峰", "宋明说出林峰今晚挡门时的动作，却说不出入学时的床位。缺口本身成为判断双宋明的证据。", { flags: ["song_described_linfeng", "song_recognition_test"], state: { songIdentityJudgment: "recognizes-new-actions", teamAcceptsLinfeng: true }, clues: [clue(10), clue(16)] }),
+      option("E", "暂不处理，以免泄露姓名", "没有人再叫他。短短十步后，谷雨转身问周朝阳：‘刚才是不是还有个人？’", { flags: ["left_linfeng_unanchored"], state: { namePollutionStage: 6, guyuMemoryDegree: "missing-recent-detail", teamAcceptsLinfeng: false } }),
     ],
   });
 
@@ -607,83 +702,128 @@
     code: "C33", nodeId: "nf05_c33", chapterId: chapterIds[5], scene: "namefloor_blank_contacts", blueprintSceneId: "DR-C5-S01",
     contentType: "phone-text", text: "存档标题自行变成《□□□□》。输入框要求重新命名这段经历。", nextNodeId: "nf05_010", durationMs: 6000, fallbackKey: "T", defaultKey: "D",
     phoneScreen: { kind: "system", view: "save", title: "存档标题", time: "06:00", messages: [{ sender: "系统", text: "《□□□□》" }] },
+    effectTags: ["written-name-erased", "name-anchor-recovery-backlash", "speaker-name-controlled-loss"],
     options: [
-      option("A", "手动输入“林峰”", "标题恢复了一秒，随即出现两个同名存档。另一份存档开始补全今晚的行为记录。", { flags: ["typed_linfeng_save_title", "second_linfeng_save_created"], state: { namePollutionStage: 6 }, clues: [clue(13), clue(14)] }),
-      option("B", "只保存为“峰”", "不完整的名字避开了复制，仍足够让林峰记住自己被谁叫过。", { flags: ["saved_as_feng_only"], clues: [clue(13)] }),
-      option("C", "保存到谷雨名下", "存档留下了，谷雨的姓名却在标题栏里少了一笔。他没有抱怨，只把手机还给林峰。", { flags: ["saved_under_guyu", "guyu_anchor_burden"], state: { namePollutionStage: 5 }, relationships: [trust("trust_guyu", 8, "谷雨承接存档污染")] }),
-      option("D", "保存为周朝阳的笔记编号", "无名编号保留了因果，却没有向四楼再喂一个姓名。周朝阳把编号写进原笔记。", { flags: ["saved_under_zhou_note_number"], clues: [clue(13), clue(14)], relationships: [trust("trust_zhouchaoyang", 8, "使用无名编号保存因果")] }),
-      option("E", "取消保存", "这一段无法回看。队伍继续前进，手机里的时间线却留下一个干净得可疑的空洞。", { flags: ["cancelled_corrupted_save"], state: { namePollutionStage: 6 } }),
-      option("T", "让系统自动保存", "黑色头像出现在标题栏，接管了这份存档。林峰看见一枚来自未来的阅读标记。", { timeoutOnly: true, flags: ["black_avatar_owns_save", "future_linfeng_reads_choices"], state: { namePollutionStage: 7 }, clues: [clue(13), clue(14)] }),
+      option("A", "手动输入“林峰”", "标题恢复了一秒，随即出现两个同名存档。另一份存档开始补全今晚的行为记录。", { flags: ["typed_linfeng_save_title", "second_linfeng_save_created"], state: { namePollutionStage: 6, nameAnchorCompleted: true, blackAvatarStage: "imitating-linfeng" }, clues: [clue(13), clue(14)] }),
+      option("B", "只保存为“峰”", "不完整的名字避开了复制，仍足够让林峰记住自己被谁叫过。", { flags: ["saved_as_feng_only"], state: { nameAnchorCompleted: true }, clues: [clue(13)] }),
+      option("C", "保存到谷雨名下", "存档留下了，谷雨的姓名却在标题栏里少了一笔。他没有抱怨，只把手机还给林峰。", { flags: ["saved_under_guyu", "guyu_anchor_burden"], state: { namePollutionStage: 5, guyuMemoryDegree: "pollution-transferred", nameAnchorCompleted: true }, relationships: [trust("trust_guyu", 8, "谷雨承接存档污染")] }),
+      option("D", "保存为周朝阳的笔记编号", "无名编号保留了因果，却没有向四楼再喂一个姓名。周朝阳把编号写进原笔记。", { flags: ["saved_under_zhou_note_number"], state: { zhouTrustSignal: "numbered-anchor", nameAnchorCompleted: true }, clues: [clue(13), clue(14)], relationships: [trust("trust_zhouchaoyang", 8, "使用无名编号保存因果")] }),
+      option("E", "取消保存", "这一段无法回看。队伍继续前进，手机里的时间线却留下一个干净得可疑的空洞。", { flags: ["cancelled_corrupted_save"], state: { namePollutionStage: 6, nameAnchorCompleted: false } }),
+      option("T", "让系统自动保存", "黑色头像出现在标题栏，接管了这份存档。林峰看见一枚来自未来的阅读标记。", { timeoutOnly: true, flags: ["black_avatar_owns_save", "future_linfeng_reads_choices"], state: { namePollutionStage: 7, blackAvatarStage: "save-owner", nameAnchorCompleted: false }, clues: [clue(13), clue(14)] }),
     ],
   });
 
-  line("nf05_010", chapterIds[5], "namefloor_changed_photo", "旁白", "班级合照在刷新。林峰原本站的位置被另一张相同的脸覆盖；群成员人数仍是四十二，没有任何新增提示。", "nf05_c34", { blueprintSceneId: "DR-C5-S02", namePollutionHistory: [{ stage: 5, visibleCarrier: "班级合照中的林峰被另一张相同的脸替换" }] });
+  line("nf05_010", chapterIds[5], "namefloor_changed_photo", "旁白", "班级合照在刷新。林峰原本站的位置被另一张相同的脸覆盖；群成员人数仍是四十二，没有任何新增提示。", "nf05_c34", {
+    blueprintSceneId: "DR-C5-S02",
+    effectTags: ["photo-blur-misaligned", "identity-overlap", "group-member-replaced"],
+    phoneScreen: phoneScreen({
+      kind: "system", view: "gallery", title: "班级合照", time: "06:04",
+      messages: [
+        { sender: "相册", text: "合照：林峰位置模糊，边缘出现另一张相同的脸。" },
+        { sender: "名单", text: "学生名单中林峰所在行正被归到黑色头像名下。" },
+      ],
+      systemNotice: "合照和名单正在互相覆盖。",
+    }),
+    namePollutionHistory: [{ stage: 5, visibleCarrier: "班级合照中的林峰被另一张相同的脸替换" }],
+  });
   decision({
     code: "C34", nodeId: "nf05_c34", chapterId: chapterIds[5], scene: "namefloor_changed_photo", blueprintSceneId: "DR-C5-S02",
     contentType: "phone-text", text: "黑色头像发来私聊：别再证明你是谁。消息正在逐字撤回。", nextNodeId: "nf05_020", defaultKey: "B",
     phoneScreen: { kind: "private", view: "message", title: "黑色头像", time: "06:05", memberCount: 42, messages: [{ sender: "黑色头像", text: "别再证明你是谁。" }] },
+    effectTags: ["black-avatar-linfeng-language", "phone-record-attribution-shift", "identity-overlap"],
     options: [
-      option("A", "不报姓名，只问它在哪个时间", "对方回复“十二点”。手机显示发送于未来，接收于今晚的开场时刻。", { flags: ["asked_black_avatar_time_safely"], clues: [clue(2), clue(13)] }),
-      option("B", "发送开场短信截图", "两张相同短信的时间戳互成镜像。警告不是外来入侵，而是从这条夜晚的另一端返回。", { flags: ["matched_loop_timestamps", "black_avatar_future_linfeng_evidence"], clues: [clue(1), clue(13)] }),
-      option("C", "发送无声手势", "黑色头像正确回了今晚临时改过的手势。它不是只会复制旧记录的东西。", { flags: ["black_avatar_new_memory_verified", "black_avatar_future_linfeng_evidence"], state: { namePollutionStage: 5 }, clues: [clue(10), clue(13)] }),
-      option("D", "质问它为何占据群位置", "一张成员变更记录闪过：黑色头像没有加入群，它覆盖的正是林峰原来的位置。总人数始终是四十二。", { flags: ["black_avatar_slot_truth", "black_avatar_future_linfeng_evidence"], state: { blackAvatarStage: "slot-revealed" }, clues: [clue(2), clue(14)] }),
-      option("E", "再次拉黑", "会话消失，手机仍在掌心震动。没有窗口显示消息，也没有办法证明是谁在敲。", { flags: ["blocked_black_avatar_again"], state: { namePollutionStage: 6 } }),
+      option("A", "不报姓名，只问它在哪个时间", "对方回复“十二点”。手机显示发送于未来，接收于今晚的开场时刻。", { flags: ["asked_black_avatar_time_safely"], state: { blackAvatarStage: "loop-time-hinted", linfengPhotoState: "second-face-visible" }, clues: [clue(2), clue(13)] }),
+      option("B", "发送开场短信截图", "两张相同短信的时间戳互成镜像。警告不是外来入侵，而是从这条夜晚的另一端返回。", { flags: ["matched_loop_timestamps", "black_avatar_future_linfeng_evidence"], state: { blackAvatarStage: "failed-loop-linfeng", linfengPhotoState: "loop-linked" }, clues: [clue(1), clue(13)] }),
+      option("C", "发送无声手势", "黑色头像正确回了今晚临时改过的手势。它不是只会复制旧记录的东西。", { flags: ["black_avatar_new_memory_verified", "black_avatar_future_linfeng_evidence"], state: { namePollutionStage: 5, blackAvatarStage: "new-memory-verified", linfengPhotoState: "new-choice-linked" }, clues: [clue(10), clue(13)] }),
+      option("D", "质问它为何占据群位置", "一张成员变更记录闪过：黑色头像没有加入群，它覆盖的正是林峰原来的位置。总人数始终是四十二。", { flags: ["black_avatar_slot_truth", "black_avatar_future_linfeng_evidence"], state: { blackAvatarStage: "slot-revealed", rosterState: "black-avatar-in-linfeng-row" }, clues: [clue(2), clue(14)] }),
+      option("E", "再次拉黑", "会话消失，手机仍在掌心震动。没有窗口显示消息，也没有办法证明是谁在敲。", { flags: ["blocked_black_avatar_again"], state: { namePollutionStage: 6, blackAvatarStage: "blocked-but-present" } }),
     ],
   });
 
-  line("nf05_020", chapterIds[5], "namefloor_guyu_forgets", "谷雨", "峰哥，我们是不是……今天才认识？我知道我信你，可我想不起为什么。", "nf05_c35", { blueprintSceneId: "DR-C5-S03", contentType: "dialogue", namePollutionHistory: [{ stage: 6, visibleCarrier: "谷雨开始忘记与林峰的共同经历" }, { stage: 7, visibleCarrier: "林峰无法完整说出自己的姓名" }] });
+  line("nf05_020", chapterIds[5], "namefloor_guyu_forgets", "谷雨", "峰哥，我们是不是……今天才认识？我知道我信你，可我想不起为什么。", "nf05_c35", { blueprintSceneId: "DR-C5-S03", contentType: "dialogue", effectTags: ["speaker-name-controlled-loss", "name-anchor-recovery-backlash"], namePollutionHistory: [{ stage: 6, visibleCarrier: "谷雨开始忘记与林峰的共同经历" }, { stage: 7, visibleCarrier: "林峰无法完整说出自己的姓名" }] });
   decision({
     code: "C35", nodeId: "nf05_c35", chapterId: chapterIds[5], scene: "namefloor_guyu_forgets", blueprintSceneId: "DR-C5-S03",
     text: "周朝阳的笔记夹层掉出一页：他早就发现林峰从名单消失，却一直没有说。", nextNodeId: "nf05_c36", defaultKey: "A",
     options: [
-      option("A", "让周朝阳完整解释", "周朝阳承认反复问名不是审讯，是锚定。他怕说破后，四楼会更快学会林峰。", { flags: ["zhou_explained_hidden_notes", "zhou_timeline_available"], clues: [clue(7), clue(16)], relationships: [trust("trust_zhouchaoyang", 10, "允许周朝阳完整说明隐瞒动机")] }),
-      option("B", "指责并夺走笔记", "笔记到了林峰手里，周朝阳却不再为他的连续性作证。证据还在，证人之间的信任断了。", { flags: ["seized_zhou_notes", "zhou_trust_broken"], relationships: [trust("trust_zhouchaoyang", -18, "指责并夺走笔记")] }),
-      option("C", "让谷雨调解", "谷雨说出周朝阳今晚每次挡在门前的细节。就算记忆缺字，人的行动仍能把动机补回来。", { flags: ["guyu_mediated_zhou_conflict"], clues: [clue(16)], relationships: [trust("trust_zhouchaoyang", 6, "接受谷雨调解"), trust("trust_guyu", 6, "让谷雨参与修复信任")] }),
-      option("D", "只核对时间线，不谈动机", "三个人把每个时间戳重新排好，维持了协作，却把那道情绪裂口留到了出口。", { flags: ["zhou_working_trust_only", "zhou_timeline_available"], clues: [clue(7), clue(16)] }),
-      option("E", "当众承诺不会因证据不利先放逐同伴", "林峰让所有人听清：“记录可以错。我会先看你今晚怎么选，不会先把你留下。”这句承诺没有被设备录下。", { flags: ["explicit_trust_promise"], clues: [clue(10), clue(16)], relationships: [trust("trust_zhouchaoyang", 10, "作出不先放逐同伴的承诺"), trust("trust_guyu", 10, "作出不先放逐同伴的承诺")] }),
+      option("A", "让周朝阳完整解释", "周朝阳承认反复问名不是审讯，是锚定。他怕说破后，四楼会更快学会林峰。", { flags: ["zhou_explained_hidden_notes", "zhou_timeline_available"], state: { zhouTrustSignal: "explained-hidden-anchor", teamAcceptsLinfeng: true }, clues: [clue(7), clue(16)], relationships: [trust("trust_zhouchaoyang", 10, "允许周朝阳完整说明隐瞒动机")] }),
+      option("B", "指责并夺走笔记", "笔记到了林峰手里，周朝阳却不再为他的连续性作证。证据还在，证人之间的信任断了。", { flags: ["seized_zhou_notes", "zhou_trust_broken"], state: { zhouTrustSignal: "broken", teamAcceptsLinfeng: false }, relationships: [trust("trust_zhouchaoyang", -18, "指责并夺走笔记")] }),
+      option("C", "让谷雨调解", "谷雨说出周朝阳今晚每次挡在门前的细节。就算记忆缺字，人的行动仍能把动机补回来。", { flags: ["guyu_mediated_zhou_conflict"], state: { guyuMemoryDegree: "partial-but-defending", zhouTrustSignal: "mediated", teamAcceptsLinfeng: true }, clues: [clue(16)], relationships: [trust("trust_zhouchaoyang", 6, "接受谷雨调解"), trust("trust_guyu", 6, "让谷雨参与修复信任")] }),
+      option("D", "只核对时间线，不谈动机", "三个人把每个时间戳重新排好，维持了协作，却把那道情绪裂口留到了出口。", { flags: ["zhou_working_trust_only", "zhou_timeline_available"], state: { zhouTrustSignal: "working-only", teamAcceptsLinfeng: true }, clues: [clue(7), clue(16)] }),
+      option("E", "当众承诺不会因证据不利先放逐同伴", "林峰让所有人听清：“记录可以错。我会先看你今晚怎么选，不会先把你留下。”这句承诺没有被设备录下。", { flags: ["explicit_trust_promise"], state: { teamAcceptsLinfeng: true, nameAnchorCompleted: true }, clues: [clue(10), clue(16)], relationships: [trust("trust_zhouchaoyang", 10, "作出不先放逐同伴的承诺"), trust("trust_guyu", 10, "作出不先放逐同伴的承诺")] }),
     ],
   });
 
   decision({
     code: "C36", nodeId: "nf05_c36", chapterId: chapterIds[5], scene: "namefloor_guyu_forgets", blueprintSceneId: "DR-C5-S03",
     speaker: "谷雨", contentType: "dialogue", text: "我记得害怕，也记得不想丢下你。可共同经历全乱了。现在怎么办？", nextNodeId: "nf05_030", defaultKey: "B",
+    effectTags: ["name-anchor-recovery-backlash", "speaker-name-controlled-loss"],
     options: [
-      option("A", "让谷雨反复背诵旧经历", "谷雨越背越熟，走廊深处另一个声音也越背越像。旧经历正在变成四楼的教材。", { flags: ["forced_guyu_old_memories"], state: { namePollutionStage: 7 }, relationships: [trust("trust_guyu", -8, "强迫谷雨背诵受污染的旧记忆")] }),
-      option("B", "创造一个不拍摄的新约定", "他们约定天亮后谁先喊饿，另一个就去买最难吃的早餐。这句话没有进入任何设备，谷雨终于笑了一下。", { flags: ["guyu_new_unrecorded_memory", "guyu_trust_stable"], state: { namePollutionStage: 6 }, clues: [clue(10), clue(16)], relationships: [trust("trust_guyu", 12, "与谷雨创造不可复制的新记忆")] }),
-      option("C", "把羽毛交给谷雨，让他继续喊林峰", "谷雨把羽毛贴在胸口，一声声叫回林峰。每一次锚定，都有一笔墨从林峰名字移到谷雨身上。", { flags: ["guyu_anchor_burden", "guyu_trust_stable", "guyu_new_unrecorded_memory"], state: { featherHolder: "谷雨", featherState: "tainted", namePollutionStage: 6 }, clues: [clue(10), clue(11)], relationships: [trust("trust_guyu", 14, "谷雨主动承接林峰的姓名污染")] }),
-      option("D", "纠正细节并录音", "录音保存了正确说法，也把它送给了走廊。播放第二遍时，背景里多了一个谷雨的声音。", { flags: ["recorded_corrected_guyu_memory"], state: { namePollutionStage: 7 }, clues: [clue(13)] }),
-      option("E", "接受他忘记，停止锚定", "谷雨不再被逼着回忆，呼吸慢慢稳定。可下一次回头，他已经叫不出“峰哥”。", { flags: ["stopped_guyu_anchor"], state: { namePollutionStage: 7 }, relationships: [trust("trust_guyu", -4, "停止让谷雨参与锚名")] }),
+      option("A", "让谷雨反复背诵旧经历", "谷雨越背越熟，走廊深处另一个声音也越背越像。旧经历正在变成四楼的教材。", { flags: ["forced_guyu_old_memories"], state: { namePollutionStage: 7, guyuMemoryDegree: "old-memory-contaminated", nameAnchorCompleted: false }, relationships: [trust("trust_guyu", -8, "强迫谷雨背诵受污染的旧记忆")] }),
+      option("B", "创造一个不拍摄的新约定", "他们约定天亮后谁先喊饿，另一个就去买最难吃的早餐。这句话没有进入任何设备，谷雨终于笑了一下。", { flags: ["guyu_new_unrecorded_memory", "guyu_trust_stable"], state: { namePollutionStage: 6, guyuMemoryDegree: "new-memory-anchor", nameAnchorCompleted: true }, clues: [clue(10), clue(16)], relationships: [trust("trust_guyu", 12, "与谷雨创造不可复制的新记忆")] }),
+      option("C", "把羽毛交给谷雨，让他继续喊林峰", "谷雨把羽毛贴在胸口，一声声叫回林峰。每一次锚定，都有一笔墨从林峰名字移到谷雨身上。", { flags: ["guyu_anchor_burden", "guyu_trust_stable", "guyu_new_unrecorded_memory"], state: { featherHolder: "谷雨", featherState: "tainted", featherPollutionSource: "linfeng-name-anchor", namePollutionStage: 6, guyuMemoryDegree: "bearing-pollution", nameAnchorCompleted: true }, clues: [clue(10), clue(11)], relationships: [trust("trust_guyu", 14, "谷雨主动承接林峰的姓名污染")] }),
+      option("D", "纠正细节并录音", "录音保存了正确说法，也把它送给了走廊。播放第二遍时，背景里多了一个谷雨的声音。", { flags: ["recorded_corrected_guyu_memory"], state: { namePollutionStage: 7, guyuMemoryDegree: "recorded-and-copied", nameAnchorCompleted: false }, clues: [clue(13)] }),
+      option("E", "接受他忘记，停止锚定", "谷雨不再被逼着回忆，呼吸慢慢稳定。可下一次回头，他已经叫不出“峰哥”。", { flags: ["stopped_guyu_anchor"], state: { namePollutionStage: 7, guyuMemoryDegree: "forgotten-by-choice", nameAnchorCompleted: false }, relationships: [trust("trust_guyu", -4, "停止让谷雨参与锚名")] }),
     ],
   });
 
-  line("nf05_030", chapterIds[5], "namefloor_two_songmings", "旁白", "同行宋明的手机响了。来电显示也是“宋明”，声音从复制宿舍深处传来；两端共享旧记忆，却只有一端经历了刚才的选择。", "nf05_c37", { blueprintSceneId: "DR-C5-S04" });
+  line("nf05_030", chapterIds[5], "namefloor_two_songmings", "旁白", "同行宋明的手机响了。来电显示也是“宋明”，声音从复制宿舍深处传来；两端共享旧记忆，却只有一端经历了刚才的选择。", "nf05_c37", {
+    blueprintSceneId: "DR-C5-S04",
+    effectTags: ["identity-overlap", "phone-record-attribution-shift"],
+    phoneScreen: phoneScreen({
+      kind: "private", view: "incoming-call", title: "宋明", time: "06:21",
+      messages: [
+        { sender: "来电", text: "同名账号正在复制宿舍深处呼叫。" },
+        { sender: "账号提示", text: "旧经历相同，今晚选择不同。" },
+      ],
+      systemNotice: "两端呼吸不同步。",
+    }),
+  });
   decision({
     code: "C37", nodeId: "nf05_c37", chapterId: chapterIds[5], scene: "namefloor_two_songmings", blueprintSceneId: "DR-C5-S04",
     text: "同行宋明看着林峰：“我的账号认识你，可我不认识。到底是你被删了，还是我不是原来的宋明？”", nextNodeId: "nf05_040", defaultKey: "A",
     options: [
-      option("A", "提醒复制宿舍里的新事件", "他想起那条没被设备记录的毛巾位置。记忆不是旧档案，却确实在今晚共同发生。", { flags: ["song_new_memory_verified", "song_recognition_restored"], clues: [clue(10), clue(16)] }),
-      option("B", "出示学籍", "宋明只认得档案里的另一个林峰。合法记录越完整，玩家林峰在他眼里越像闯入者。", { flags: ["song_trusted_legal_records", "legal_linfeng_records_stronger"], state: { namePollutionStage: 7 } }),
-      option("C", "问他是否愿意替林峰承担一次风险", "他先问林峰愿不愿意换回来，再走到最危险的位置。这个回答不是旧宋明留给他的。", { flags: ["song_voluntary_risk", "song_mimic_self_aware", "song_new_choice_verified"], clues: [clue(10), clue(16)], relationships: [trust("recognition_songming", 10, "以自愿承担风险确认主体选择")] }),
-      option("D", "让谷雨判断语气", "谷雨说，词句像宋明，停顿却不像。他没有因此判死刑，只把差异保留下来。", { flags: ["guyu_noted_song_voice_difference"], clues: [clue(16)], relationships: [trust("trust_guyu", 6, "保留双宋明的语气差异")] }),
-      option("E", "因恐惧把他锁在门外", "铁门隔开同行宋明。他在另一侧提醒林峰曾答应不会先放逐他，随后真正的人声被追赶者淹没。", { flags: ["song_exiled_after_promise", "trusted_then_abandoned", "misjudged_human", "wrong_exile_proven"], relationships: [trust("recognition_songming", -18, "因恐惧放逐可能是真人的同行宋明")] }),
-      option("F", "让他自己选择一个新名字", "他没有从学籍里挑，也没有借用死者的姓名，只选了一个今晚才有意义的称呼。这是模仿者第一次不按模板作答。", { flags: ["song_chose_new_name", "song_mimic_self_aware", "song_new_memory_verified"], clues: [clue(10), clue(16)], relationships: [trust("recognition_songming", 12, "承认同行者自行选择新名字")] }),
+      option("A", "提醒复制宿舍里的新事件", "他想起那条没被设备记录的毛巾位置。记忆不是旧档案，却确实在今晚共同发生。", { flags: ["song_new_memory_verified", "song_recognition_restored"], state: { songIdentityJudgment: "new-event-recognized", teamAcceptsLinfeng: true }, clues: [clue(10), clue(16)] }),
+      option("B", "出示学籍", "宋明只认得档案里的另一个林峰。合法记录越完整，玩家林峰在他眼里越像闯入者。", { flags: ["song_trusted_legal_records", "legal_linfeng_records_stronger"], state: { namePollutionStage: 7, songIdentityJudgment: "legal-records-over-current-lin", teamAcceptsLinfeng: false } }),
+      option("C", "问他是否愿意替林峰承担一次风险", "他先问林峰愿不愿意换回来，再走到最危险的位置。这个回答不是旧宋明留给他的。", { flags: ["song_voluntary_risk", "song_mimic_self_aware", "song_new_choice_verified"], state: { songIdentityJudgment: "voluntary-risk-recognized", teamAcceptsLinfeng: true }, clues: [clue(10), clue(16)], relationships: [trust("recognition_songming", 10, "以自愿承担风险确认主体选择")] }),
+      option("D", "让谷雨判断语气", "谷雨说，词句像宋明，停顿却不像。他没有因此判死刑，只把差异保留下来。", { flags: ["guyu_noted_song_voice_difference"], state: { songIdentityJudgment: "voice-difference-kept", guyuMemoryDegree: "tone-judge-stable" }, clues: [clue(16)], relationships: [trust("trust_guyu", 6, "保留双宋明的语气差异")] }),
+      option("E", "因恐惧把他锁在门外", "铁门隔开同行宋明。他在另一侧提醒林峰曾答应不会先放逐他，随后真正的人声被追赶者淹没。", { flags: ["song_exiled_after_promise", "trusted_then_abandoned", "misjudged_human", "wrong_exile_proven"], state: { songIdentityJudgment: "exiled", teamAcceptsLinfeng: false }, relationships: [trust("recognition_songming", -18, "因恐惧放逐可能是真人的同行宋明")] }),
+      option("F", "让他自己选择一个新名字", "他没有从学籍里挑，也没有借用死者的姓名，只选了一个今晚才有意义的称呼。这是模仿者第一次不按模板作答。", { flags: ["song_chose_new_name", "song_mimic_self_aware", "song_new_memory_verified"], state: { songIdentityJudgment: "new-name-self-aware", teamAcceptsLinfeng: true }, clues: [clue(10), clue(16)], relationships: [trust("recognition_songming", 12, "承认同行者自行选择新名字")] }),
     ],
   });
 
-  line("nf05_040", chapterIds[5], "namefloor_black_avatar_truth", "旁白", "两个“林峰”账号同时来电。屏幕倒影里，黑色头像短暂显出林峰失去五官后的轮廓；它占据的仍是他的原群位置。", "nf05_c38", { blueprintSceneId: "DR-C5-S05", namePollutionHistory: [{ stage: 8, visibleCarrier: "不存在的四楼开始覆盖现实出口，黑色头像显出未来林峰轮廓" }] });
+  line("nf05_040", chapterIds[5], "namefloor_black_avatar_truth", "旁白", "两个“林峰”账号同时来电。屏幕倒影里，黑色头像短暂显出林峰失去五官后的轮廓；它占据的仍是他的原群位置。", "nf05_c38", { blueprintSceneId: "DR-C5-S05", effectTags: ["black-avatar-linfeng-language", "identity-overlap", "fourth-floor-reality-cover"], namePollutionHistory: [{ stage: 8, visibleCarrier: "不存在的四楼开始覆盖现实出口，黑色头像显出未来林峰轮廓" }] });
   decision({
     code: "C38", nodeId: "nf05_c38", chapterId: chapterIds[5], scene: "namefloor_black_avatar_truth", blueprintSceneId: "DR-C5-S05",
-    contentType: "phone-text", text: "一个来电来自林峰手中的手机，另一个来自四楼深处。接通任何一端，都可能让两份身份开始同步。", nextNodeId: "nf06_001", durationMs: 8000, fallbackKey: "T", defaultKey: "C",
-    phoneScreen: { kind: "system", view: "incoming-calls", title: "同名来电", time: "06:35", memberCount: 42, messages: [{ sender: "系统", text: "林峰 · 两个来电同时接入" }] },
+    contentType: "phone-text", text: "一个来电来自林峰手中的手机，另一个来自四楼深处。接通任何一端，都可能让两份身份开始同步。", nextNodeId: "nf05_050", durationMs: 8000, fallbackKey: "T", defaultKey: "C",
+    phoneScreen: { kind: "system", view: "incoming-calls", title: "同名来电", time: "06:35", memberCount: 42, messages: [{ sender: "系统", text: "林峰 · 两个来电同时接入" }, { sender: "黑色头像", text: "你会选录屏，因为我当时也是。" }] },
+    effectTags: ["identity-overlap", "fourth-floor-reality-cover", "black-avatar-linfeng-language"],
     options: [
-      option("A", "接听手中手机", "听筒里只有林峰自己的呼吸，慢半拍重复。手中这份身份因此变得更稳，也更像一段回放。", { flags: ["answered_handset_linfeng_call"], state: { namePollutionStage: 7 }, clues: [clue(13), clue(16)] }),
-      option("B", "接听深处来电", "家人的声音从深处叫出“林峰”。另一个林峰在走廊尽头睁开眼，合法记录随之更加牢固。", { flags: ["answered_deep_linfeng_call", "legal_linfeng_records_stronger"], state: { namePollutionStage: 7 }, clues: [clue(13), clue(16)] }),
-      option("C", "同时录屏，但不接听", "录屏保住两个同号来电并存的证据。谁都没有获得交换另一端身份的机会。", { flags: ["recorded_dual_linfeng_calls"], clues: [clue(13), clue(16)] }),
-      option("D", "让周朝阳接听", "周朝阳只听三秒便挂断，记下两个呼吸之间固定的时间差。差异没有被任何一端吞掉。", { flags: ["zhou_measured_dual_call_gap"], clues: [clue(13), clue(16)], relationships: [trust("trust_zhouchaoyang", 8, "由周朝阳记录双来电时间差")] }),
-      option("E", "让谷雨只听语气", "谷雨没有回应，只听出一端在害怕失去名字，另一端在害怕失去合法生活。两种恐惧都是真的。", { flags: ["guyu_heard_dual_linfeng_fear"], clues: [clue(13), clue(16)], relationships: [trust("trust_guyu", 8, "让谷雨保留双林的情绪差异")] }),
-      option("F", "关机，循声寻找实体", "屏幕熄灭后，深处的铃声仍在响。队伍沿实体声源找到了校长室方向。", { flags: ["found_principal_route_by_call"], clues: [clue(13), clue(16)] }),
-      option("T", "任由两个来电自动接通", "两端同时传出“喂”。旧记忆开始逐句同步，双林唯一可见的差异被四楼抹平。", { timeoutOnly: true, flags: ["dual_linfeng_memories_synchronized", "identity_unresolved"], state: { namePollutionStage: 8 }, clues: [clue(13), clue(16)] }),
+      option("A", "接听手中手机", "听筒里只有林峰自己的呼吸，慢半拍重复。手中这份身份因此变得更稳，也更像一段回放。", { flags: ["answered_handset_linfeng_call"], state: { namePollutionStage: 7, blackAvatarStage: "failed-loop-linfeng", principalOfficeRoute: "handset-call-clue" }, clues: [clue(13), clue(16)] }),
+      option("B", "接听深处来电", "家人的声音从深处叫出“林峰”。另一个林峰在走廊尽头睁开眼，合法记录随之更加牢固。", { flags: ["answered_deep_linfeng_call", "legal_linfeng_records_stronger"], state: { namePollutionStage: 7, blackAvatarStage: "legal-life-overlap", principalOfficeRoute: "deep-call-clue" }, clues: [clue(13), clue(16)] }),
+      option("C", "同时录屏，但不接听", "录屏保住两个同号来电并存的证据。谁都没有获得交换另一端身份的机会。", { flags: ["recorded_dual_linfeng_calls"], state: { blackAvatarStage: "dual-call-recorded", principalOfficeRoute: "dual-call-evidence" }, clues: [clue(13), clue(16)] }),
+      option("D", "让周朝阳接听", "周朝阳只听三秒便挂断，记下两个呼吸之间固定的时间差。差异没有被任何一端吞掉。", { flags: ["zhou_measured_dual_call_gap"], state: { zhouTrustSignal: "dual-call-measured", principalOfficeRoute: "zhou-call-gap" }, clues: [clue(13), clue(16)], relationships: [trust("trust_zhouchaoyang", 8, "由周朝阳记录双来电时间差")] }),
+      option("E", "让谷雨只听语气", "谷雨没有回应，只听出一端在害怕失去名字，另一端在害怕失去合法生活。两种恐惧都是真的。", { flags: ["guyu_heard_dual_linfeng_fear"], state: { guyuMemoryDegree: "dual-fear-recognized", principalOfficeRoute: "guyu-tone-route" }, clues: [clue(13), clue(16)], relationships: [trust("trust_guyu", 8, "让谷雨保留双林的情绪差异")] }),
+      option("F", "关机，循声寻找实体", "屏幕熄灭后，深处的铃声仍在响。队伍沿实体声源找到了校长室方向。", { flags: ["found_principal_route_by_call"], state: { principalOfficeRoute: "physical-ringtone" }, clues: [clue(13), clue(16)] }),
+      option("T", "任由两个来电自动接通", "两端同时传出“喂”。旧记忆开始逐句同步，双林唯一可见的差异被四楼抹平。", { timeoutOnly: true, flags: ["dual_linfeng_memories_synchronized", "identity_unresolved"], state: { namePollutionStage: 8, blackAvatarStage: "identity-synchronized", principalOfficeRoute: "forced-by-sync" }, clues: [clue(13), clue(16)] }),
     ],
+  });
+
+  add({
+    nodeId: "nf05_050",
+    chapterId: chapterIds[5],
+    scene: "namefloor_black_avatar_truth",
+    blueprintSceneId: "DR-C5-S05",
+    speaker: "旁白",
+    text: "铃声停下后，走廊墙皮剥落成校长室门牌的形状。黑色头像撤回最后一条消息，只留下林峰常用的句式：别让名册先替你决定。队伍沿着门牌方向继续，但真正的校长室仍在更深处。",
+    type: "chapter-ending",
+    contentType: "narration",
+    chapterEnding: {
+      title: "第五章结束",
+      subtitle: "林峰正在被班群和名单主动删除，校长室成为唯一明确方向。",
+      cta: "保存并返回书架",
+    },
+    effectTags: ["fourth-floor-reality-cover", "black-avatar-linfeng-language", "speaker-name-controlled-loss"],
+    effects: [{ type: "signal-glitch", durationMs: 900, intensity: 0.34 }, { type: "focus-pulse", durationMs: 1100, intensity: 0.28 }],
   });
 
   line("nf06_001", chapterIds[6], "namefloor_archive_corridors", "旁白", "校长室藏在四楼最深处。五条走廊分别由宿管档案、失踪姓名、黑头像、另一个林峰和死亡账号复制，没有一条能同时保住全部证据。", "nf06_c39", { blueprintSceneId: "DR-C6-S01" });
@@ -933,8 +1073,8 @@
   const chapters = [
     { chapterId: chapterIds[2], title: "第二章：门外的人", order: 2, status: "runtime", startNodeId: "nf02_001", sceneCount: 6, decisionCount: 8, timedDecisionCount: 2 },
     { chapterId: chapterIds[3], title: "第三章：三点可以进食", order: 3, status: "runtime", startNodeId: "nf03_001", sceneCount: 6, decisionCount: 9, timedDecisionCount: 3 },
-    { chapterId: chapterIds[4], title: "第四章：宿管的三年", order: 4, status: "blueprint-only", sceneCount: 5, decisionCount: 0, timedDecisionCount: 0 },
-    { chapterId: chapterIds[5], title: "第五章：班群里被删除的人", order: 5, status: "blueprint-only", sceneCount: 5, decisionCount: 0, timedDecisionCount: 0 },
+    { chapterId: chapterIds[4], title: "第四章：宿管的三年", order: 4, status: "runtime", startNodeId: "nf04_001", sceneCount: 6, decisionCount: 7, timedDecisionCount: 2 },
+    { chapterId: chapterIds[5], title: "第五章：班群里被删除的人", order: 5, status: "runtime", startNodeId: "nf05_001", sceneCount: 5, decisionCount: 7, timedDecisionCount: 2 },
     { chapterId: chapterIds[6], title: "第六章：校长室", order: 6, status: "blueprint-only", sceneCount: 5, decisionCount: 0, timedDecisionCount: 0 },
     { chapterId: chapterIds[7], title: "第七章：谁是林峰", order: 7, status: "blueprint-only", sceneCount: 11, decisionCount: 0, timedDecisionCount: 0 },
   ];
@@ -1080,6 +1220,8 @@
     ...Array.from({ length: 10 }, (_, index) => `DR-C1-S${String(index + 1).padStart(2, "0")}`),
     ...Array.from({ length: 6 }, (_, index) => `DR-C2-S${String(index + 1).padStart(2, "0")}`),
     ...Array.from({ length: 6 }, (_, index) => `DR-C3-S${String(index + 1).padStart(2, "0")}`),
+    ...Array.from({ length: 5 }, (_, index) => `DR-C4-S${String(index + 1).padStart(2, "0")}`),
+    ...Array.from({ length: 5 }, (_, index) => `DR-C5-S${String(index + 1).padStart(2, "0")}`),
   ];
 
   const defaultStoryState = {
@@ -1101,6 +1243,18 @@
     chapterThreeIrreversible: "unresolved",
     rosterState: base.defaultStoryState?.rosterState || "unseen",
     rosterCarrier: null,
+    managerTrueName: base.defaultStoryState?.managerTrueName || null,
+    managerNameStability: base.defaultStoryState?.managerNameStability || "unknown",
+    managerSaved: base.defaultStoryState?.managerSaved ?? null,
+    managerTrustSignal: base.defaultStoryState?.managerTrustSignal || "unmet",
+    managerSuccessorIntent: base.defaultStoryState?.managerSuccessorIntent || false,
+    promisedManagerSuccession: base.defaultStoryState?.promisedManagerSuccession || false,
+    principalOfficeRoute: base.defaultStoryState?.principalOfficeRoute || null,
+    featherPollutionSource: base.defaultStoryState?.featherPollutionSource || null,
+    guyuMemoryDegree: base.defaultStoryState?.guyuMemoryDegree || "accurate",
+    linfengPhotoState: base.defaultStoryState?.linfengPhotoState || "normal",
+    nameAnchorCompleted: base.defaultStoryState?.nameAnchorCompleted || false,
+    teamAcceptsLinfeng: base.defaultStoryState?.teamAcceptsLinfeng ?? true,
   };
 
   const defaultFlags = {
@@ -1120,7 +1274,7 @@
     { stage: 9, title: "身份被穿走", visibleCarrier: "姓名彻底消失，林峰成为占据原群位置的黑色头像" },
   ];
 
-  const runtimeChapterIds = new Set(["namefloor_chapter_01", chapterIds[2], chapterIds[3]]);
+  const runtimeChapterIds = new Set(["namefloor_chapter_01", chapterIds[2], chapterIds[3], chapterIds[4], chapterIds[5]]);
   const runtimeNodes = Object.fromEntries(
     Object.entries(nodes).filter(([, node]) => runtimeChapterIds.has(node.chapterId)),
   );

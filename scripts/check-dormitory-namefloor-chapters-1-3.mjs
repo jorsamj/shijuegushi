@@ -111,19 +111,33 @@ const laterChapterIds = [
   "namefloor_chapter_06",
   "namefloor_chapter_07",
 ];
+const activeLaterChapterIds = laterChapterIds.filter((chapterId) => {
+  const chapter = data.chapters.find((item) => item.chapterId === chapterId);
+  return chapter?.status === "runtime";
+});
 
 assert.equal(data.nodes.nf01_040?.nextNodeId, "nf02_001", "Chapter 1 ending must continue into Chapter 2.");
 const defaultRoute = walkDefaultRoute(data, "nf01_040");
 assert.ok(defaultRoute.some((node) => node.chapterId === chapter2Id), "Chapter 2 must be reachable from Chapter 1.");
 assert.ok(defaultRoute.some((node) => node.chapterId === chapter3Id), "Chapter 3 must be reachable from Chapter 2.");
-assert.equal(defaultRoute.at(-1)?.chapterId, chapter3Id, "Current formal runtime must stop at the Chapter 3 hook.");
-assert.equal(defaultRoute.at(-1)?.type, "chapter-ending", "Chapter 3 hook must be a chapter-ending node, not Chapter 4.");
-assert.ok(!defaultRoute.some((node) => laterChapterIds.includes(node.chapterId)), "Chapters 4-7 must not be reachable this round.");
+assert.equal(defaultRoute.at(-1)?.type, "chapter-ending", "Current formal runtime must stop on a chapter-ending hook.");
+if (activeLaterChapterIds.length === 0) {
+  assert.equal(defaultRoute.at(-1)?.chapterId, chapter3Id, "Chapter 1-3 phase must stop at the Chapter 3 hook.");
+  assert.ok(!defaultRoute.some((node) => laterChapterIds.includes(node.chapterId)), "Chapters 4-7 must not be reachable during the Chapter 1-3 phase.");
+} else {
+  activeLaterChapterIds.forEach((chapterId) => {
+    assert.ok(defaultRoute.some((node) => node.chapterId === chapterId), `${chapterId} is runtime and must remain reachable after Chapter 3.`);
+  });
+}
 
 laterChapterIds.forEach((chapterId) => {
   const chapter = data.chapters.find((item) => item.chapterId === chapterId);
-  assert.ok(!chapter || chapter.status !== "runtime", `${chapterId} must remain blueprint-only or absent.`);
-  assert.equal(nodes.some((node) => node.chapterId === chapterId), false, `${chapterId} must not export runtime nodes this round.`);
+  if (chapter?.status === "runtime") {
+    assert.equal(nodes.some((node) => node.chapterId === chapterId), true, `${chapterId} is runtime and must export nodes.`);
+  } else {
+    assert.ok(!chapter || chapter.status !== "runtime", `${chapterId} must remain blueprint-only or absent.`);
+    assert.equal(nodes.some((node) => node.chapterId === chapterId), false, `${chapterId} must not export runtime nodes this phase.`);
+  }
 });
 
 const chapter2Decisions = countDecisionNodes(nodes, chapter2Id);
