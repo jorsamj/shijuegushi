@@ -146,15 +146,16 @@ const defaultRoute = walkDefaultRoute(data, "nf01_040");
   chapterIds.chapter4,
   chapterIds.chapter5,
   chapterIds.chapter6,
+  chapterIds.chapter7,
 ].forEach((chapterId) => assert.ok(defaultRoute.some((node) => node.chapterId === chapterId), `${chapterId} must be reachable on the default route.`));
-assert.equal(defaultRoute.at(-1)?.chapterId, chapterIds.chapter6, "Current formal runtime must stop at the Chapter 6 hook.");
-assert.equal(defaultRoute.at(-1)?.type, "chapter-ending", "Chapter 6 hook must be a chapter-ending node.");
-assert.ok(!defaultRoute.some((node) => node.chapterId === chapterIds.chapter7), "Chapter 7 must not be reachable this round.");
+assert.equal(defaultRoute.at(-1)?.chapterId, chapterIds.chapter7, "Current formal runtime must stop at the Chapter 7 hook.");
+assert.equal(defaultRoute.at(-1)?.type, "chapter-ending", "Chapter 7 hook must be a chapter-ending node.");
 
 [
   [chapterIds.chapter4, 7, 2],
   [chapterIds.chapter5, 7, 2],
   [chapterIds.chapter6, 8, 2],
+  [chapterIds.chapter7, 8, 2],
 ].forEach(([chapterId, minimumDecisions, minimumTimed]) => {
   const chapter = data.chapters.find((item) => item.chapterId === chapterId);
   assert.equal(chapter?.status, "runtime", `${chapterId} must be marked runtime.`);
@@ -164,11 +165,6 @@ assert.ok(!defaultRoute.some((node) => node.chapterId === chapterIds.chapter7), 
   assertPlayableChapterChoices(nodes, chapterId, data);
 });
 
-[chapterIds.chapter7].forEach((chapterId) => {
-  const chapter = data.chapters.find((item) => item.chapterId === chapterId);
-  assert.ok(!chapter || chapter.status !== "runtime", `${chapterId} must remain blueprint-only or absent.`);
-  assert.equal(nodes.some((node) => node.chapterId === chapterId), false, `${chapterId} must not export runtime nodes this round.`);
-});
 
 const chapter4PhoneNodes = nodes.filter((node) => node.chapterId === chapterIds.chapter4 && node.phoneScreen);
 const chapter5PhoneNodes = nodes.filter((node) => node.chapterId === chapterIds.chapter5 && node.phoneScreen);

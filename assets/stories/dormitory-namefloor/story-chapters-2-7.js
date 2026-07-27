@@ -963,6 +963,7 @@
     speaker: "旁白",
     text: "广播停下时，校长室最深处的柜门完全打开。另一个林峰站在里面：账号、学籍、家庭资料、宿舍记录和所有旧照片都承认他；他抬起头，却先问起一件今晚没有被任何设备记下的事。",
     type: "chapter-ending",
+    nextNodeId: "nf07_001",
     contentType: "narration",
     chapterEnding: {
       title: "第六章结束",
@@ -1085,27 +1086,28 @@
 
   decision({
     code: "C55", nodeId: "nf07_c55", chapterId: chapterIds[7], scene: "namefloor_midnight_return", blueprintSceneId: "DR-C7-S03",
-    contentType: "phone-text", text: "出口前，林峰的手机重现午夜界面。它允许向零点的自己发送一条信息。", nextNodeId: "nf07_resolve", defaultKey: "E",
-    phoneScreen: { kind: "private", view: "message", title: "发送给零点的自己", time: "08:08", memberCount: 42, messages: [{ sender: "系统", text: "仅可发送一次" }] },
+    contentType: "phone-text", text: "黑色头像、两个林峰账号与名册散页同时停住。结局入口只记录你们怎样定义“林峰”，不会替任何人宣布真假。", nextNodeId: "nf07_decision_entry", defaultKey: "E",
+    phoneScreen: { kind: "private", view: "message", title: "身份记录汇总", time: "08:08", memberCount: 42, messages: [{ sender: "黑色头像", text: "我占的是原来的位置，不是新增成员。" }, { sender: "系统", text: "将保存姓名、人格、名册与站队判断。" }] },
     options: [
-      option("A", "发送“不要忘记你的名字”", "信息穿过时间，落回第一幕的手机。若姓名已彻底消失且没有活人锚，黑色头像便从这里永远占住林峰的位置。", { flags: ["sent_loop_warning", "name_stage_9"], state: { namePollutionStage: 9, blackAvatarStage: "loop-closed" }, clues: [clue(1), clue(9), clue(13), clue(18)] }),
-      option("B", "发送所有幸存者姓名和新约定", "过去收到了完整姓名，也让四楼获得下一轮复制种子。第五道影子在发送进度里闪了一次。", { flags: ["sent_survivor_names", "fifth_released", "identity_unresolved"], state: { namePollutionStage: 8 }, clues: [clue(1), clue(10), clue(18)] }),
-      option("C", "发送名册照片后砸碎手机", "照片留在过去，当前账号彻底断开。玩家林峰再也无法用手机证明自己，却阻止了追踪继续同步。", { flags: ["sent_roster_photo", "smashed_phone", "player_linfeng_escaped_nameless"], clues: [clue(1), clue(13), clue(15)] }),
-      option("D", "不发送，保留黑色头像会话", "循环没有闭合，黑色头像仍显示在线。它和当前幸存者隔着一个未发送的输入框互相凝视。", { flags: ["kept_black_avatar_conversation"], clues: [clue(1), clue(13)] }),
-      option("E", "让同伴各说一句未记录的话再发送", "过去只收到一段残缺语音，听不清姓名，却保留了几个人在同一时刻作出的新选择。", { flags: ["sent_unrecorded_companion_words", "all_core_escape"], clues: [clue(1), clue(10), clue(13)], relationships: [trust("trust_zhouchaoyang", 6, "共同留下未记录的新话"), trust("trust_guyu", 6, "共同留下未记录的新话")] }),
+      option("A", "让玩家林峰保留名字", "合法记录没有消失，玩家林峰也没有被要求立刻消失。名册把这次判断记为一项可复核的选择。", { flags: ["player_linfeng_named", "final_identity_recorded"], state: { finalLinfengNameHolder: "player", endingCandidateState: "pending" }, clues: [clue(10), clue(15), clue(16)] }),
+      option("B", "让合法林峰保留名字", "另一个林峰得到学校承认，玩家林峰仍保留这一夜的记忆与对后果的承担。", { flags: ["legal_linfeng_named", "final_identity_recorded"], state: { finalLinfengNameHolder: "legal", endingCandidateState: "pending", namePollutionStage: 9 }, clues: [clue(1), clue(13), clue(15), clue(16)] }),
+      option("C", "让两人都以选择被记录", "队伍拒绝把不可证明的来源变成处刑理由；两份身份被记为并列的后续问题。", { flags: ["dual_linfeng_subjects_acknowledged", "final_identity_recorded"], state: { finalLinfengNameHolder: "shared", endingCandidateState: "pending" }, clues: [clue(10), clue(16)] }),
+      option("D", "保留黑色头像会话作为警告", "失败时间线留下的痕迹被保留，既可能是救援，也可能是闭环的诱饵。", { flags: ["kept_black_avatar_conversation", "final_identity_recorded"], state: { blackAvatarStage: "warning-preserved", endingCandidateState: "pending" }, clues: [clue(1), clue(9), clue(13)] }),
+      option("E", "由所有仍在场者写下未记录的话", "没有一句旧档案能替代这一刻的回答。队友站队与人格判断被留给结局判定，而不是由系统当场裁决。", { flags: ["sent_unrecorded_companion_words", "all_core_escape", "final_identity_recorded"], state: { finalLinfengNameHolder: "deferred", endingCandidateState: "pending" }, clues: [clue(10), clue(16)], relationships: [trust("trust_zhouchaoyang", 6, "共同记录未被设备保存的新话"), trust("trust_guyu", 6, "共同记录未被设备保存的新话")] }),
     ],
     extra: { namePollutionHistory: [{ stage: 9, visibleCarrier: "姓名彻底消失，黑色头像占据林峰原群位置并向零点发送警告" }] },
   });
 
   add({
-    nodeId: "nf07_resolve",
+    nodeId: "nf07_decision_entry",
     chapterId: chapterIds[7],
     scene: "namefloor_ending_resolve",
     blueprintSceneId: "DR-C7-S03",
     speaker: "旁白",
-    text: "天光穿过出口。名册、手机、羽毛与活人的记忆同时停止改写，所有选择按固定顺序结算。",
-    type: "ending-resolver",
-    resolveEnding: true,
+    text: "时间短暂停住。名册、手机、羽毛与活人的记忆保留在当前状态：第七章正式运行时已完成，八个结局将在下一阶段接入。",
+    type: "chapter-ending",
+    contentType: "narration",
+    chapterEnding: { title: "第七章结束", subtitle: "身份、名册、人格与队友站队已写入结局判定入口。", cta: "保存并返回书架" },
   });
 
   const chapters = [
@@ -1114,7 +1116,7 @@
     { chapterId: chapterIds[4], title: "第四章：宿管的三年", order: 4, status: "runtime", startNodeId: "nf04_001", sceneCount: 6, decisionCount: 7, timedDecisionCount: 2 },
     { chapterId: chapterIds[5], title: "第五章：班群里被删除的人", order: 5, status: "runtime", startNodeId: "nf05_001", sceneCount: 5, decisionCount: 7, timedDecisionCount: 2 },
     { chapterId: chapterIds[6], title: "第六章：校长室", order: 6, status: "runtime", startNodeId: "nf06_001", sceneCount: 6, decisionCount: 8, timedDecisionCount: 2 },
-    { chapterId: chapterIds[7], title: "第七章：谁是林峰", order: 7, status: "blueprint-only", sceneCount: 11, decisionCount: 0, timedDecisionCount: 0 },
+    { chapterId: chapterIds[7], title: "第七章：谁是林峰", order: 7, status: "runtime", startNodeId: "nf07_001", sceneCount: 6, decisionCount: 9, timedDecisionCount: 2 },
   ];
 
   const managerRules = managerRuleCards;
@@ -1261,6 +1263,7 @@
     ...Array.from({ length: 5 }, (_, index) => `DR-C4-S${String(index + 1).padStart(2, "0")}`),
     ...Array.from({ length: 5 }, (_, index) => `DR-C5-S${String(index + 1).padStart(2, "0")}`),
     ...Array.from({ length: 5 }, (_, index) => `DR-C6-S${String(index + 1).padStart(2, "0")}`),
+    ...Array.from({ length: 3 }, (_, index) => `DR-C7-S${String(index + 1).padStart(2, "0")}`),
   ];
 
   const defaultStoryState = {
@@ -1294,6 +1297,11 @@
     linfengPhotoState: base.defaultStoryState?.linfengPhotoState || "normal",
     nameAnchorCompleted: base.defaultStoryState?.nameAnchorCompleted || false,
     teamAcceptsLinfeng: base.defaultStoryState?.teamAcceptsLinfeng ?? true,
+    linfengRecordVerdict: "unresolved",
+    linfengNewMemoryVerdict: "unresolved",
+    personhoodVerdict: "unresolved",
+    finalLinfengNameHolder: null,
+    endingCandidateState: "unresolved",
   };
 
   const defaultFlags = {
@@ -1313,7 +1321,7 @@
     { stage: 9, title: "身份被穿走", visibleCarrier: "姓名彻底消失，林峰成为占据原群位置的黑色头像" },
   ];
 
-  const runtimeChapterIds = new Set(["namefloor_chapter_01", chapterIds[2], chapterIds[3], chapterIds[4], chapterIds[5], chapterIds[6]]);
+  const runtimeChapterIds = new Set(["namefloor_chapter_01", chapterIds[2], chapterIds[3], chapterIds[4], chapterIds[5], chapterIds[6], chapterIds[7]]);
   const runtimeNodes = Object.fromEntries(
     Object.entries(nodes).filter(([, node]) => runtimeChapterIds.has(node.chapterId)),
   );

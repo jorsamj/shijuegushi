@@ -31,8 +31,8 @@ assert.equal(data.chapters.find((chapter) => chapter.chapterId === chapter6)?.st
 assert.ok(c6Nodes.length >= 10, "Chapter 6 must expose the complete principal's office node chain.");
 assert.ok(c6Nodes.filter((node) => node.timedChoice).length >= 2, "Chapter 6 must include two timed choices.");
 assert.ok(choices.length >= 8, "Chapter 6 must offer at least eight effective choices.");
-assert.ok(c6Nodes.some((node) => node.type === "chapter-ending" && !node.nextNodeId), "Chapter 6 must stop at its chapter hook.");
-assert.equal(Object.values(data.nodes).some((node) => node.chapterId === chapter7), false, "Chapter 7 must remain outside the runtime.");
+assert.equal(data.nodes.nf06_050?.nextNodeId, "nf07_001", "Chapter 6 must continue into the identity confrontation.");
+assert.ok(Object.values(data.nodes).some((node) => node.chapterId === chapter7), "Chapter 7 must be exported with the completed Chapter 7 runtime.");
 assert.ok(choices.some((choice) => choice.setFlags?.includes("lin_self_removed_from_roster")), "The player must be able to delete Lin Feng from the registry.");
 assert.ok(choices.some((choice) => choice.setFlags?.includes("guyu_voluntary_substitution")), "Gu Yu's voluntary sacrifice must be playable.");
 assert.ok(choices.some((choice) => choice.setFlags?.includes("roster_quota_broken")), "Destroying the registry must be playable.");

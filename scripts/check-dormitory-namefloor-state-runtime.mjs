@@ -285,12 +285,9 @@ if (Object.keys(data.routePlans || {}).length > 0) {
   assert.ok(runtimeChapterIds.has("namefloor_chapter_06"), "Current Chapter 1-6 phase must include Chapter 6 runtime.");
   assert.equal(data.nodes.nf05_050?.nextNodeId, "nf06_001", "Chapter 5 hook must continue into Chapter 6.");
   assert.equal(data.nodes.nf06_050?.type, "chapter-ending", "Current Chapter 1-6 phase must stop at the Chapter 6 hook.");
-  assert.equal(data.nodes.nf06_050?.nextNodeId, undefined, "Chapter 6 hook must not advance into Chapter 7 this phase.");
-  ["namefloor_chapter_07"].forEach((chapterId) => {
-    const chapter = data.chapters.find((item) => item.chapterId === chapterId);
-    assert.ok(!chapter || chapter.status !== "runtime", `${chapterId} must not be runtime during the Chapter 1-5 phase.`);
-    assert.equal(Object.values(data.nodes).some((node) => node.chapterId === chapterId), false, `${chapterId} must not export runtime nodes during the Chapter 1-5 phase.`);
-  });
+  assert.equal(data.nodes.nf06_050?.nextNodeId, "nf07_001", "Chapter 6 hook must continue into Chapter 7.");
+  assert.ok(runtimeChapterIds.has("namefloor_chapter_07"), "Current Chapter 1-7 phase must include Chapter 7 runtime.");
+  assert.equal(data.nodes.nf07_decision_entry?.nextNodeId, undefined, "Chapter 7 must stop at the ending-decision entry.");
   runtime.setState({
     ...runtime.createInitialState(scriptId),
     scriptId,
