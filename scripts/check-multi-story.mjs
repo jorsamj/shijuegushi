@@ -64,18 +64,19 @@ assert((namefloor?.chapters || []).length === 7, "Canonical dormitory runtime mu
 assert((namefloor?.rules || []).filter((rule) => rule.ruleId?.startsWith("namefloor_rule_")).length === 8, "Canonical dormitory runtime must contain eight student rules.");
 assert((namefloor?.rules || []).filter((rule) => rule.ruleId?.startsWith("namefloor_manager_rule_")).length === 7, "Canonical dormitory runtime must contain seven manager rules.");
 const canonicalEndingCount = Object.keys(namefloor?.endings || {}).length;
-assert(canonicalEndingCount === 0 || canonicalEndingCount === 8, "Canonical dormitory runtime must either be the current Chapter 1-5 Draft phase or the final eight-ending runtime.");
+assert(canonicalEndingCount === 0 || canonicalEndingCount === 8, "Canonical dormitory runtime must either be the current Chapter 1-6 Draft phase or the final eight-ending runtime.");
 if (canonicalEndingCount === 8) {
   assert(Object.keys(namefloor?.nodes || {}).length >= 300, "Canonical dormitory runtime is unexpectedly incomplete.");
 } else {
-  assert(namefloor?.nodes?.nf05_050?.type === "chapter-ending", "Canonical dormitory Chapter 1-5 Draft phase must stop at the Chapter 5 hook.");
-  assert(!namefloor?.nodes?.nf05_050?.nextNodeId, "Canonical dormitory Chapter 1-5 Draft phase must not advance into Chapter 6.");
-  assert(Object.keys(namefloor?.nodes || {}).length >= 260, "Canonical dormitory Chapter 1-5 Draft phase is unexpectedly incomplete.");
-  for (const chapterId of ["namefloor_chapter_02", "namefloor_chapter_03", "namefloor_chapter_04", "namefloor_chapter_05"]) {
+  assert(namefloor?.nodes?.nf05_050?.nextNodeId === "nf06_001", "Canonical dormitory Chapter 5 hook must advance into Chapter 6.");
+  assert(namefloor?.nodes?.nf06_050?.type === "chapter-ending", "Canonical dormitory Chapter 1-6 Draft phase must stop at the Chapter 6 hook.");
+  assert(!namefloor?.nodes?.nf06_050?.nextNodeId, "Canonical dormitory Chapter 6 Draft phase must not advance into Chapter 7.");
+  assert(Object.keys(namefloor?.nodes || {}).length >= 320, "Canonical dormitory Chapter 1-6 Draft phase is unexpectedly incomplete.");
+  for (const chapterId of ["namefloor_chapter_02", "namefloor_chapter_03", "namefloor_chapter_04", "namefloor_chapter_05", "namefloor_chapter_06"]) {
     const chapter = namefloor.chapters.find((item) => item.chapterId === chapterId);
     assert(chapter?.status === "runtime", `${chapterId} must be runtime in the Chapter 1-5 Draft phase.`);
   }
-  for (const chapterId of ["namefloor_chapter_06", "namefloor_chapter_07"]) {
+  for (const chapterId of ["namefloor_chapter_07"]) {
     const chapter = namefloor.chapters.find((item) => item.chapterId === chapterId);
     assert(chapter?.status !== "runtime", `${chapterId} must remain blueprint-only in the Chapter 1-5 Draft phase.`);
     assert(!Object.values(namefloor.nodes || {}).some((node) => node.chapterId === chapterId), `${chapterId} must not export runtime nodes in the Chapter 1-5 Draft phase.`);

@@ -816,11 +816,12 @@
     speaker: "旁白",
     text: "铃声停下后，走廊墙皮剥落成校长室门牌的形状。黑色头像撤回最后一条消息，只留下林峰常用的句式：别让名册先替你决定。队伍沿着门牌方向继续，但真正的校长室仍在更深处。",
     type: "chapter-ending",
+    nextNodeId: "nf06_001",
     contentType: "narration",
     chapterEnding: {
       title: "第五章结束",
       subtitle: "林峰正在被班群和名单主动删除，校长室成为唯一明确方向。",
-      cta: "保存并返回书架",
+      cta: "进入校长室",
     },
     effectTags: ["fourth-floor-reality-cover", "black-avatar-linfeng-language", "speaker-name-controlled-loss"],
     effects: [{ type: "signal-glitch", durationMs: 900, intensity: 0.34 }, { type: "focus-pulse", durationMs: 1100, intensity: 0.28 }],
@@ -831,11 +832,11 @@
     code: "C39", nodeId: "nf06_c39", chapterId: chapterIds[6], scene: "namefloor_archive_corridors", blueprintSceneId: "DR-C6-S01",
     text: "钥匙已经发烫。第一条选择的走廊，会决定哪组记录最先抵达校长室。", nextNodeId: "nf06_010", defaultKey: "A",
     options: [
-      option("A", "用吴阿姨的钥匙开旧门", "旧门后是历任宿管档案。吴阿姨逐年缺字的姓名成为第一份未被改写的证据。", { flags: ["principal_route_manager_archive", "manager_archive_baseline"], clues: [clue(12), clue(16)] }),
-      option("B", "沿被刮掉的姓名前进", "墙面像墓碑一样列着失踪学生。每个被恢复的名字旁，都有另一个新刮痕。", { flags: ["principal_route_erased_names", "missing_student_baseline"], state: { namePollutionStage: 7 }, clues: [clue(15), clue(16)] }),
-      option("C", "跟随黑头像撤回前的箭头", "箭头把队伍领进时间错位的走廊。开场短信的发送时刻和现在在同一块玻璃上重叠。", { flags: ["principal_route_black_avatar", "loop_timeline_baseline"], clues: [clue(13), clue(16)] }),
-      option("D", "跟随另一个林峰的账号定位", "定位尽头先出现家庭档案。每一项都承认合法林峰，却没有记录今晚玩家林峰救过谁。", { flags: ["principal_route_legal_linfeng", "legal_linfeng_records_stronger"], state: { namePollutionStage: 8 }, clues: [clue(16)], relationships: [trust("trust_guyu", -6, "把合法记录置于今晚选择之前")] }),
-      option("E", "沿死亡账号的脚步声前进", "死亡账号把他们带过红马甲残影。隔壁学生最后一段脚步被保留下来，重伤者却差点被影子截走。", { flags: ["principal_route_dead_account", "dead_account_evidence_recovered"], clues: [clue(14), clue(16)] }),
+      option("A", "用吴阿姨的钥匙开旧门", "旧门后是历任宿管档案。吴阿姨逐年缺字的姓名成为第一份未被改写的证据。", { flags: ["principal_route_manager_archive", "manager_archive_baseline"], state: { principalOfficeRoute: "manager-archive" }, clues: [clue(12), clue(16)] }),
+      option("B", "沿被刮掉的姓名前进", "墙面像墓碑一样列着失踪学生。每个被恢复的名字旁，都有另一个新刮痕。", { flags: ["principal_route_erased_names", "missing_student_baseline"], state: { namePollutionStage: 7, principalOfficeRoute: "erased-name" }, clues: [clue(15), clue(16)] }),
+      option("C", "跟随黑头像撤回前的箭头", "箭头把队伍领进时间错位的走廊。开场短信的发送时刻和现在在同一块玻璃上重叠。", { flags: ["principal_route_black_avatar", "loop_timeline_baseline"], state: { principalOfficeRoute: "black-avatar" }, clues: [clue(13), clue(16)] }),
+      option("D", "跟随另一个林峰的账号定位", "定位尽头先出现家庭档案。每一项都承认合法林峰，却没有记录今晚玩家林峰救过谁。", { flags: ["principal_route_legal_linfeng", "legal_linfeng_records_stronger"], state: { namePollutionStage: 8, principalOfficeRoute: "legal-record" }, clues: [clue(16)], relationships: [trust("trust_guyu", -6, "把合法记录置于今晚选择之前")] }),
+      option("E", "沿死亡账号的脚步声前进", "死亡账号把他们带过红马甲残影。隔壁学生最后一段脚步被保留下来，重伤者却差点被影子截走。", { flags: ["principal_route_dead_account", "dead_account_evidence_recovered"], state: { principalOfficeRoute: "dead-account" }, clues: [clue(14), clue(16)] }),
     ],
   });
 
@@ -843,6 +844,16 @@
   decision({
     code: "C40", nodeId: "nf06_c40", chapterId: chapterIds[6], scene: "namefloor_fixed_count_archives", blueprintSceneId: "DR-C6-S02",
     text: "失踪名单、班群备份、历年合照、宿管姓名和双林家庭学籍，只能先保住一组不可污染的基准。", nextNodeId: "nf06_c41", defaultKey: "B",
+    phoneScreen: phoneScreen({
+      kind: "system", view: "documents", title: "校长室档案柜", time: "06:43",
+      messages: [
+        { sender: "失踪学生档案", text: "名单被删除后，身体、记忆和姓名仍需分别核对。" },
+        { sender: "班群备份", text: "黑色头像占据林峰原位置，成员人数从未增加。" },
+        { sender: "历任宿管", text: "每三年一任；真实姓名会先于职位记录消失。" },
+        { sender: "不同年份合照", text: "照片保留床位，却把不同人的脸写成同一个位置。" },
+      ],
+      systemNotice: "请选择一组记录先作为不可改写的基准。",
+    }),
     options: [
       option("A", "先看历届失踪名单", "名单显示：每恢复一名失踪学生，另一行就会被固定人数挤掉。这不是故障，是制度本身。", { flags: ["missing_roster_clean_baseline"], state: { rosterState: "fixed-quota-revealed" }, clues: [clue(15), clue(17)] }),
       option("B", "先看班群服务器备份", "备份证明黑色头像没有增加成员数。它覆盖了林峰原来的群位置，四十二这个总数从未改变。", { flags: ["group_backup_clean_baseline", "black_avatar_slot_truth"], state: { blackAvatarStage: "slot-revealed" }, clues: [clue(2), clue(14)] }),
@@ -885,19 +896,28 @@
     code: "C43", nodeId: "nf06_c43", chapterId: chapterIds[6], scene: "namefloor_name_exchange", blueprintSceneId: "DR-C6-S04",
     text: "名册要求一个名字换一个名字。拒绝支付也许能打破制度，也可能让所有人的记录一起崩塌。", nextNodeId: "nf06_c44", defaultKey: "G",
     options: [
-      option("A", "林峰主动退出名册", "林峰按下自己的名字。联系人、学籍和群位置同时空白，身体仍站在原地。", { flags: ["lin_self_removed_from_roster", "player_linfeng_escaped_nameless"], state: { namePollutionStage: 8, rosterState: "exchange-paid" }, clues: [clue(15), clue(17)] }),
-      option("B", "由谷雨主动代位", "谷雨把羽毛按在林峰名字上：“这次我自己选。”林峰那行恢复，谷雨所在的位置开始变白。", { flags: ["guyu_voluntary_substitution", "guyu_anchor_burden", "linfeng_restored"], state: { namePollutionStage: 6, rosterState: "exchange-paid" }, clues: [clue(11), clue(15), clue(17)], relationships: [trust("trust_guyu", 14, "谷雨自愿为林峰代位")] }),
-      option("C", "由吴阿姨代位", "旧合同在吴阿姨姓名下碎裂。她失去学校承认，却第一次不再把岗位传给下一个学生。", { flags: ["wu_voluntary_substitution", "wu_redemption_complete"], state: { rosterState: "exchange-paid" }, clues: [clue(12), clue(15), clue(17)] }),
-      option("D", "由同行宋明或有自我的模仿者代位", "同行者没有立即按下名字，先问这是请求还是命令。只有自愿的回答，才被周朝阳记作一次主体选择。", { flags: ["song_offered_roster_substitution", "song_voluntary_risk"], state: { rosterState: "exchange-paid" }, clues: [clue(10), clue(15), clue(17)] }),
-      option("E", "移除一名已经死亡的被困学生", "死者那行彻底消失，连失踪墙上的空钉都被填平。固定人数保住了，人的历史没有。", { flags: ["dead_student_erased_for_quota", "roster_intact", "mechanical_compliance"], state: { rosterState: "quota-maintained" }, clues: [clue(17)] }),
+      option("A", "删除自己，给恢复者腾位", "林峰按下自己的名字。联系人、学籍和群位置同时空白，身体仍站在原地。", { flags: ["lin_self_removed_from_roster", "player_linfeng_escaped_nameless", "linfeng_name_deleted_for_exchange"], state: { namePollutionStage: 8, rosterState: "exchange-paid" }, clues: [clue(15), clue(17)] }),
+      option("B", "让谷雨自愿承担代价", "谷雨把羽毛按在林峰名字上：“这次我自己选。”林峰那行恢复，谷雨所在的位置开始变白。", { flags: ["guyu_voluntary_substitution", "guyu_anchor_burden", "linfeng_restored", "guyu_name_deleted_for_exchange"], state: { namePollutionStage: 6, rosterState: "exchange-paid" }, clues: [clue(11), clue(15), clue(17)], relationships: [trust("trust_guyu", 14, "谷雨自愿为林峰代位")] }),
+      option("C", "删除吴阿姨的宿管位置", "旧合同在吴阿姨姓名下碎裂。她失去学校承认，却第一次不再把岗位传给下一个学生。", { flags: ["wu_voluntary_substitution", "wu_redemption_complete", "manager_name_deleted_for_exchange"], state: { rosterState: "exchange-paid", managerNameStability: "deleted-from-registry" }, clues: [clue(12), clue(15), clue(17)] }),
+      option("D", "让同行宋明自愿让位", "同行者没有立即按下名字，先问这是请求还是命令。只有自愿的回答，才被周朝阳记作一次主体选择。", { flags: ["song_offered_roster_substitution", "song_voluntary_risk", "song_name_deleted_for_exchange"], state: { rosterState: "exchange-paid", songIdentityJudgment: "self-aware-name-yielded" }, clues: [clue(10), clue(15), clue(17)] }),
+      option("E", "不可逆删除被困学生姓名", "死者那行彻底消失，连失踪墙上的空钉都被填平。固定人数保住了，人的历史没有。", { flags: ["dead_student_erased_for_quota", "irreversible_name_deletion", "roster_intact", "mechanical_compliance"], state: { rosterState: "quota-maintained" }, clues: [clue(17)] }),
       option("F", "让名册自动选择", "墨迹爬向当前最不被信任的人。没有抽签，也没有犹豫，制度只沿着他们亲手留下的裂缝结算。", { flags: ["roster_auto_selected_lowest_trust", "roster_intact", "mechanical_compliance", "original_person_lost"], state: { rosterState: "quota-maintained" }, relationships: [trust("trust_guyu", -10, "把牺牲对象交给名册选择")] }),
       option("G", "拒绝支付，卡住装订", "周朝阳把钥匙插进装订钉，林峰压住渗墨的页面。名册流出暗红墨水，交换第一次没有完成。", { flags: ["refused_roster_exchange", "roster_break_entry"], state: { rosterState: "jammed" }, clues: [clue(15), clue(17)] }),
+      option("H", "删除有自我的模仿者", "它没有反抗，只把今晚没被记录的约定重复一遍。宋明的联系人、班群语音和一张合照里的位置同时空白。", { flags: ["self_aware_mimic_erased", "irreversible_name_deletion"], state: { rosterState: "exchange-paid", songIdentityJudgment: "mimic-erased" }, clues: [clue(10), clue(15), clue(16)], relationships: [trust("recognition_songming", -18, "删除有自我的同行者")] }),
     ],
   });
 
   decision({
     code: "C44", nodeId: "nf06_c44", chapterId: chapterIds[6], scene: "namefloor_break_roster", blueprintSceneId: "DR-C6-S04",
-    text: "固定人数的装订钉已经松动。毁掉名册、保留名册，或让黑色头像补空位，会决定谁还能被学校承认。", nextNodeId: "nf06_040", defaultKey: "A",
+    contentType: "phone-text", text: "固定人数的装订钉已经松动。毁掉名册、保留名册，或让黑色头像补空位，会决定谁还能被学校承认。", nextNodeId: "nf06_040", defaultKey: "A",
+    phoneScreen: phoneScreen({
+      kind: "system", view: "documents", title: "固定人数名册", time: "06:52",
+      messages: [
+        { sender: "校务档案", text: "每次写入、删除、交换或锁定，都会同步改变联系人、班群、合照、记忆或站队。" },
+        { sender: "校务档案", text: "黑色头像占位不会增加班群人数。" },
+      ],
+      systemNotice: "装订钉已松动：此操作无法由普通对话框覆盖。",
+    }),
     options: [
       option("A", "砸断装订钉，保留散页", "固定配额断开，姓名散成可以分别携带的纸页。此后它们只能靠活人记忆，而不能靠学校总数维持。", { flags: ["roster_quota_broken", "loose_roster_pages"], state: { rosterState: "quota-broken" }, clues: [clue(15), clue(17)], relationships: [trust("trust_guyu", 8, "打断固定人数牺牲机制")] }),
       option("B", "焚毁整本名册", "火焰吞掉所有装订。两个林峰的学籍同时抖动，谁是最初者变得无法由记录证明。", { flags: ["roster_burned", "identity_unresolved", "fifth_seed"], state: { rosterState: "burned", namePollutionStage: 8 }, clues: [clue(15), clue(16)] }),
@@ -925,7 +945,7 @@
 
   decision({
     code: "C46", nodeId: "nf06_c46", chapterId: chapterIds[6], scene: "namefloor_deep_cabinet", blueprintSceneId: "DR-C6-S05",
-    speaker: "校园广播", contentType: "world-audio", text: "请确认本层学生全员到齐。确认后，出口将按正确人数开放。", nextNodeId: "nf07_001", durationMs: 5000, fallbackKey: "A", defaultKey: "B",
+    speaker: "校园广播", contentType: "world-audio", text: "请确认本层学生全员到齐。确认后，出口将按正确人数开放。", nextNodeId: "nf06_050", durationMs: 5000, fallbackKey: "A", defaultKey: "B",
     options: [
       option("A", "确认“全员到齐”", "校章重重盖在名册上。广播没有数人，只把当前版本写成了现实，并要求出口留下一个位置。", { flags: ["confirmed_all_present", "roster_intact", "mechanical_compliance"], state: { rosterState: "quota-sealed" }, clues: [clue(4), clue(17)], relationships: [trust("trust_guyu", -10, "接受学校的正确人数结算")] }),
       option("B", "否认，并说有人失踪", "所有走廊门同时打开。广播第一次无法用“正常”覆盖那些空床位。", { flags: ["rejected_all_present", "missing_students_acknowledged"], clues: [clue(4), clue(14), clue(17)], relationships: [trust("trust_guyu", 8, "拒绝抹去失踪者")] }),
@@ -933,6 +953,24 @@
       option("D", "让黑色头像回答", "喇叭里响起林峰自己的声线：“全员……到齐。”黑色头像从群位置移向出口计数器。", { flags: ["black_avatar_answered_broadcast", "no_live_anchor"], state: { blackAvatarStage: "speaking", namePollutionStage: 8 }, clues: [clue(2), clue(13), clue(17)] }),
       option("E", "保持沉默，切断喇叭", "周朝阳扯断线路，谷雨压住名册。广播卡在“全员”二字，出口获得一道没有盖章的缝。", { flags: ["cut_broadcast", "rejected_all_present"], clues: [clue(4), clue(17)], relationships: [trust("trust_guyu", 8, "切断正确人数广播")] }),
     ],
+  });
+
+  add({
+    nodeId: "nf06_050",
+    chapterId: chapterIds[6],
+    scene: "namefloor_final_two_lins",
+    blueprintSceneId: "DR-C6-S05",
+    speaker: "旁白",
+    text: "广播停下时，校长室最深处的柜门完全打开。另一个林峰站在里面：账号、学籍、家庭资料、宿舍记录和所有旧照片都承认他；他抬起头，却先问起一件今晚没有被任何设备记下的事。",
+    type: "chapter-ending",
+    contentType: "narration",
+    chapterEnding: {
+      title: "第六章结束",
+      subtitle: "名册留下了不可逆的选择；拥有完整身份的另一个林峰已在校长室深处出现。",
+      cta: "保存并返回书架",
+    },
+    effectTags: ["identity-overlap", "fourth-floor-reality-cover", "roster-scratch"],
+    effects: [{ type: "double-character", durationMs: 1000, intensity: 0.34 }, { type: "signal-glitch", durationMs: 760, intensity: 0.26 }],
   });
 
   line("nf07_001", chapterIds[7], "namefloor_final_two_lins", "旁白", "校长室深处，两个林峰隔着散页相对而立。一人拥有完整身份，一人拥有今晚行动的连续性；若身体曾经中断，合法身份的另一个林峰可能正是被困的原身。", "nf07_c47", { blueprintSceneId: "DR-C7-S01" });
@@ -1075,7 +1113,7 @@
     { chapterId: chapterIds[3], title: "第三章：三点可以进食", order: 3, status: "runtime", startNodeId: "nf03_001", sceneCount: 6, decisionCount: 9, timedDecisionCount: 3 },
     { chapterId: chapterIds[4], title: "第四章：宿管的三年", order: 4, status: "runtime", startNodeId: "nf04_001", sceneCount: 6, decisionCount: 7, timedDecisionCount: 2 },
     { chapterId: chapterIds[5], title: "第五章：班群里被删除的人", order: 5, status: "runtime", startNodeId: "nf05_001", sceneCount: 5, decisionCount: 7, timedDecisionCount: 2 },
-    { chapterId: chapterIds[6], title: "第六章：校长室", order: 6, status: "blueprint-only", sceneCount: 5, decisionCount: 0, timedDecisionCount: 0 },
+    { chapterId: chapterIds[6], title: "第六章：校长室", order: 6, status: "runtime", startNodeId: "nf06_001", sceneCount: 6, decisionCount: 8, timedDecisionCount: 2 },
     { chapterId: chapterIds[7], title: "第七章：谁是林峰", order: 7, status: "blueprint-only", sceneCount: 11, decisionCount: 0, timedDecisionCount: 0 },
   ];
 
@@ -1222,6 +1260,7 @@
     ...Array.from({ length: 6 }, (_, index) => `DR-C3-S${String(index + 1).padStart(2, "0")}`),
     ...Array.from({ length: 5 }, (_, index) => `DR-C4-S${String(index + 1).padStart(2, "0")}`),
     ...Array.from({ length: 5 }, (_, index) => `DR-C5-S${String(index + 1).padStart(2, "0")}`),
+    ...Array.from({ length: 5 }, (_, index) => `DR-C6-S${String(index + 1).padStart(2, "0")}`),
   ];
 
   const defaultStoryState = {
@@ -1274,7 +1313,7 @@
     { stage: 9, title: "身份被穿走", visibleCarrier: "姓名彻底消失，林峰成为占据原群位置的黑色头像" },
   ];
 
-  const runtimeChapterIds = new Set(["namefloor_chapter_01", chapterIds[2], chapterIds[3], chapterIds[4], chapterIds[5]]);
+  const runtimeChapterIds = new Set(["namefloor_chapter_01", chapterIds[2], chapterIds[3], chapterIds[4], chapterIds[5], chapterIds[6]]);
   const runtimeNodes = Object.fromEntries(
     Object.entries(nodes).filter(([, node]) => runtimeChapterIds.has(node.chapterId)),
   );

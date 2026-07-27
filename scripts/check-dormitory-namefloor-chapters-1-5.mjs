@@ -145,14 +145,16 @@ const defaultRoute = walkDefaultRoute(data, "nf01_040");
   chapterIds.chapter3,
   chapterIds.chapter4,
   chapterIds.chapter5,
+  chapterIds.chapter6,
 ].forEach((chapterId) => assert.ok(defaultRoute.some((node) => node.chapterId === chapterId), `${chapterId} must be reachable on the default route.`));
-assert.equal(defaultRoute.at(-1)?.chapterId, chapterIds.chapter5, "Current formal runtime must stop at the Chapter 5 hook.");
-assert.equal(defaultRoute.at(-1)?.type, "chapter-ending", "Chapter 5 hook must be a chapter-ending node.");
-assert.ok(!defaultRoute.some((node) => [chapterIds.chapter6, chapterIds.chapter7].includes(node.chapterId)), "Chapters 6-7 must not be reachable this round.");
+assert.equal(defaultRoute.at(-1)?.chapterId, chapterIds.chapter6, "Current formal runtime must stop at the Chapter 6 hook.");
+assert.equal(defaultRoute.at(-1)?.type, "chapter-ending", "Chapter 6 hook must be a chapter-ending node.");
+assert.ok(!defaultRoute.some((node) => node.chapterId === chapterIds.chapter7), "Chapter 7 must not be reachable this round.");
 
 [
   [chapterIds.chapter4, 7, 2],
   [chapterIds.chapter5, 7, 2],
+  [chapterIds.chapter6, 8, 2],
 ].forEach(([chapterId, minimumDecisions, minimumTimed]) => {
   const chapter = data.chapters.find((item) => item.chapterId === chapterId);
   assert.equal(chapter?.status, "runtime", `${chapterId} must be marked runtime.`);
@@ -162,7 +164,7 @@ assert.ok(!defaultRoute.some((node) => [chapterIds.chapter6, chapterIds.chapter7
   assertPlayableChapterChoices(nodes, chapterId, data);
 });
 
-[chapterIds.chapter6, chapterIds.chapter7].forEach((chapterId) => {
+[chapterIds.chapter7].forEach((chapterId) => {
   const chapter = data.chapters.find((item) => item.chapterId === chapterId);
   assert.ok(!chapter || chapter.status !== "runtime", `${chapterId} must remain blueprint-only or absent.`);
   assert.equal(nodes.some((node) => node.chapterId === chapterId), false, `${chapterId} must not export runtime nodes this round.`);
@@ -246,7 +248,7 @@ const effectTags = new Set(nodes.flatMap((node) => node.effectTags || []));
 ].forEach((tag) => assert.ok(effectTags.has(tag), `Missing effect tag ${tag}.`));
 
 nodes
-  .filter((node) => [chapterIds.chapter1, chapterIds.chapter2, chapterIds.chapter3, chapterIds.chapter4, chapterIds.chapter5].includes(node.chapterId))
+  .filter((node) => [chapterIds.chapter1, chapterIds.chapter2, chapterIds.chapter3, chapterIds.chapter4, chapterIds.chapter5, chapterIds.chapter6].includes(node.chapterId))
   .forEach((node) => {
     const text = visibleNodeText(node);
     assert.doesNotMatch(text, /\b(?:Lin Feng|Song Ming|Gu Yu|Zhou Chaoyang|roleId|nodeId|namePollutionStage|blackAvatarStage|managerNameStability|C\d+|E[1-8])\b/i, `${node.nodeId} exposes internal or English text.`);

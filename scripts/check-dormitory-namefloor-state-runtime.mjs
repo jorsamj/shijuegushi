@@ -281,10 +281,12 @@ if (Object.keys(data.routePlans || {}).length > 0) {
 } else {
   const runtimeChapterIds = new Set((data.chapters || []).filter((chapter) => chapter.status === "runtime").map((chapter) => chapter.chapterId));
   assert.ok(runtimeChapterIds.has("namefloor_chapter_04"), "Current Chapter 1-5 phase must include Chapter 4 runtime.");
-  assert.ok(runtimeChapterIds.has("namefloor_chapter_05"), "Current Chapter 1-5 phase must include Chapter 5 runtime.");
-  assert.equal(data.nodes.nf05_050?.type, "chapter-ending", "Current Chapter 1-5 phase must stop at the Chapter 5 hook.");
-  assert.equal(data.nodes.nf05_050?.nextNodeId, undefined, "Chapter 5 hook must not advance into Chapter 6 this phase.");
-  ["namefloor_chapter_06", "namefloor_chapter_07"].forEach((chapterId) => {
+  assert.ok(runtimeChapterIds.has("namefloor_chapter_05"), "Current Chapter 1-6 phase must include Chapter 5 runtime.");
+  assert.ok(runtimeChapterIds.has("namefloor_chapter_06"), "Current Chapter 1-6 phase must include Chapter 6 runtime.");
+  assert.equal(data.nodes.nf05_050?.nextNodeId, "nf06_001", "Chapter 5 hook must continue into Chapter 6.");
+  assert.equal(data.nodes.nf06_050?.type, "chapter-ending", "Current Chapter 1-6 phase must stop at the Chapter 6 hook.");
+  assert.equal(data.nodes.nf06_050?.nextNodeId, undefined, "Chapter 6 hook must not advance into Chapter 7 this phase.");
+  ["namefloor_chapter_07"].forEach((chapterId) => {
     const chapter = data.chapters.find((item) => item.chapterId === chapterId);
     assert.ok(!chapter || chapter.status !== "runtime", `${chapterId} must not be runtime during the Chapter 1-5 phase.`);
     assert.equal(Object.values(data.nodes).some((node) => node.chapterId === chapterId), false, `${chapterId} must not export runtime nodes during the Chapter 1-5 phase.`);
@@ -292,10 +294,10 @@ if (Object.keys(data.routePlans || {}).length > 0) {
   runtime.setState({
     ...runtime.createInitialState(scriptId),
     scriptId,
-    nodeId: "nf05_050",
+    nodeId: "nf06_050",
     storyState: {
       ...data.defaultStoryState,
-      namePollutionStage: 8,
+      namePollutionStage: 9,
       featherHolder: "谷雨",
       featherState: "tainted",
       managerSaved: true,
