@@ -3,6 +3,8 @@
 
   const isLocalAcceptanceCapture = ["127.0.0.1", "localhost"].includes(window.location.hostname)
     && new URLSearchParams(window.location.search).get("acceptanceCapture") === "1";
+  const isDormitoryAcceptanceMode = ["127.0.0.1", "localhost"].includes(window.location.hostname)
+    && new URLSearchParams(window.location.search).get("dormitoryAcceptance") === "1";
 
   const RAIN_DATA = window.MIST_DATA;
   let DATA = RAIN_DATA;
@@ -599,6 +601,7 @@
   }
 
   function saveJSON(key, value) {
+    if (isDormitoryAcceptanceMode) return;
     if (!storageAvailable) return;
     try {
       localStorage.setItem(key, JSON.stringify(value));
@@ -2134,6 +2137,7 @@
   }
 
   function autoSave() {
+    if (isDormitoryAcceptanceMode) return;
     state.updatedAt = new Date().toISOString();
     const keys = getStoryStorageKeys(state.scriptId);
     saveJSON(keys.progress, snapshotState());
@@ -2968,6 +2972,69 @@
       feedbackQueue.push(feedbackItem);
     }
     window.setTimeout(processFeedbackQueue, 0);
+  }
+
+  function renderDormitoryAcceptanceHub() {
+    activateStory(NAMEFLOOR_SCRIPT_ID);
+    const plans = Object.entries(DATA.routePlans || {});
+    setView("acceptance", `
+      <section class="library-screen" aria-label="宿舍规则怪谈开发验收">
+        <div class="library-hero"><p class="eyebrow">本地开发验收</p><h1>宿舍规则怪谈</h1><p>此页仅在 localhost 的明确验收地址启用，不写入玩家存档。每条路线从第一章正式起点回放至第七章结局判定入口。</p></div>
+        <section class="story-grid">${plans.map(([routeName, plan]) => {
+          const ending = DATA.endings?.[plan.expectedEnding] || {};
+          return `<article class="story-card"><p>合法累计状态回放</p><h2>${escapeHTML(ending.title || "结局验收")}</h2><p>${escapeHTML(ending.tone || "通过统一判定器进入独立正文。")}</p><button type="button" data-acceptance-route="${escapeHTML(routeName)}">运行验收路线</button></article>`;
+        }).join("")}</section>
+        <button class="secondary-button" type="button" data-acceptance-exit>退出验收</button>
+      </section>`);
+    app.querySelectorAll("[data-acceptance-route]").forEach((button) => button.addEventListener("click", () => runDormitoryAcceptanceRoute(button.dataset.acceptanceRoute)));
+    app.querySelector("[data-acceptance-exit]")?.addEventListener("click", exitDormitoryAcceptanceMode);
+  }
+
+  function runDormitoryAcceptanceRoute(routeName) {
+    const plan = DATA.routePlans?.[routeName];
+    if (!plan) return;
+    resetStorySessionTransients({ preserveTimedChoice: false, resetVisual: true });
+    state = createInitialState(NAMEFLOOR_SCRIPT_ID);
+    // The authored ending plans begin at chapter two because their chapter-one
+    // defaults are shared.  Acceptance still walks those defaults from the
+    // official opening node, so a browser run exercises the whole story rather
+    // than teleporting into the ending material.
+    let nodeId = DATA.script?.startNodeId || plan.startNodeId;
+    for (let step = 0; step < 800; step += 1) {
+      const node = DATA.nodes?.[nodeId];
+      if (!node) throw new Error("验收路线引用了不存在的节点。");
+      const items = node.choices?.length ? node.choices : node.phoneScreen?.actions || [];
+      if (items.length) {
+        const requested = plan.choices?.[nodeId]
+          || plan.actions?.[nodeId]
+          || node.defaultChoiceId
+          || items.find((candidate) => !candidate.timeoutOnly)?.choiceId
+          || items[0]?.choiceId
+          || items[0]?.actionId;
+        const item = items.find((candidate) => candidate.choiceId === requested || candidate.actionId === requested);
+        if (!item) throw new Error("验收路线缺少合法选择。");
+        recordChoice(node, item);
+        applyInteractionEffects(item);
+        nodeId = item.nextNodeId || node.nextNodeId;
+        continue;
+      }
+      if (node.resolveEnding === true) {
+        const endingId = resolveEnding();
+        if (endingId !== plan.expectedEnding) throw new Error("验收路线未命中预期结局。");
+        state.nodeId = node.nodeId;
+        goToNode(node.nodeId);
+        return;
+      }
+      if (!node.nextNodeId) throw new Error("验收路线在非结局节点停止。");
+      nodeId = node.nextNodeId;
+    }
+    throw new Error("验收路线超过最大推进步数。");
+  }
+
+  function exitDormitoryAcceptanceMode() {
+    resetStorySessionTransients({ preserveTimedChoice: false, resetVisual: true });
+    state = createInitialState("script_rain_call");
+    showSeries(getScript()?.seriesId);
   }
 
   function renderInlineStoryFeedback(item) {
@@ -4387,5 +4454,6 @@
     });
   }
 
+  if (isDormitoryAcceptanceMode) window.setTimeout(renderDormitoryAcceptanceHub, 0);
   init();
 })();

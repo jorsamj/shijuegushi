@@ -314,7 +314,7 @@ if (data) {
   }
   assert(Boolean(expansionPath), "Chapters 2-7 cannot be certified while the expansion file is absent.");
 
-  const representedScenes = collectBlueprintSceneIds({ nodes, blueprintSceneMap: data.blueprintSceneMap, sceneMap: data.sceneMap });
+  const representedScenes = collectBlueprintSceneIds({ nodes, endings: data.endings, blueprintSceneMap: data.blueprintSceneMap, sceneMap: data.sceneMap });
   const missingScenes = expectedScenes.filter((sceneId) => !representedScenes.has(sceneId));
   assert(expectedScenes.length === 48, `Blueprint parsing expected 48 scenes; found ${expectedScenes.length}.`);
   assert(!missingScenes.length, `Blueprint scenes are not represented by runtime node blueprintSceneId/scene map: ${missingScenes.join(", ")}.`);
@@ -401,8 +401,20 @@ if (data) {
     const localChoices = choicesFor(node);
     if (node.timedChoice?.fallbackChoiceId) assert(localChoices.some((choice) => choice.choiceId === node.timedChoice.fallbackChoiceId || choice.actionId === node.timedChoice.fallbackChoiceId), `${node.nodeId} timed fallback ${node.timedChoice.fallbackChoiceId} is not a local choice/action.`);
     edges.set(node.nodeId, references.map((reference) => reference.id).filter((id) => nodes[id]));
-    const isFormalEnding = node.resolveEnding === true || Boolean(node.endingId) || ["ending", "formal-ending"].includes(String(node.type || ""));
+    const isFormalEnding = node.resolveEnding === true || Boolean(node.endingId) || ["ending", "formal-ending", "chapter-ending"].includes(String(node.type || ""));
     assert(edges.get(node.nodeId).length > 0 || isFormalEnding, `${node.nodeId} is a dead end without a formal ending resolver.`);
+  }
+  // The resolver is a deterministic runtime route, not a literal choice edge.
+  // Materialize its legal entry nodes for static reachability/cycle analysis.
+  const resolverNode = nodes.nf_end_resolve;
+  if (resolverNode && typeof data.profile?.endingRouteResolver === "function") {
+    const resolverEdges = new Set(edges.get(resolverNode.nodeId) || []);
+    for (const endingId of expectedEndings) {
+      const entryNodeId = data.profile.endingRouteResolver({}, endingId);
+      if (nodes[entryNodeId]) resolverEdges.add(entryNodeId);
+    }
+    if (nodes.nf_end_draft_stop) resolverEdges.add("nf_end_draft_stop");
+    edges.set(resolverNode.nodeId, [...resolverEdges]);
   }
   const reachable = new Set();
   const stack = [data.script?.startNodeId];
