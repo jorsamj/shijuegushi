@@ -198,6 +198,7 @@
         relationshipDefs: dataset.profile.relationshipDefs || [],
         evidenceLinks: dataset.profile.evidenceLinks || [],
         endingResolver: dataset.profile.endingResolver,
+        endingRouteResolver: dataset.profile.endingRouteResolver,
         endingPriority: dataset.profile.endingPriority || [],
         deductionTotal: dataset.profile.deductionTotal || 0,
         capabilities: dataset.profile.capabilities || {},

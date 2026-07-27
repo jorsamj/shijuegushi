@@ -1097,7 +1097,7 @@
       option("A", "让玩家林峰保留名字", "合法记录没有消失，玩家林峰也没有被要求立刻消失。名册把这次判断记为一项可复核的选择。", { flags: ["player_linfeng_named", "final_identity_recorded"], state: { finalLinfengNameHolder: "player", endingCandidateState: "pending" }, clues: [clue(10), clue(15), clue(16)] }),
       option("B", "让合法林峰保留名字", "另一个林峰得到学校承认，玩家林峰仍保留这一夜的记忆与对后果的承担。", { flags: ["legal_linfeng_named", "final_identity_recorded"], state: { finalLinfengNameHolder: "legal", endingCandidateState: "pending", namePollutionStage: 9 }, clues: [clue(1), clue(13), clue(15), clue(16)] }),
       option("C", "让两人都以选择被记录", "队伍拒绝把不可证明的来源变成处刑理由；两份身份被记为并列的后续问题。", { flags: ["dual_linfeng_subjects_acknowledged", "final_identity_recorded"], state: { finalLinfengNameHolder: "shared", endingCandidateState: "pending" }, clues: [clue(10), clue(16)] }),
-      option("D", "保留黑色头像会话作为警告", "失败时间线留下的痕迹被保留，既可能是救援，也可能是闭环的诱饵。", { flags: ["kept_black_avatar_conversation", "final_identity_recorded"], state: { blackAvatarStage: "warning-preserved", endingCandidateState: "pending" }, clues: [clue(1), clue(9), clue(13)] }),
+      option("D", "保留黑色头像会话作为警告", "失败时间线留下的痕迹被保留，既可能是救援，也可能是闭环的诱饵。若再没有人能在设备外叫出林峰，这条会话只会把警告送回零点。", { flags: ["kept_black_avatar_conversation", "sent_loop_warning", "final_identity_recorded"], state: { blackAvatarStage: "warning-preserved", endingCandidateState: "pending", namePollutionStage: 9 }, clues: [clue(1), clue(9), clue(13)] }),
       option("E", "由所有仍在场者写下未记录的话", "没有一句旧档案能替代这一刻的回答。队友站队与人格判断被留给结局判定，而不是由系统当场裁决。", { flags: ["sent_unrecorded_companion_words", "all_core_escape", "final_identity_recorded"], state: { finalLinfengNameHolder: "deferred", endingCandidateState: "pending" }, clues: [clue(10), clue(16)], relationships: [trust("trust_zhouchaoyang", 6, "共同记录未被设备保存的新话"), trust("trust_guyu", 6, "共同记录未被设备保存的新话")] }),
     ],
     extra: { namePollutionHistory: [{ stage: 9, visibleCarrier: "姓名彻底消失，黑色头像占据林峰原群位置并向零点发送警告" }] },
@@ -1151,7 +1151,40 @@
   line("nf_e4_005", "namefloor_ending_betrayal_message", "林峰", "我去找他。", "nf_e4_006", { endingRouteId: "E4", contentType: "dialogue", visualCharacter: "林峰" });
   line("nf_e4_006", "namefloor_ending_betrayal_message", "旁白", "四楼已经缩回不存在的地方。电话没有接通，名册却在天亮后补回了那个人原本的名字。", "nf_e4_007", { endingRouteId: "E4", effects: [{ type: "delayed-message", level: "heavy", durationMs: 900 }] });
   add({ nodeId: "nf_e4_007", chapterId: chapterIds[7], scene: "namefloor_ending_betrayal_message", endingRouteId: "E4", endingId: "E4", speaker: "旁白", text: "你明明说过相信我。", type: "ending", contentType: "narration", resolveEnding: true });
-  add({ nodeId: "nf_end_draft_stop", chapterId: chapterIds[7], scene: "namefloor_ending_resolve", speaker: "旁白", text: "这条选择链已经明确命中一个尚未接入正文的结局候选。当前开发阶段只保存该结果，不把它伪装成正式结局。", type: "chapter-ending", contentType: "narration", chapterEnding: { title: "结局候选已记录", subtitle: "后四个正式结局将在下一阶段接入。", cta: "保存并返回书架" } });
+
+  line("nf_e5_001", "namefloor_ending_all_present_notice", "旁白", "四楼收缩时，档案柜没有倒下。它们像校门口的闸机一样，一格一格核对走出去的人数。", "nf_e5_002", { endingRouteId: "E5", effects: [{ type: "row-rewrite", level: "heavy", durationMs: 900 }] });
+  line("nf_e5_002", "namefloor_ending_all_present_notice", "周朝阳", "人数、学籍和宿舍床位都对得上。可这不是我愿意签字的那种正确。", "nf_e5_003", { endingRouteId: "E5", contentType: "dialogue", visualCharacter: "周朝阳" });
+  line("nf_e5_003", "namefloor_ending_all_present_notice", "吴阿姨", "三年一轮，学校只问位置有没有空过。它从来不问原来的人还在不在。", "nf_e5_004", { endingRouteId: "E5", contentType: "dialogue", visualCharacter: "吴阿姨" });
+  add({ nodeId: "nf_e5_004", chapterId: chapterIds[7], scene: "namefloor_ending_all_present_notice", endingRouteId: "E5", speaker: "旁白", text: "晨间公告贴上墙。班群、合照、宿舍名单与现场人数严丝合缝，只有一张熟悉的脸在照片里迟了半拍才眨眼。", type: "phone-interaction", contentType: "phone-text", phoneScreen: { kind: "system", title: "宿舍秩序公告", time: "07:00", messages: [{ sender: "学校", text: "昨夜宿舍秩序正常，无人员失踪。" }], systemNotice: "班群、学籍、宿舍记录：全部正常。" }, nextNodeId: "nf_e5_005" });
+  line("nf_e5_005", "namefloor_ending_all_present_notice", "谷雨", "我知道我们该高兴，可我想不起刚才是谁替我们留在里面。", "nf_e5_006", { endingRouteId: "E5", contentType: "dialogue", visualCharacter: "谷雨" });
+  line("nf_e5_006", "namefloor_ending_all_present_notice", "旁白", "锁住的名册没有少一行。它只是把每个失去的人，换成了一个更容易被学校承认的位置。", "nf_e5_007", { endingRouteId: "E5", effects: [{ type: "cabinet-flicker", level: "medium", durationMs: 750 }] });
+  add({ nodeId: "nf_e5_007", chapterId: chapterIds[7], scene: "namefloor_ending_all_present_notice", endingRouteId: "E5", endingId: "E5", speaker: "旁白", text: "所有人都在，但不是所有人都回来了。", type: "ending", contentType: "narration", resolveEnding: true });
+
+  line("nf_e6_001", "namefloor_ending_second_linfeng", "旁白", "出口外的晨光没有拒绝林峰，只是把他的影子落在了没有名字的位置。", "nf_e6_002", { endingRouteId: "E6", effects: [{ type: "mirror-offset", level: "medium", durationMs: 800 }] });
+  add({ nodeId: "nf_e6_002", chapterId: chapterIds[7], scene: "namefloor_ending_second_linfeng", endingRouteId: "E6", speaker: "旁白", text: "另一部手机先响了。账号、学籍、宿舍床位、家庭联系人和班群历史都属于另一个林峰；玩家手里的屏幕只剩空白。", type: "phone-interaction", contentType: "phone-text", phoneScreen: { kind: "system", title: "身份对比", time: "07:16", messages: [{ sender: "系统", text: "林峰：学籍有效，1107在住，家庭联系人已确认。" }, { sender: "系统", text: "当前设备：用户不存在。" }], systemNotice: "两个面孔相同，记录只承认其中一个。" }, nextNodeId: "nf_e6_003" });
+  line("nf_e6_003", "namefloor_ending_second_linfeng", "谷雨", "我记得你今晚说过的话。可我也记得……他一直都在我们合照里。", "nf_e6_004", { endingRouteId: "E6", contentType: "dialogue", visualCharacter: "谷雨" });
+  line("nf_e6_004", "namefloor_ending_second_linfeng", "周朝阳", "证据能确认记录的连续性，不能替我决定谁的恐惧和选择更像一个人。", "nf_e6_005", { endingRouteId: "E6", contentType: "dialogue", visualCharacter: "周朝阳" });
+  line("nf_e6_005", "namefloor_ending_second_linfeng", "另一个林峰", "我也不知道自己从哪里开始算起。但我不想再让任何人替我消失。", "nf_e6_006", { endingRouteId: "E6", contentType: "dialogue", visualCharacter: "林峰" });
+  line("nf_e6_006", "namefloor_ending_second_linfeng", "旁白", "他们没有宣布谁是真的。玩家林峰带着未被设备保存的这一夜，站在所有旧记录之外。", "nf_e6_007", { endingRouteId: "E6", effects: [{ type: "contact-blank", level: "heavy", durationMs: 850 }] });
+  add({ nodeId: "nf_e6_007", chapterId: chapterIds[7], scene: "namefloor_ending_second_linfeng", endingRouteId: "E6", endingId: "E6", speaker: "旁白", text: "他们叫住了林峰，可回头的人不是我。", type: "ending", contentType: "narration", resolveEnding: true });
+
+  line("nf_e7_001", "namefloor_ending_fifth_shadow", "旁白", "四楼入口在他们身后缩成一面普通的墙，像从来没有出现过。", "nf_e7_002", { endingRouteId: "E7", effects: [{ type: "sign-erasure", level: "medium", durationMs: 700 }] });
+  line("nf_e7_002", "namefloor_ending_fifth_shadow", "周朝阳", "别再数了。每数一次，刚才的答案就会换一种。", "nf_e7_003", { endingRouteId: "E7", contentType: "dialogue", visualCharacter: "周朝阳" });
+  line("nf_e7_003", "namefloor_ending_fifth_shadow", "谷雨", "可我明明听见我们后面还有一双鞋。", "nf_e7_004", { endingRouteId: "E7", contentType: "dialogue", visualCharacter: "谷雨" });
+  add({ nodeId: "nf_e7_004", chapterId: chapterIds[7], scene: "namefloor_ending_fifth_shadow", endingRouteId: "E7", speaker: "旁白", text: "手机里的班群没有任何新成员。晨光下，四个人的步子向前，第五道影子却总比他们慢半步。", type: "phone-interaction", contentType: "phone-text", phoneScreen: { kind: "group", title: "班级群", time: "07:28", memberCount: 42, members: [{ name: "林峰" }, { name: "周朝阳" }, { name: "谷雨" }, { name: "宋明" }], systemNotice: "群成员人数未发生变化。" }, nextNodeId: "nf_e7_005" });
+  line("nf_e7_005", "namefloor_ending_fifth_shadow", "旁白", "没人能说明第五者是另一个林峰、同行伪人、获救学生，还是某个早已借走身体的名字。没有人替它下结论。", "nf_e7_006", { endingRouteId: "E7", effects: [{ type: "shadow-extra", level: "heavy", durationMs: 850 }] });
+  line("nf_e7_006", "namefloor_ending_fifth_shadow", "林峰", "走吧。别回头。", "nf_e7_007", { endingRouteId: "E7", contentType: "dialogue", visualCharacter: "林峰" });
+  add({ nodeId: "nf_e7_007", chapterId: chapterIds[7], scene: "namefloor_ending_fifth_shadow", endingRouteId: "E7", endingId: "E7", speaker: "旁白", text: "我们没有再数第五遍。", type: "ending", contentType: "narration", resolveEnding: true });
+
+  line("nf_e8_001", "namefloor_ending_midnight_loop", "旁白", "当最后一个活人的称呼也离开耳边，林峰才发现自己已经站在黑色头像原来的位置上。", "nf_e8_002", { endingRouteId: "E8", effects: [{ type: "avatar-lock", level: "heavy", durationMs: 900 }] });
+  add({ nodeId: "nf_e8_002", chapterId: chapterIds[7], scene: "namefloor_ending_midnight_loop", endingRouteId: "E8", speaker: "旁白", text: "账号、学籍、宿舍名单和家庭联系人依次撤销。班群仍是四十二人，黑色头像占着的从来不是新增位置。", type: "phone-interaction", contentType: "phone-text", phoneScreen: { kind: "private", title: "零点前的会话", time: "00:00", memberCount: 42, messages: [{ sender: "黑色头像", text: "不要在四楼报出完整姓名。" }], systemNotice: "当前设备：用户不存在。" }, nextNodeId: "nf_e8_003" });
+  line("nf_e8_003", "namefloor_ending_midnight_loop", "旁白", "时间不是倒回去，而是被困在一条只够发送一条警告的缝里。林峰知道这可能是在救过去的自己，也可能是在把自己送回这里。", "nf_e8_004", { endingRouteId: "E8", effects: [{ type: "time-rewind", level: "heavy", durationMs: 850 }] });
+  line("nf_e8_004", "namefloor_ending_midnight_loop", "黑色头像", "如果你看见这条消息，先记住你还做过选择。", "nf_e8_005", { endingRouteId: "E8", contentType: "dialogue" });
+  line("nf_e8_005", "namefloor_ending_midnight_loop", "旁白", "发送键亮起又熄灭。循环没有自动重开；它只留下这一次能够拒绝遗忘的机会。", "nf_e8_006", { endingRouteId: "E8", effects: [{ type: "signal-static", level: "medium", durationMs: 700 }] });
+  line("nf_e8_006", "namefloor_ending_midnight_loop", "旁白", "门牌、合照和名册上都没有林峰。只有一条来自失败时间线的短信，仍在零点等待被读到。", "nf_e8_007", { endingRouteId: "E8", effects: [{ type: "name-erasure", level: "heavy", durationMs: 850 }] });
+  add({ nodeId: "nf_e8_007", chapterId: chapterIds[7], scene: "namefloor_ending_midnight_loop", endingRouteId: "E8", endingId: "E8", speaker: "旁白", text: "不要忘记你的名字。", type: "ending", contentType: "narration", resolveEnding: true });
+
+  add({ nodeId: "nf_end_draft_stop", chapterId: chapterIds[7], scene: "namefloor_ending_resolve", speaker: "旁白", text: "这份记录暂时无法归入任何已经承担过的结果。出口没有立刻给出答案。", type: "chapter-ending", contentType: "narration", chapterEnding: { title: "记录暂存", subtitle: "你可以保存这一夜的记录，并在书架重新开始。", cta: "保存并返回书架" } });
 
   const chapters = [
     { chapterId: chapterIds[2], title: "第二章：门外的人", order: 2, status: "runtime", startNodeId: "nf02_001", sceneCount: 6, decisionCount: 8, timedDecisionCount: 2 },
@@ -1225,14 +1258,14 @@
       endingId: "E6", title: "第二个林峰", blueprintSceneId: "DR-C7-S09", scene: "namefloor_ending_second_linfeng",
       tone: "身份恐怖、孤独、强反转",
       text: "玩家林峰跟着队伍走出宿舍楼，却没有账号、学籍和同学认知。合法林峰拥有家庭档案、姓名和朋友的迎接。玩家也许是真人被偷走身份，也许早已是替身；无论来源，他记得自己今晚作过的全部选择。",
-      finalLine: "他们叫走了林峰，却没有一个人回头。",
+      finalLine: "他们叫住了林峰，可回头的人不是我。",
       phoneState: "玩家手机显示用户不存在，名册只承认合法林峰。",
     },
     E7: {
       endingId: "E7", title: "还有一个人", blueprintSceneId: "DR-C7-S10", scene: "namefloor_ending_fifth_shadow",
       tone: "开放悬疑、不安",
       text: "林峰、周朝阳、谷雨和同行宋四个身体走进晨光，路灯下却投出五道不同步的影子。第五者可能是另一个林峰、自我伪人、假名或获救学生，也可能早已在四人之中。答案没有被强行揭晓。",
-      finalLine: "群成员人数未发生变化。",
+      finalLine: "我们没有再数第五遍。",
       phoneState: "班群仍显示四十二人，名册页边多出无名湿手印。",
     },
     E8: {
@@ -1253,10 +1286,10 @@
     E5: ["保留固定人数制度", "确认全员到齐", "按配额留下一人", "至少一名原人被替代"],
     E6: ["玩家林身体连续性中断或姓名证据被夺", "合法林峰得到综合或合法证据", "合法林峰获名，玩家无名离开"],
     E7: ["制造第五人种子", "四个身体离开", "放行额外影子", "第五者身份保持未定"],
-    E8: ["硬门槛：姓名污染第九阶段", "无活人姓名锚或黑色头像占据林峰名册位置", "向零点发送警告；亦为所有其他结局未命中时的固定兜底"],
+    E8: ["硬门槛：姓名污染第九阶段", "无活人姓名锚或黑色头像占据林峰名册位置", "向零点发送警告"],
   };
   const endingConditions = {
-    E8: { required: ["第九阶段且无活锚/黑色头像占位并发送警告；或其他候选均不命中"], excluded: [] },
+    E8: { required: ["第九阶段且无活锚/黑色头像占位并发送警告"], excluded: ["未发送循环警告", "污染阶段不足第九阶段"] },
     E3: { required: ["谷雨自愿承接并持续锚名", "林峰被恢复"], excluded: ["谷雨已死亡或完全遗忘林峰", "第九阶段硬闭环"] },
     E2: { required: ["真宋明已死", "同行模仿者有新记忆、自我人格且自愿牺牲"], excluded: ["真宋明正常同行", "谷雨牺牲候选"] },
     E4: { required: ["曾承诺信任", "主动放逐/删除/牺牲对象", "对象后来被证实为真人或不可否认人格"], excluded: ["对象是自愿牺牲的自我模仿者", "E2/E3"] },
@@ -1283,7 +1316,7 @@
     if (has("lin_continuity_broken") && has("legal_linfeng_confirmed") && has("legal_linfeng_named") && has("player_linfeng_escaped_nameless")) return "E6";
     if (has("fifth_seed") && has("fifth_released") && has("identity_unresolved")) return "E7";
     if (has("song_rescue_on_time") && has("song_new_memory_verified") && has("song_voluntary_risk") && has("rescued_trapped_student") && has("roster_quota_broken") && has("rejected_all_present") && has("no_one_left") && has("exit_audited") && has("all_core_escape")) return "E1";
-    return "E8";
+    return "UNRESOLVED";
   }
 
   const defaultChoices = Object.fromEntries(decisionRegistry.map(({ nodeId, defaultChoiceId }) => [nodeId, defaultChoiceId]));
@@ -1303,6 +1336,10 @@
     itIsAlsoSongMing: route("E2", { C19: "C", C20: "C", C21: "A", C25: "E", C37: "F", C50: "D" }),
     rememberGuYu: route("E3", { C32: "C", C36: "C", C42: "A", C43: "B", C52: "A", C53: "B" }),
     promisedTrust: route("E4", { C35: "E", C37: "E", C50: "E" }),
+    allPresent: route("E5", { C43: "E", C44: "C", C46: "A", C51: "F", C54: "C" }),
+    secondLinfeng: route("E6", { C18: "T", C47: "C", C48: "C", C53: "A", C55: "C" }),
+    oneMorePerson: route("E7", { C23: "C", C25: "A", C48: "A", C54: "B", C55: "D" }),
+    doNotForgetYourName: route("E8", { C18: "T", C44: "E", C46: "D", C48: "F", C51: "G", C52: "D", C55: "D" }),
   };
 
   const blueprintSceneMap = [
@@ -1383,13 +1420,13 @@
 
   const allClues = { ...(base.clues || {}), ...clueDefinitions };
   const expansion = {
-    schemaVersion: "namefloor-chapters-2-7-1.0",
+    schemaVersion: "namefloor-chapters-2-7-1.1",
     chapters,
     chapterMetadata: chapters,
     managerRules,
     rules: base.rules || [],
     clues: allClues,
-    endings: Object.fromEntries(Object.entries(endings).filter(([endingId]) => ["E1", "E2", "E3", "E4"].includes(endingId))),
+    endings,
     endingPriority,
     endingPreconditions,
     endingConditions,
@@ -1407,7 +1444,7 @@
       endingPriority,
       endingResolver,
       endingRouteResolver(state, endingId) {
-        const routes = { E1: "nf_e1_001", E2: "nf_e2_001", E3: "nf_e3_001", E4: "nf_e4_001" };
+        const routes = { E1: "nf_e1_001", E2: "nf_e2_001", E3: "nf_e3_001", E4: "nf_e4_001", E5: "nf_e5_001", E6: "nf_e6_001", E7: "nf_e7_001", E8: "nf_e8_001" };
         return routes[endingId] || "nf_end_draft_stop";
       },
       namePollutionStages,

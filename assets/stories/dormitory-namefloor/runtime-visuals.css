@@ -111,6 +111,25 @@
   --nf-accent: #d4c48d;
 }
 
+.nf-scene-ending-all-present {
+  --nf-sky: #69756c;
+  --nf-wall: #424941;
+  --nf-accent: #b7c18a;
+}
+
+.nf-scene-ending-second-linfeng,
+.nf-scene-ending-fifth-shadow {
+  --nf-sky: #718d98;
+  --nf-wall: #4d625e;
+  --nf-accent: #d4e4e6;
+}
+
+.nf-scene-ending-midnight-loop {
+  --nf-sky: #111925;
+  --nf-wall: #15131c;
+  --nf-accent: #8093bd;
+}
+
 .nf-scene-stair-echo {
   --nf-sky: #18242c;
   --nf-wall: #365052;

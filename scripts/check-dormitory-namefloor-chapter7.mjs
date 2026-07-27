@@ -24,5 +24,5 @@ assert.ok(choices.some((choice) => choice.setFlags?.includes("player_linfeng_con
 assert.ok(choices.some((choice) => choice.setFlags?.includes("dual_linfeng_subjects_acknowledged")), "Personhood validation must be playable.");
 assert.ok(choices.some((choice) => choice.setFlags?.includes("song_mimic_self_aware")), "Mimic personhood choice must be playable.");
 assert.equal(nodes.nf07_decision_entry?.nextNodeId, "nf_end_resolve", "Chapter 7 must enter the deterministic ending resolver.");
-assert.deepEqual(Object.keys(expansion.endings || {}).sort(), ["E1", "E2", "E3", "E4"], "Only the first four ending bodies may be exported.");
+assert.deepEqual(Object.keys(expansion.endings || {}).sort(), ["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8"], "Chapter 7 must feed all eight formal ending bodies through one resolver.");
 console.log(`Dormitory Chapter 7 check passed. nodes=${chapterNodes.length}; decisions=${decisions.length}`);

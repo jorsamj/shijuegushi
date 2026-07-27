@@ -268,7 +268,7 @@ for (const [routeName, plan] of Object.entries(data.routePlans || {})) {
   reached.push(first);
 }
 if (Object.keys(data.routePlans || {}).length > 0) {
-  assert.deepEqual(new Set(reached), new Set(["E1", "E2", "E3", "E4"]), "This phase must route its four formal endings uniquely.");
+  assert.deepEqual(new Set(reached), new Set(["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8"]), "All eight formal endings must route uniquely.");
   runtime.setState({
     ...runtime.createInitialState(scriptId),
     scriptId,

@@ -15,9 +15,9 @@ const data = { ...base, ...expansion, nodes: { ...base.nodes, ...expansion.nodes
 
 assert.deepEqual(Object.keys(data.endingConditions || {}).sort(), ["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8"], "All eight candidate conditions must live in the single resolver source.");
 assert.deepEqual([...data.endingPriority], ["E8", "E3", "E2", "E4", "E5", "E6", "E7", "E1"], "Priority must match the approved branch matrix.");
-assert.deepEqual(Object.keys(data.endings || {}).sort(), ["E1", "E2", "E3", "E4"], "Only the first four formal endings may be exported this round.");
+assert.deepEqual(Object.keys(data.endings || {}).sort(), ["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8"], "The shared resolver must export all formal ending metadata.");
 assert.equal(data.nodes.nf07_decision_entry?.nextNodeId, "nf_end_resolve", "Chapter 7 must continue through the deterministic ending resolver.");
-assert.ok(data.nodes.nf_end_draft_stop?.type === "chapter-ending", "Unimplemented candidates need a dedicated Draft stop node.");
+assert.ok(data.nodes.nf_end_draft_stop?.type === "chapter-ending", "The abnormal unresolved state needs a controlled stop node.");
 
 for (const [endingId, finalLine] of Object.entries({
   E1: "林峰，走了，回宿舍。",
@@ -48,7 +48,7 @@ for (const endingId of ["E1", "E2", "E3", "E4"]) {
   const finalNode = followEndingRoute(data.profile.endingRouteResolver({}, endingId));
   assert.equal(finalNode.endingId, endingId, `${endingId} may not cross into another ending.`);
 }
-assert.equal(data.profile.endingRouteResolver({}, "E5"), "nf_end_draft_stop", "Unimplemented candidates must enter the Draft stop node.");
+assert.notEqual(data.profile.endingRouteResolver({}, "E5"), "nf_end_draft_stop", "Formal later endings must have their own route.");
 
 const resolve = data.profile.endingResolver;
 const cases = {
@@ -59,6 +59,6 @@ const cases = {
   E5: { flags: { roster_intact: true, confirmed_all_present: true, sacrificed_for_quota: true, mechanical_compliance: true, original_person_lost: true } },
 };
 for (const [expected, state] of Object.entries(cases)) assert.equal(resolve(state), expected, `${expected} must resolve deterministically.`);
-assert.equal(resolve({ flags: { fifth_seed: true, fifth_released: true, identity_unresolved: true } }), "E7", "An unimplemented candidate must not fall into formal ending content.");
-assert.equal(resolve({ flags: {} }), "E8", "No-match fallback must remain deterministic.");
+assert.equal(resolve({ flags: { fifth_seed: true, fifth_released: true, identity_unresolved: true } }), "E7", "The fifth-shadow route must remain distinct from the first four endings.");
+assert.equal(resolve({ flags: {} }), "UNRESOLVED", "No-match fallback must be controlled without pretending to have earned a formal ending.");
 console.log("Dormitory endings 1-4 check passed.");

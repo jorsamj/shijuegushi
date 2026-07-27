@@ -259,8 +259,8 @@ nodes
     }
   });
 
-assert.deepEqual(Object.keys(data.endings || {}).sort(), ["E1", "E2", "E3", "E4"], "This phase may export only the first four formal endings.");
-assert.equal(Object.keys(data.routePlans || {}).length, 4, "This phase needs deterministic route plans for the first four endings.");
+assert.deepEqual(Object.keys(data.endings || {}).sort(), ["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8"], "The complete runtime must export all eight formal endings.");
+assert.equal(Object.keys(data.routePlans || {}).length, 8, "The complete runtime needs deterministic route plans for all eight endings.");
 
 console.log("Dormitory name-floor Chapter 1-5 runtime check passed.");
 console.log(`chapter4Nodes=${nodes.filter((node) => node.chapterId === chapterIds.chapter4).length}; chapter5Nodes=${nodes.filter((node) => node.chapterId === chapterIds.chapter5).length}; chapter4Decisions=${countDecisionNodes(nodes, chapterIds.chapter4).length}; chapter5Decisions=${countDecisionNodes(nodes, chapterIds.chapter5).length}`);
