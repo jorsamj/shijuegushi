@@ -73,13 +73,14 @@ function hasRealAlpha(png) {
 }
 
 const manifest = loadManifest();
-assert(manifest?.phase === "phase-1", "manifest must identify the phase-1 checkpoint");
+assert(manifest?.phase === "phase-1" || manifest?.phase === "phase-2", "manifest must identify an approved formal visual checkpoint");
 assert(manifest?.generation?.model === "gpt-image-2", "phase-1 generation record must be gpt-image-2");
 assert(!JSON.stringify(manifest).match(/(?:api[_-]?key|authorization|bearer\s+)/i), "manifest must not include credentials");
 const assets = Array.isArray(manifest.assets) ? manifest.assets : [];
-assert(assets.length === 13, `phase-1 must register exactly 13 approved assets, received ${assets.length}`);
+const phase1Assets = assets.filter((asset) => asset.phase !== "state-approved");
+assert(phase1Assets.length === 13, `phase-1 must retain exactly 13 approved checkpoint assets, received ${phase1Assets.length}`);
 
-for (const asset of assets) {
+for (const asset of phase1Assets) {
   assert(asset.phase === "master-approved" || asset.phase === "background-approved" || asset.phase === "ending-approved", `invalid phase status: ${asset.id}`);
   assert(asset.runtimeIntegrated === false, `phase-1 asset must not be runtime integrated: ${asset.id}`);
   assert(asset.path.startsWith("assets/stories/dormitory-namefloor/formal/"), `asset outside formal namespace: ${asset.id}`);
@@ -98,14 +99,14 @@ for (const asset of assets) {
   }
 }
 
-const characterAssets = assets.filter((asset) => asset.assetType === "character-master");
+const characterAssets = phase1Assets.filter((asset) => asset.assetType === "character-master");
 assert(characterAssets.length === 7, "phase-1 needs seven character masters");
 assert(expectedCharacters.every((characterId) => characterAssets.some((asset) => asset.characterId === characterId)), "missing phase-1 character master");
 assert(characterAssets.find((asset) => asset.characterId === "guyu")?.gender === "male", "Gu Yu must be registered as male");
-const backgrounds = assets.filter((asset) => asset.assetType === "background");
+const backgrounds = phase1Assets.filter((asset) => asset.assetType === "background");
 assert(backgrounds.length === 5, "phase-1 needs five reusable backgrounds");
 assert(expectedBackgrounds.every((sceneId) => backgrounds.some((asset) => asset.sceneId === sceneId)), "missing phase-1 background");
-const ending = assets.filter((asset) => asset.assetType === "ending-key-art");
+const ending = phase1Assets.filter((asset) => asset.assetType === "ending-key-art");
 assert(ending.length === 1 && ending[0].endingId === "E1", "phase-1 needs only E1 key art");
 
 console.log("phase-1 formal visuals OK: 7 character masters, 5 backgrounds, E1 key art");
