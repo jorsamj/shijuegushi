@@ -73,7 +73,7 @@ function hasRealAlpha(png) {
 }
 
 const manifest = loadManifest();
-assert(["phase-1", "phase-2", "phase-3", "phase-4"].includes(manifest?.phase), "manifest must identify an approved formal visual checkpoint");
+assert(["phase-1", "phase-2", "phase-3", "phase-4", "phase-5", "phase-6"].includes(manifest?.phase), "manifest must identify an approved formal visual checkpoint");
 assert(manifest?.generation?.model === "gpt-image-2", "phase-1 generation record must be gpt-image-2");
 assert(!JSON.stringify(manifest).match(/(?:api[_-]?key|authorization|bearer\s+)/i), "manifest must not include credentials");
 const assets = Array.isArray(manifest.assets) ? manifest.assets : [];
